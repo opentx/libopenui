@@ -337,6 +337,8 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
       drawSolidFilledRect(x, y, 1, h, flags);
     }
 
+    void drawLine(coord_t x, coord_t y, coord_t w, coord_t h, uint8_t pat = SOLID, LcdFlags flags = 0);
+
     void drawRect(coord_t x, coord_t y, coord_t w, coord_t h, uint8_t thickness = 1, uint8_t pat = SOLID, LcdFlags flags = 0);
 
     inline void drawSolidRect(coord_t x, coord_t y, coord_t w, coord_t h, uint8_t thickness = 1, LcdFlags flags = 0)

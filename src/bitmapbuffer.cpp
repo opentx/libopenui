@@ -126,6 +126,50 @@ void BitmapBuffer::drawVerticalLine(coord_t x, coord_t y, coord_t h, uint8_t pat
   }
 }
 
+void BitmapBuffer::drawLine(coord_t x, coord_t y, coord_t w, coord_t h, uint8_t pat, LcdFlags att)
+{
+  pixel_t color = lcdColorTable[COLOR_IDX(att)];
+  uint8_t opacity = 0x0F - (att >> 24);
+
+  APPLY_OFFSET();
+  
+  // Case 1:
+  //     (0 <= m <= 1<<16)
+  // <=> (w >= h)
+
+  if (w >= h) {
+
+    int32_t f;
+    int32_t m = ((int32_t)h << 16) / w;
+    coord_t x2 = x + w;
+
+    f = y << 16;
+    for (; x <= x2; x++, f += m) {
+      int32_t g = f;
+      g += 32767;
+      drawAlphaPixel(x, g >> 16, opacity, color);
+    }
+  }
+  // Case 2:
+  //     (m > 1<<16)
+  // <=> ((y2 - y1) >= (x2 - x1))
+  else {
+    int32_t f;
+    int32_t m = ((int32_t)w << 16) / h;
+    coord_t y2 = y + h;
+
+    pixel_t color = lcdColorTable[COLOR_IDX(att)];
+    uint8_t opacity = 0x0F - (att >> 24);
+ 
+    f = x << 16;
+    for (; y <= y2; y++, f += m) {
+      int32_t g = f;
+      g += 32767;
+      drawAlphaPixel(g >> 16, y, opacity, color);
+    }
+  }
+}
+
 void BitmapBuffer::drawRect(coord_t x, coord_t y, coord_t w, coord_t h, uint8_t thickness, uint8_t pat, LcdFlags att)
 {
   for (int i=0; i<thickness; i++) {
