@@ -141,6 +141,13 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, uint
   x2 += offsetX;
   y2 += offsetY;
 
+  // Clipping
+  if (x1 < xmin || x1 >= xmax || y1 < ymin || y1 >= ymax)
+    return;
+
+  if (x2 < xmin || x2 >= xmax || y2 < ymin || y2 >= ymax)
+    return;
+
   pixel_t color = lcdColorTable[COLOR_IDX(flags)];
 
   int dx = x2 - x1;      /* the horizontal distance of the line */
