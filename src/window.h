@@ -427,6 +427,8 @@ class Window
     }
 
 #if defined(HARDWARE_TOUCH)
+    coord_t snapIn(coord_t relativeScrollPosition, coord_t pageSize);
+
     virtual bool onTouchStart(coord_t x, coord_t y);
 
     virtual bool onTouchEnd(coord_t x, coord_t y);

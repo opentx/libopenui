@@ -338,6 +338,27 @@ void Window::paintChildren(BitmapBuffer * dc, std::list<Window *>::iterator it)
   }
 }
 
+#if defined(HARDWARE_TOUCH)
+coord_t Window::snapIn(coord_t relativeScrollPosition, coord_t pageSize)
+{
+  coord_t inc = 0;
+  if (relativeScrollPosition > pageSize / 2) {
+    // closer to next page
+    inc = (pageSize - relativeScrollPosition);
+  }
+  else {
+    // closer to previous page
+    inc = (0 - relativeScrollPosition);
+  }
+
+  // do not get too slow
+  if (abs(inc) > 32)
+    inc /= 2;
+
+  return inc;
+}
+#endif
+
 void Window::checkEvents()
 {
   auto copy = children;
@@ -361,18 +382,15 @@ void Window::checkEvents()
 #if defined(HARDWARE_TOUCH)
   if (touchState.event != TE_SLIDE && touchState.lastDeltaX == 0 && touchState.lastDeltaY == 0) {
     if (pageWidth) {
-      coord_t relativeScrollPosition = scrollPositionX % pageWidth;
+      coord_t relativeScrollPosition = getScrollPositionX() % pageWidth;
       if (relativeScrollPosition) {
-        setScrollPositionX(getScrollPositionX() - relativeScrollPosition + (relativeScrollPosition > pageWidth / 2 ? pageWidth : 0));
+        setScrollPositionX(getScrollPositionX() + snapIn(relativeScrollPosition, pageWidth));
       }
     }
     if (pageHeight) {
-      coord_t relativeScrollPosition = scrollPositionY % pageHeight;
+      coord_t relativeScrollPosition = getScrollPositionY() % pageHeight;
       if (relativeScrollPosition) {
-        if (relativeScrollPosition > 0)
-          setScrollPositionY(getScrollPositionY() - relativeScrollPosition + (relativeScrollPosition > pageHeight / 2 ? pageHeight : 0));
-        else
-          setScrollPositionY(getScrollPositionY() - relativeScrollPosition - (relativeScrollPosition > -pageHeight / 2 ? 0 : pageHeight));
+        setScrollPositionY(getScrollPositionY() + snapIn(relativeScrollPosition, pageHeight));
       }
     }
   }
