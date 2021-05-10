@@ -21,7 +21,8 @@
 
 #include "form.h"
 
-class TextEdit : public FormField {
+class TextEdit: public FormField
+{
   friend class TextKeyboard;
 
   public:
@@ -85,32 +86,30 @@ class TextEdit : public FormField {
       }
     }
 
-    static uint8_t getNextChar(uint8_t c)
+    static uint8_t getNextChar(uint8_t c, uint8_t previous)
     {
       if (c == ' ' || c == 0)
-        return 'A';
-      else if (c == 'Z')
-        return 'a';
-      else if (c == 'z')
-        return '0';
-      else if (c == '>')
-        return ' ';
-      else
-        return c + 1;
+        return (previous >= 'a' && previous <= 'z') ? 'a' : 'A';
+
+      for (auto & suite: charsSuite) {
+        if (c == suite[0])
+          return suite[1];
+      }
+
+      return c + 1;
     }
 
     static uint8_t getPreviousChar(uint8_t c)
     {
       if (c == 'A')
         return ' ';
-      else if (c == 'a')
-        return 'Z';
-      else if (c == '0')
-        return 'z';
-      else if (c == ' ' || c == 0)
-        return '>';
-      else
-        return c - 1;
+
+      for (auto & suite: charsSuite) {
+        if (c == suite[1])
+          return suite[0];
+      }
+
+      return c - 1;
     }
 
     static uint8_t toggleCase(uint8_t c)

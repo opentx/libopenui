@@ -116,13 +116,14 @@ void TextEdit::onEvent(event_t event)
 
 #if defined(HARDWARE_KEYS)
   if (editMode) {
+    char previousChar = (cursorPos > 0 ? value[cursorPos - 1] : 0);
     int c = value[cursorPos];
     int v = c;
 
     switch (event) {
       case EVT_ROTARY_RIGHT:
         for (int i = 0; i < ROTARY_ENCODER_SPEED(); i++) {
-          v = getNextChar(v);
+          v = getNextChar(v, previousChar);
         }
         break;
 
