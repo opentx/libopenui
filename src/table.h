@@ -181,7 +181,7 @@ class Table: public FormField
         {
           if (lines[index]->flags != flags) {
             lines[index]->flags = flags;
-            invalidate({0, index * TABLE_LINE_HEIGHT, width(), TABLE_LINE_HEIGHT});
+            invalidate({0, index * TABLE_LINE_HEIGHT - scrollPositionY, width(), TABLE_LINE_HEIGHT});
           }
         }
 
