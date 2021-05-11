@@ -42,7 +42,8 @@
 #define PREC1                          0x10u
 #define PREC2                          0x20u
 #define PREC3                          0x30u
-#define MODE(flags)                    (uint8_t((flags) & 0x30u) >> 4u)
+#define FLAGS_TO_PREC(flags)           (uint8_t((flags) & 0x30u) >> 4u)
+#define PREC_TO_FLAGS(prec)            (uint8_t(prec) << 4u)
 
 #define LEADING0                       0x40u
 
