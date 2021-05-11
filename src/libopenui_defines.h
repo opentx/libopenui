@@ -39,13 +39,12 @@
 // unused 0x8000u
 
 /* drawNumber flags */
-#define LEADING0                       0x10u
-#define PREC1                          0x20u
-#define PREC2                          0x30u
-#define MODE(flags)                    ((((int8_t)(flags) & 0x30) - 0x10) >> 4)
+#define PREC1                          0x10u
+#define PREC2                          0x20u
+#define PREC3                          0x30u
+#define MODE(flags)                    (uint8_t((flags) & 0x30u) >> 4u)
 
-/* telemetry flags */
-#define NO_UNIT                        0x40u
+#define LEADING0                       0x40u
 
 #define FONT_MASK                      0x0F00u
 #define FONT_INDEX(flags)              (((flags) & FONT_MASK) >> 8u)
