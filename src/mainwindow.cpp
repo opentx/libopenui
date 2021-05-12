@@ -42,19 +42,20 @@ void MainWindow::emptyTrash()
 void MainWindow::checkEvents()
 {
 #if defined(HARDWARE_TOUCH)
-  if (touchPanelEventOccured()) {
-    touchPanelRead();
-  }
+  auto touchEvent = touchState.popEvent();
 
-  if (touchState.event == TE_DOWN) {
+  if (touchEvent == TE_DOWN) {
     onTouchStart(touchState.x + scrollPositionX, touchState.y + scrollPositionY);
     slidingWindow = nullptr;
   }
-  else if (touchState.event == TE_UP) {
-    onTouchEnd(touchState.startX + scrollPositionX, touchState.startY + scrollPositionY);
-    touchState.event = TE_NONE;
+  else if (touchEvent == TE_LONG) {
+    onTouchLong(touchState.x + scrollPositionX, touchState.y + scrollPositionY);
+    slidingWindow = nullptr;
   }
-  else if (touchState.event == TE_SLIDE) {
+  else if (touchEvent == TE_UP) {
+    onTouchEnd(touchState.startX + scrollPositionX, touchState.startY + scrollPositionY);
+  }
+  else if (touchEvent == TE_SLIDE) {
     if (touchState.deltaX || touchState.deltaY) {
       onTouchSlide(touchState.x, touchState.y, touchState.startX, touchState.startY, touchState.deltaX, touchState.deltaY);
       touchState.lastDeltaX = touchState.deltaX;
@@ -63,7 +64,7 @@ void MainWindow::checkEvents()
       touchState.deltaY = 0;
     }
   }
-  else if (touchState.event == TE_SLIDE_END && slidingWindow) {
+  else if (touchEvent == TE_SLIDE_END && slidingWindow) {
     if (touchState.lastDeltaX > SLIDE_SPEED_REDUCTION)
       touchState.lastDeltaX -= SLIDE_SPEED_REDUCTION;
     else if (touchState.lastDeltaX < -SLIDE_SPEED_REDUCTION)

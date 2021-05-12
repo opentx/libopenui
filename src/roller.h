@@ -119,7 +119,7 @@ class Roller: public Choice
       }
 
 #if defined(HARDWARE_TOUCH)
-      if (touchState.event != TE_SLIDE) {
+      if (touchState.state != TE_SLIDE) {
         if (scrollPositionY != lastScrollPositionY) {
           updateValueFromScrollPosition();
         }

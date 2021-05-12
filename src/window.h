@@ -431,6 +431,8 @@ class Window
 
     virtual bool onTouchStart(coord_t x, coord_t y);
 
+    virtual bool onTouchLong(coord_t x, coord_t y);
+
     virtual bool onTouchEnd(coord_t x, coord_t y);
 
     virtual bool onTouchSlide(coord_t x, coord_t y, coord_t startX, coord_t startY, coord_t slideX, coord_t slideY);

@@ -380,7 +380,7 @@ void Window::checkEvents()
   }
 
 #if defined(HARDWARE_TOUCH)
-  if (touchState.event != TE_SLIDE && touchState.lastDeltaX == 0 && touchState.lastDeltaY == 0) {
+  if (touchState.state != TE_SLIDE && touchState.lastDeltaX == 0 && touchState.lastDeltaY == 0) {
     if (pageWidth) {
       coord_t relativeScrollPosition = getScrollPositionX() % pageWidth;
       if (relativeScrollPosition) {
@@ -412,6 +412,20 @@ bool Window::onTouchStart(coord_t x, coord_t y)
     auto child = *it;
     if (child->rect.contains(x, y)) {
       if (child->onTouchStart(x - child->rect.x + child->scrollPositionX, y - child->rect.y + child->scrollPositionY)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+bool Window::onTouchLong(coord_t x, coord_t y)
+{
+  for (auto it = children.rbegin(); it != children.rend(); ++it) {
+    auto child = *it;
+    if (child->rect.contains(x, y)) {
+      if (child->onTouchLong(x - child->rect.x + child->scrollPositionX, y - child->rect.y + child->scrollPositionY)) {
         return true;
       }
     }
