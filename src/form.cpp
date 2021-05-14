@@ -300,6 +300,21 @@ void FormWindow::onEvent(event_t event)
       return;
     }
   }
+  else if (event == EVT_ROTARY_LEFT && !previous && !hasFocus()) {
+    if (scrollPositionY > 0) {
+      onKeyPress();
+      setScrollPositionY(scrollPositionY - height());
+      return;
+    }
+
+  }
+  else if (event == EVT_ROTARY_RIGHT && !next && !hasFocus()) {
+    if (scrollPositionY < innerHeight - height()) {
+      onKeyPress();
+      setScrollPositionY(scrollPositionY + height());
+      return;
+    }
+  }
 
   FormGroup::onEvent(event);
 }
