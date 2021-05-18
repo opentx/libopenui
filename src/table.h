@@ -284,6 +284,11 @@ class Table: public FormField
       }
     }
 
+    coord_t getColumnWidth(uint8_t index) const
+    {
+      return columnsWidth[index];
+    }
+
     int getSelection() const
     {
       return body.selection;
