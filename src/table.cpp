@@ -22,7 +22,7 @@
 
 void Table::Header::paint(BitmapBuffer * dc)
 {
-  coord_t x = 10;
+  coord_t x = TABLE_HORIZONTAL_PADDING;
   if (!cells.empty()) {
     dc->clear(TABLE_HEADER_BGCOLOR);
     for (unsigned i = 0; i < cells.size(); i++) {
@@ -44,7 +44,7 @@ void Table::Body::checkEvents()
 
   coord_t y = 0;
   for (auto line: lines) {
-    coord_t x = 10;
+    coord_t x = TABLE_HORIZONTAL_PADDING;
     for (unsigned i = 0; i < line->cells.size(); i++) {
       auto cell = line->cells[i];
       auto width = static_cast<Table *>(parent)->columnsWidth[i];
