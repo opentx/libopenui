@@ -268,7 +268,7 @@ class Table: public FormField
     void setColumnsWidth(const coord_t values[])
     {
       int restColumn = -1;
-      coord_t restWidth = width();
+      coord_t restWidth = width() - 2 * TABLE_HORIZONTAL_PADDING;
       for (uint8_t i = 0; i < columnsCount; i++) {
         auto columnWidth = values[i];
         columnsWidth[i] = columnWidth;
