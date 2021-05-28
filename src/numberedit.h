@@ -41,6 +41,11 @@ class NumberEdit : public BaseNumberEdit
       isValueAvailable = std::move(handler);
     }
 
+    void setGetStringValueHandler(std::function<std::string(int)> handler)
+    {
+      getStringValue = std::move(handler);
+    }
+
     void setPrefix(std::string value)
     {
       prefix = std::move(value);
@@ -56,9 +61,9 @@ class NumberEdit : public BaseNumberEdit
       zeroText = std::move(value);
     }
 
-    void setDisplayHandler(std::function<void(BitmapBuffer *, LcdFlags, int)> function)
+    void setDisplayHandler(std::function<void(BitmapBuffer *, LcdFlags, int)> handler)
     {
-      displayFunction = std::move(function);
+      displayFunction = std::move(handler);
     }
 
     void onEvent(event_t event) override;
@@ -75,5 +80,5 @@ class NumberEdit : public BaseNumberEdit
     std::string suffix;
     std::string zeroText;
     std::function<bool(int)> isValueAvailable;
+    std::function<std::string(int)> getStringValue;
 };
-
