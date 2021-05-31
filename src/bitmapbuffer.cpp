@@ -989,33 +989,45 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename)
 #define STBI_NO_HDR
 #define STBI_NO_LINEAR
 
-// #define TRACE_STB_MALLOC
-
-#if defined(TRACE_STB_MALLOC)
 #define STBI_MALLOC(sz)                     stb_malloc(sz)
 #define STBI_REALLOC_SIZED(p,oldsz,newsz)   stb_realloc(p,oldsz,newsz)
 #define STBI_FREE(p)                        stb_free(p)
 
+#if !defined(TRACE_STB_MALLOC)
+#define TRACE_STB_MALLOC(...)
+#endif
+
 void * stb_malloc(unsigned int size)
 {
+#if defined(STB_MALLOC_MAXSIZE)
+  if (size > STB_MALLOC_MAXSIZE) {
+    TRACE("malloc size %d refused", size);
+    return nullptr;
+  }
+#endif
   void * res = malloc(size);
-  TRACE("malloc %d = %p", size, res);
+  TRACE_STB_MALLOC("malloc %d = %p", size, res);
   return res;
 }
 
 void stb_free(void *ptr)
 {
-  TRACE("free %p", ptr);
+  TRACE_STB_MALLOC("free %p", ptr);
   free(ptr);
 }
 
 void *stb_realloc(void *ptr, unsigned int oldsz, unsigned int newsz)
 {
+#if defined(STB_MALLOC_MAXSIZE)
+  if (newsz > STB_MALLOC_MAXSIZE) {
+    TRACE("realloc size %d refused", newsz);
+    return nullptr;
+  }
+#endif
   void * res =  realloc(ptr, newsz);
-  TRACE("realloc %p, %d -> %d = %p", ptr, oldsz, newsz, res);
+  TRACE_STB_MALLOC("realloc %p, %d -> %d = %p", ptr, oldsz, newsz, res);
   return res;
 }
-#endif // #if defined(TRACE_STB_MALLOC)
 
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
