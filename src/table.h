@@ -55,11 +55,23 @@ class Table: public FormField
 
         bool needsInvalidate() override
         {
-          return false;
+          return valueChanged;
+        }
+
+        std::string getValue() const
+        {
+          return value;
+        }
+
+        void setValue(std::string newValue)
+        {
+          value = std::move(newValue);
+          valueChanged = true;
         }
 
       protected:
         std::string value;
+        bool valueChanged = false;
     };
 
     class DynamicStringCell : public Cell
@@ -356,6 +368,11 @@ class Table: public FormField
         line->cells[i] = new StringCell(values[i]);
       }
       addLine(line, std::move(onPress), std::move(onSelect));
+    }
+
+    Cell * getCell(unsigned row, unsigned column) const
+    {
+      return body.lines[row]->cells[column];
     }
 
     void clear()
