@@ -49,7 +49,7 @@ void Table::Body::checkEvents()
       auto cell = line->cells[i];
       auto width = static_cast<Table *>(parent)->columnsWidth[i];
       if (cell && cell->needsInvalidate()) {
-        invalidate({x, y, width, TABLE_LINE_HEIGHT - 2});
+        invalidate({x, y, width, TABLE_LINE_HEIGHT - TABLE_LINES_SPACING});
       }
       x += width;
     }
@@ -66,16 +66,16 @@ void Table::Body::paint(BitmapBuffer * dc)
   for (auto line: lines) {
     bool highlight = (index == selection);
     if (isMoveMode) {
-      dc->drawSolidFilledRect(4, y + 2, width() - 4, TABLE_LINE_HEIGHT - 2, TABLE_BGCOLOR);
+      dc->drawSolidFilledRect(TABLE_LINES_SPACING * 2, y + TABLE_LINES_SPACING, width() - TABLE_LINES_SPACING * 2, TABLE_LINE_HEIGHT - TABLE_LINES_SPACING, TABLE_BGCOLOR);
       if (highlight) {
-        dc->drawSolidFilledRect(4, y, width() - 4, 2, MENU_HIGHLIGHT_BGCOLOR);
-        for (unsigned i = 0; i < 4; i++) {
-          dc->drawVerticalLine(i, y - (4 - i), (4 - i) * 2 + 1, SOLID, MENU_HIGHLIGHT_BGCOLOR);
+        dc->drawSolidFilledRect(TABLE_LINES_SPACING * 2, y, width() - TABLE_LINES_SPACING * 2, TABLE_LINES_SPACING, MENU_HIGHLIGHT_BGCOLOR);
+        for (unsigned i = 0; i < TABLE_LINES_SPACING * 2; i++) {
+          dc->drawVerticalLine(i, y - (TABLE_LINES_SPACING * 2 - i), (TABLE_LINES_SPACING * 2 - i) * 2 + 1, SOLID, MENU_HIGHLIGHT_BGCOLOR);
         }
       }
     }
     else {
-      dc->drawSolidFilledRect(0, y, width(), TABLE_LINE_HEIGHT - 2, highlight ? MENU_HIGHLIGHT_BGCOLOR : TABLE_BGCOLOR);
+      dc->drawSolidFilledRect(0, y, width(), TABLE_LINE_HEIGHT - TABLE_LINES_SPACING, highlight ? MENU_HIGHLIGHT_BGCOLOR : TABLE_BGCOLOR);
     }
     coord_t x = TABLE_HORIZONTAL_PADDING;
     for (unsigned i = 0; i < line->cells.size(); i++) {
