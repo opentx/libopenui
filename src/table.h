@@ -386,10 +386,22 @@ class Table: public FormField
       return body.lines.size();
     }
 
+    bool isMoveMode() const
+    {
+      return moveMode;
+    }
+
+    void setMoveMode(bool newMode)
+    {
+      moveMode = newMode;
+      body.invalidate();
+    }
+
   protected:
     uint8_t columnsCount;
     std::vector<coord_t> columnsWidth;
     Header header;
     Body body;
+    bool moveMode = false;
 };
 

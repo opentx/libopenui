@@ -62,14 +62,26 @@ void Table::Body::paint(BitmapBuffer * dc)
   coord_t y = 0;
   int index = 0;
   dc->clear(DEFAULT_BGCOLOR);
+  bool isMoveMode = static_cast<Table *>(parent)->isMoveMode();
   for (auto line: lines) {
     bool highlight = (index == selection);
-    dc->drawSolidFilledRect(0, y, width(), TABLE_LINE_HEIGHT - 2, highlight ? MENU_HIGHLIGHT_BGCOLOR : TABLE_BGCOLOR);
+    if (isMoveMode) {
+      dc->drawSolidFilledRect(4, y + 2, width() - 4, TABLE_LINE_HEIGHT - 2, TABLE_BGCOLOR);
+      if (highlight) {
+        dc->drawSolidFilledRect(4, y, width() - 4, 2, MENU_HIGHLIGHT_BGCOLOR);
+        for (unsigned i = 0; i < 4; i++) {
+          dc->drawVerticalLine(i, y - (4 - i), (4 - i) * 2 + 1, SOLID, MENU_HIGHLIGHT_BGCOLOR);
+        }
+      }
+    }
+    else {
+      dc->drawSolidFilledRect(0, y, width(), TABLE_LINE_HEIGHT - 2, highlight ? MENU_HIGHLIGHT_BGCOLOR : TABLE_BGCOLOR);
+    }
     coord_t x = TABLE_HORIZONTAL_PADDING;
     for (unsigned i = 0; i < line->cells.size(); i++) {
       auto cell = line->cells[i];
       if (cell) {
-        cell->paint(dc, x, y, line->flags + (highlight ? MENU_HIGHLIGHT_COLOR - COLOR_MASK(line->flags) : DEFAULT_COLOR));
+        cell->paint(dc, x, y, line->flags + ((!isMoveMode && highlight) ? MENU_HIGHLIGHT_COLOR - COLOR_MASK(line->flags) : DEFAULT_COLOR));
       }
       x += static_cast<Table *>(parent)->columnsWidth[i];
     }
