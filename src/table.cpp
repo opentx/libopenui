@@ -65,23 +65,19 @@ void Table::Body::paint(BitmapBuffer * dc)
   bool isMoveMode = static_cast<Table *>(parent)->isMoveMode();
   for (auto line: lines) {
     bool highlight = (index == selection);
-    if (isMoveMode) {
-      dc->drawSolidFilledRect(TABLE_LINES_SPACING * 2, y + TABLE_LINES_SPACING, width() - TABLE_LINES_SPACING * 2, TABLE_LINE_HEIGHT - TABLE_LINES_SPACING, TABLE_BGCOLOR);
-      if (highlight) {
-        dc->drawSolidFilledRect(TABLE_LINES_SPACING * 2, y, width() - TABLE_LINES_SPACING * 2, TABLE_LINES_SPACING, MENU_HIGHLIGHT_BGCOLOR);
-        for (unsigned i = 0; i < TABLE_LINES_SPACING * 2; i++) {
-          dc->drawVerticalLine(i, y - (TABLE_LINES_SPACING * 2 - i), (TABLE_LINES_SPACING * 2 - i) * 2 + 1, SOLID, MENU_HIGHLIGHT_BGCOLOR);
-        }
+    dc->drawSolidFilledRect(0, y, width(), TABLE_LINE_HEIGHT - TABLE_LINES_SPACING, !isMoveMode && highlight ? MENU_HIGHLIGHT_BGCOLOR : TABLE_BGCOLOR);
+    if (isMoveMode && highlight) {
+      dc->drawSolidFilledRect(0, selection ? y - TABLE_LINES_SPACING : y, width(), TABLE_LINES_SPACING, MENU_HIGHLIGHT_BGCOLOR);
+      coord_t triangleHeight = TABLE_LINES_SPACING * 3;
+      for (unsigned i = 0; i < triangleHeight; i++) {
+        dc->drawVerticalLine(i, y - (triangleHeight - i), (triangleHeight - i) * 2, SOLID, MENU_HIGHLIGHT_BGCOLOR);
       }
-    }
-    else {
-      dc->drawSolidFilledRect(0, y, width(), TABLE_LINE_HEIGHT - TABLE_LINES_SPACING, highlight ? MENU_HIGHLIGHT_BGCOLOR : TABLE_BGCOLOR);
     }
     coord_t x = TABLE_HORIZONTAL_PADDING;
     for (unsigned i = 0; i < line->cells.size(); i++) {
       auto cell = line->cells[i];
       if (cell) {
-        cell->paint(dc, x, y, line->flags + ((!isMoveMode && highlight) ? MENU_HIGHLIGHT_COLOR - COLOR_MASK(line->flags) : DEFAULT_COLOR));
+        cell->paint(dc, x + (isMoveMode ? TABLE_LINES_SPACING : 0), y, line->flags + ((!isMoveMode && highlight) ? MENU_HIGHLIGHT_COLOR - COLOR_MASK(line->flags) : DEFAULT_COLOR));
       }
       x += static_cast<Table *>(parent)->columnsWidth[i];
     }
@@ -163,6 +159,9 @@ void Table::Body::onEvent(event_t event)
         select(selection <= 0 ? lines.size() - 1 : selection - 1, true);
       }
     }
+  }
+  else if (event == EVT_KEY_BREAK(KEY_EXIT) && static_cast<Table *>(parent)->isMoveMode()) {
+    static_cast<Table *>(parent)->setMoveMode(false);
   }
   else if (event == EVT_KEY_BREAK(KEY_EXIT) && selection >= 0) {
     select(-1, true);
