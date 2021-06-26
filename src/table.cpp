@@ -49,7 +49,7 @@ void Table::Body::checkEvents()
       auto cell = line->cells[i];
       auto width = static_cast<Table *>(parent)->columnsWidth[i];
       if (cell && cell->needsInvalidate()) {
-        invalidate({x, y, width, TABLE_LINE_HEIGHT - 2});
+        invalidate({x, y, width, TABLE_LINE_HEIGHT - TABLE_LINE_BORDER});
       }
       x += width;
     }
@@ -64,7 +64,7 @@ void Table::Body::paint(BitmapBuffer * dc)
   dc->clear(DEFAULT_BGCOLOR);
   for (auto line: lines) {
     bool highlight = (index == selection);
-    dc->drawSolidFilledRect(0, y, width(), TABLE_LINE_HEIGHT - 2, highlight ? MENU_HIGHLIGHT_BGCOLOR : TABLE_BGCOLOR);
+    dc->drawSolidFilledRect(0, y, width(), TABLE_LINE_HEIGHT - TABLE_LINE_BORDER, highlight ? MENU_HIGHLIGHT_BGCOLOR : TABLE_BGCOLOR);
     coord_t x = TABLE_HORIZONTAL_PADDING;
     for (unsigned i = 0; i < line->cells.size(); i++) {
       auto cell = line->cells[i];

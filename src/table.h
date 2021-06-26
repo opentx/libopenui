@@ -183,7 +183,7 @@ class Table: public FormField
         void addLine(Line * line)
         {
           lines.push_back(line);
-          setInnerHeight((int)lines.size() * TABLE_LINE_HEIGHT - 2);
+          setInnerHeight((int)lines.size() * TABLE_LINE_HEIGHT - TABLE_LINE_BORDER);
           if (hasFocus() && selection < 0) {
             select(0, true);
           }
@@ -250,12 +250,12 @@ class Table: public FormField
     };
 
   public:
-    Table(Window * parent, const rect_t & rect, uint8_t columnsCount, WindowFlags windowFlags = OPAQUE | FORM_NO_BORDER):
+    Table(Window * parent, const rect_t & rect, uint8_t columnsCount, std::function<Table::Header *(Table *)> createHeader = nullptr, std::function<Table::Body *(Table *)> createBody = nullptr, WindowFlags windowFlags = OPAQUE | FORM_NO_BORDER):
       FormField(parent, rect, windowFlags),
       columnsCount(columnsCount),
       columnsWidth(columnsCount, width() / columnsCount),
-      header(this, {0, 0, width(), 0}, columnsCount),
-      body(this, {0, 0, width(), height()}, windowFlags)
+      header(createHeader ? createHeader(this) : new Header(this, {0, 0, width(), 0}, columnsCount)),
+      body(createBody ? createBody(this) : new Body(this, {0, 0, width(), height()}, windowFlags))
     {
     }
 
@@ -265,17 +265,6 @@ class Table: public FormField
       return "Table";
     }
 #endif
-
-    void deleteLater(bool detach = true, bool trash = true) override // NOLINT(google-default-arguments)
-    {
-      if (_deleted)
-        return;
-
-      header.deleteLater(true, false);
-      body.deleteLater(true, false);
-
-      FormField::deleteLater(detach, trash);
-    }
 
     void setColumnsWidth(const coord_t values[])
     {
@@ -303,18 +292,18 @@ class Table: public FormField
 
     int getSelection() const
     {
-      return body.selection;
+      return body->selection;
     }
 
     void clearSelection()
     {
-      body.selection = -1;
-      body.invalidate();
+      body->selection = -1;
+      body->invalidate();
     }
 
     void setFocus(uint8_t flag = SET_FOCUS_DEFAULT, Window * from = nullptr) override // NOLINT(google-default-arguments)
     {
-      if (body.lines.empty()) {
+      if (body->lines.empty()) {
         if (flag == SET_FOCUS_BACKWARD) {
           if (previous) {
             previous->setFocus(flag, this);
@@ -327,30 +316,30 @@ class Table: public FormField
         }
       }
       else {
-        body.setFocus(flag, from);
-        if (body.selection < 0) {
-          select(flag == SET_FOCUS_BACKWARD ? (int)body.lines.size() - 1 : 0);
+        body->setFocus(flag, from);
+        if (body->selection < 0) {
+          select(flag == SET_FOCUS_BACKWARD ? (int)body->lines.size() - 1 : 0);
         }
       }
     }
 
     void select(int index, bool scroll = true)
     {
-      body.select(index, scroll);
+      body->select(index, scroll);
     }
 
     void setLineFlags(uint8_t index, LcdFlags flags)
     {
-      body.setLineFlags(index, flags);
+      body->setLineFlags(index, flags);
     }
 
     void setHeader(const char * const values[])
     {
-      header.setHeight(TABLE_HEADER_HEIGHT);
-      body.setTop(TABLE_HEADER_HEIGHT);
-      body.setHeight(height() - TABLE_HEADER_HEIGHT);
+      header->setHeight(TABLE_HEADER_HEIGHT);
+      body->setTop(TABLE_HEADER_HEIGHT);
+      body->setHeight(height() - TABLE_HEADER_HEIGHT);
       for (uint8_t i = 0; i < columnsCount; i++) {
-        header.cells[i] = new StringCell(values[i]);
+        header->cells[i] = new StringCell(values[i]);
       }
     }
 
@@ -358,7 +347,7 @@ class Table: public FormField
     {
       line->onPress = std::move(onPress);
       line->onSelect = std::move(onSelect);
-      body.addLine(line);
+      body->addLine(line);
     }
 
     void addLine(const char * const values[], std::function<void()> onPress = nullptr, std::function<void()> onSelect = nullptr)
@@ -372,24 +361,23 @@ class Table: public FormField
 
     Cell * getCell(unsigned row, unsigned column) const
     {
-      return body.lines[row]->cells[column];
+      return body->lines[row]->cells[column];
     }
 
     void clear()
     {
       clearSelection();
-      body.clear();
+      body->clear();
     }
 
     uint8_t size() const
     {
-      return body.lines.size();
+      return body->lines.size();
     }
 
   protected:
     uint8_t columnsCount;
     std::vector<coord_t> columnsWidth;
-    Header header;
-    Body body;
+    Header * header;
+    Body * body;
 };
-
