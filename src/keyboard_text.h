@@ -29,7 +29,8 @@
 #define KEYBOARD_SET_LETTERS   "\203"
 #define KEYBOARD_SET_NUMBERS   "\204"
 
-class TextKeyboard : public Keyboard {
+class TextKeyboard: public Keyboard
+{
   public:
     TextKeyboard();
 
@@ -41,6 +42,11 @@ class TextKeyboard : public Keyboard {
       return "TextKeyboard";
     }
 #endif
+
+    static void setInstance(TextKeyboard * keyboard)
+    {
+      _instance = keyboard;
+    }
 
     static void show(FormField * field)
     {
@@ -59,4 +65,3 @@ class TextKeyboard : public Keyboard {
     static TextKeyboard * _instance;
     const char * const * layout;
 };
-

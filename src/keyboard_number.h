@@ -21,7 +21,8 @@
 
 #include "keyboard_base.h"
 
-class NumberKeyboard : public Keyboard {
+class NumberKeyboard: public Keyboard
+{
   public:
     NumberKeyboard();
 
@@ -33,6 +34,11 @@ class NumberKeyboard : public Keyboard {
       return "NumberKeyboard";
     }
 #endif
+
+    static void setInstance(NumberKeyboard * keyboard)
+    {
+      _instance = keyboard;
+    }
 
     static void show(FormField * field)
     {
@@ -46,4 +52,3 @@ class NumberKeyboard : public Keyboard {
   protected:
     static NumberKeyboard * _instance;
 };
-
