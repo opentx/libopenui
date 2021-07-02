@@ -89,7 +89,7 @@ void TextEdit::onEvent(event_t event)
 {
   TRACE_WINDOWS("%s received event 0x%X", getWindowDebugString().c_str(), event);
 
-#if defined(HARDWARE_TOUCH)
+#if defined(VIRTUAL_KEYBOARD)
   if (IS_VIRTUAL_KEY_EVENT(event)) {
     uint8_t c = event & 0xFF;
     if (c == (uint8_t)KEYBOARD_BACKSPACE[0]) {
