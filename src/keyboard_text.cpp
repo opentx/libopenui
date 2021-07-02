@@ -19,10 +19,7 @@
 
 #include "keyboard_text.h"
 #include "libopenui_globals.h"
-#include "textedit.h"
 #include "font.h"
-
-constexpr coord_t KEYBOARD_HEIGHT = 160;
 
 TextKeyboard * TextKeyboard::_instance = nullptr;
 
@@ -58,17 +55,31 @@ const uint8_t * const LBM_SPECIAL_KEYS[] = {
   LBM_KEY_NUMBERS,
 };
 
-const char * const KEYBOARD_LOWERCASE[] = {
+const char * const KEYBOARD_QWERTY_LOWERCASE[] = {
   "qwertyuiop",
   " asdfghjkl",
   KEYBOARD_SET_UPPERCASE "zxcvbnm" KEYBOARD_BACKSPACE,
   KEYBOARD_SET_NUMBERS KEYBOARD_SPACE KEYBOARD_ENTER
 };
 
-const char * const KEYBOARD_UPPERCASE[] = {
+const char * const KEYBOARD_AZERTY_LOWERCASE[] = {
+  "azertyuiop",
+  " qsdfghjklm",
+  KEYBOARD_SET_UPPERCASE "wxcvbn," KEYBOARD_BACKSPACE,
+  KEYBOARD_SET_NUMBERS KEYBOARD_SPACE KEYBOARD_ENTER
+};
+
+const char * const KEYBOARD_QWERTY_UPPERCASE[] = {
   "QWERTYUIOP",
   " ASDFGHJKL",
   KEYBOARD_SET_LOWERCASE "ZXCVBNM" KEYBOARD_BACKSPACE,
+  KEYBOARD_SET_NUMBERS KEYBOARD_SPACE KEYBOARD_ENTER
+};
+
+const char * const KEYBOARD_AZERTY_UPPERCASE[] = {
+  "AZERTYUIOP",
+  " QSDFGHJKLM",
+  KEYBOARD_SET_UPPERCASE "WXCVBN," KEYBOARD_BACKSPACE,
   KEYBOARD_SET_NUMBERS KEYBOARD_SPACE KEYBOARD_ENTER
 };
 
@@ -79,16 +90,14 @@ const char * const KEYBOARD_NUMBERS[] = {
   KEYBOARD_SET_LETTERS KEYBOARD_SPACE KEYBOARD_ENTER
 };
 
-const char * const * const KEYBOARD_LAYOUTS[] = {
-  KEYBOARD_UPPERCASE,
-  KEYBOARD_LOWERCASE,
-  KEYBOARD_LOWERCASE,
+const char * const * KEYBOARDS[] = {
+  KEYBOARD_QWERTY_UPPERCASE,
+  KEYBOARD_QWERTY_LOWERCASE,
   KEYBOARD_NUMBERS,
 };
 
 TextKeyboard::TextKeyboard():
-  Keyboard(KEYBOARD_HEIGHT),
-  layout(KEYBOARD_LOWERCASE)
+  Keyboard(TEXT_KEYBOARD_HEIGHT)
 {
 }
 
@@ -99,10 +108,12 @@ TextKeyboard::~TextKeyboard()
 
 void TextKeyboard::paint(BitmapBuffer * dc)
 {
+  auto layout = KEYBOARDS[layoutIndex];
+
   lcdSetColor(RGB(0xE0, 0xE0, 0xE0));
   dc->clear(CUSTOM_COLOR);
 
-  for (uint8_t i=0; i<4; i++) {
+  for (uint8_t i = 0; i < 4; i++) {
     coord_t y = 15 + i * 40;
     coord_t x = 15;
     const char * c = layout[i];
@@ -117,7 +128,7 @@ void TextKeyboard::paint(BitmapBuffer * dc)
       }
       else if (*c == KEYBOARD_ENTER[0]) {
         // enter
-        dc->drawSolidFilledRect(x, y-2, 80, 25, TEXT_DISABLE_COLOR);
+        dc->drawSolidFilledRect(x, y - 2, 80, 25, DISABLE_COLOR);
         dc->drawText(x+40, y, "ENTER", CENTERED);
         x += 80;
       }
@@ -136,6 +147,8 @@ void TextKeyboard::paint(BitmapBuffer * dc)
 
 bool TextKeyboard::onTouchEnd(coord_t x, coord_t y)
 {
+  auto layout = KEYBOARDS[layoutIndex];
+
   onKeyPress();
 
   uint8_t row = max<coord_t>(0, y - 5) / 40;
@@ -167,7 +180,7 @@ bool TextKeyboard::onTouchEnd(coord_t x, coord_t y)
           pushEvent(EVT_VIRTUAL_KEY(KEYBOARD_BACKSPACE[0]));
         }
         else {
-          layout = KEYBOARD_LAYOUTS[specialKey - 129];
+          layoutIndex = layoutIndexes[specialKey - 129];
           invalidate();
         }
         break;

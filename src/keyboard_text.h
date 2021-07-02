@@ -29,6 +29,24 @@
 #define KEYBOARD_SET_LETTERS   "\203"
 #define KEYBOARD_SET_NUMBERS   "\204"
 
+extern const uint8_t LBM_KEY_SPACEBAR[];
+extern const uint8_t * const LBM_SPECIAL_KEYS[];
+extern const char * const * KEYBOARDS[];
+
+enum LayoutIndex
+{
+  LAYOUT_INDEX_UPPERCASE,
+  LAYOUT_INDEX_LOWERCASE,
+  LAYOUT_INDEX_NUMBERS,
+};
+
+static const uint8_t layoutIndexes[] = {
+  LAYOUT_INDEX_UPPERCASE,
+  LAYOUT_INDEX_LOWERCASE,
+  LAYOUT_INDEX_LOWERCASE,
+  LAYOUT_INDEX_NUMBERS,
+};
+
 class TextKeyboard: public Keyboard
 {
   public:
@@ -63,5 +81,5 @@ class TextKeyboard: public Keyboard
 
   protected:
     static TextKeyboard * _instance;
-    const char * const * layout;
+    unsigned layoutIndex = LAYOUT_INDEX_LOWERCASE;
 };

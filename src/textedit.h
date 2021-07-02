@@ -21,6 +21,10 @@
 
 #include "form.h"
 
+#if defined(SOFTWARE_KEYBOARD)
+#include "keyboard_text.h"
+#endif
+
 class TextEdit: public FormField
 {
   friend class TextKeyboard;
@@ -44,6 +48,16 @@ class TextEdit: public FormField
     {
       changeHandler = std::move(handler);
     }
+
+#if defined(SOFTWARE_KEYBOARD)
+    void setEditMode(bool newEditMode) override
+    {
+      FormField::setEditMode(newEditMode);
+      if (editMode) {
+        TextKeyboard::show(this);
+      }
+    }
+#endif
 
     uint8_t getMaxLength() const
     {

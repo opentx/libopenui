@@ -30,10 +30,6 @@
 #define STR_CLEAR "Clear"
 #endif
 
-#if defined(HARDWARE_TOUCH)
-#include "keyboard_text.h"
-#endif
-
 #if defined(HARDWARE_KEYS)
 #include "menu.h"
 #endif
