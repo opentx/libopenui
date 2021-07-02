@@ -137,11 +137,20 @@ void TextEdit::onEvent(event_t event)
         break;
 
       case EVT_KEY_BREAK(KEY_RIGHT):
+      {
+#if defined(SOFTWARE_KEYBOARD)
+        if (cursorPos < length && value[cursorPos] != '\0') {
+          cursorPos++;
+          invalidate();
+        }
+#else
         if (cursorPos < length - 1 && value[cursorPos + 1] != '\0') {
           cursorPos++;
           invalidate();
         }
+#endif
         break;
+      }
 
       case EVT_KEY_BREAK(KEY_ENTER):
         if (cursorPos < length - 1) {
