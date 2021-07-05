@@ -82,7 +82,12 @@
 
 #define COLOR(index)                   LcdFlags(unsigned(index) << 16u)
 #define COLOR_IDX(flags)               uint8_t((flags) >> 16u)
-#define COLOR_MASK(flags)              ((flags) & 0xFFFF0000u)
+#define COLOR_MASK                     0xFFFF0000u
+
+inline LcdFlags replaceColor(LcdFlags flags, LcdFlags color)
+{
+  return (flags & ~COLOR_MASK) | color;
+}
 
 #define DEFAULT_COLOR                  COLOR(DEFAULT_COLOR_INDEX)
 #define DEFAULT_BGCOLOR                COLOR(DEFAULT_BGCOLOR_INDEX)

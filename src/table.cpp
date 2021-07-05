@@ -69,7 +69,8 @@ void Table::Body::paint(BitmapBuffer * dc)
     for (unsigned i = 0; i < line->cells.size(); i++) {
       auto cell = line->cells[i];
       if (cell) {
-        cell->paint(dc, x, y, line->flags + (highlight ? MENU_HIGHLIGHT_COLOR - COLOR_MASK(line->flags) : DEFAULT_COLOR));
+        auto flags = highlight ? replaceColor(line->flags, MENU_HIGHLIGHT_COLOR) : line->flags;
+        cell->paint(dc, x, y, flags);
       }
       x += static_cast<Table *>(parent)->columnsWidth[i];
     }
