@@ -24,9 +24,15 @@
 class NumberKeyboard: public Keyboard
 {
   public:
-    NumberKeyboard();
+    NumberKeyboard():
+      Keyboard(NUMBER_KEYBOARD_HEIGHT)
+    {
+    }
 
-    ~NumberKeyboard() override;
+    ~NumberKeyboard() override
+    {
+      _instance = nullptr;
+    }
 
 #if defined(DEBUG_WINDOWS)
     std::string getName() const override
@@ -40,15 +46,16 @@ class NumberKeyboard: public Keyboard
       _instance = keyboard;
     }
 
-    static void show(FormField * field)
-    {
-      if (!_instance)
-        _instance = new NumberKeyboard();
-      _instance->setField(field);
-    }
-
-    void paint(BitmapBuffer * dc) override;
+    static void show(FormField * field);
 
   protected:
     static NumberKeyboard * _instance;
+};
+
+class DefaultNumberKeyboard : public NumberKeyboard
+{
+  public:
+    DefaultNumberKeyboard();
+
+    void paint(BitmapBuffer * dc) override;
 };

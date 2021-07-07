@@ -43,7 +43,7 @@ class Keyboard: public FormWindow
     FormField * field = nullptr;
     Window * fieldContainer = nullptr;
 
-    void setField(FormField * newField)
+    virtual void setField(FormField * newField)
     {
       if (activeKeyboard) {
         if (activeKeyboard == this)
@@ -53,8 +53,11 @@ class Keyboard: public FormWindow
       activeKeyboard = this;
       attach(MainWindow::instance());
       fieldContainer = getFieldContainer(newField);
-      fieldContainer->setHeight(LCD_H - height() - fieldContainer->top());
+      auto backupHeight = fieldContainer->height();
+      fieldContainer->setHeight(fieldContainer->height() - height());
       fieldContainer->scrollTo(newField);
+      fieldContainer->setHeight(backupHeight);
+      fieldContainer->disableScroll();
       invalidate();
       newField->setEditMode(true);
       field = newField;
@@ -64,7 +67,7 @@ class Keyboard: public FormWindow
     {
       detach();
       if (fieldContainer) {
-        fieldContainer->setHeight(LCD_H - 0 - fieldContainer->top());
+        fieldContainer->enableScroll();
         fieldContainer = nullptr;
       }
       if (field) {
@@ -73,15 +76,14 @@ class Keyboard: public FormWindow
       }
     }
 
-    Window * getFieldContainer(FormField * field)
+    static Window * getFieldContainer(FormField * field)
     {
       Window * parent = field;
       while (true) {
-        Window * tmp = parent->getParent();
-        if ((tmp->getWindowFlags() & OPAQUE) && tmp->width() == LCD_W && tmp->height() == LCD_H) {
+        parent = parent->getParent();
+        if (!(parent->getWindowFlags() & FORWARD_SCROLL) /*&& tmp->width() == LCD_W && tmp->height() == LCD_H*/) {
           return parent;
         }
-        parent = tmp;
       }
     }
 };

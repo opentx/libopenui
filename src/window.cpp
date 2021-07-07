@@ -17,6 +17,7 @@
  * Lesser General Public License for more details.
  */
 
+#include <algorithm>
 #include "window.h"
 #include "touch.h"
 
@@ -219,13 +220,8 @@ bool Window::hasOpaqueRect(const rect_t & testRect) const
     return true;
   }
 
-  rect_t relativeRect = {testRect.x - rect.x, testRect.y - rect.y, testRect.w, testRect.h};
-  for (auto child: children) {
-    if (child->hasOpaqueRect(relativeRect))
-      return true;
-  }
-
-  return false;
+  const rect_t relativeRect = {testRect.x - rect.x, testRect.y - rect.y, testRect.w, testRect.h};
+  return std::any_of(children.begin(), children.end(), [relativeRect](auto child) { return child->hasOpaqueRect(relativeRect); });
 }
 
 void Window::fullPaint(BitmapBuffer * dc)
@@ -465,6 +461,10 @@ bool Window::onTouchSlide(coord_t x, coord_t y, coord_t startX, coord_t startY, 
         return true;
       }
     }
+  }
+
+  if (!scrollEnabled) {
+    return false;
   }
 
   if (slidingWindow && slidingWindow != this) {

@@ -71,10 +71,10 @@ void NumberEdit::onEvent(event_t event)
 #if defined(HARDWARE_KEYS)
       case EVT_ROTARY_RIGHT: {
         int value = getValue();
-        do {
-          value += ROTARY_ENCODER_SPEED() * step;
-        } while (isValueAvailable && !isValueAvailable(value) && value <= vmax);
-        if (value <= vmax) {
+        if (value < vmax) {
+          do {
+            value += ROTARY_ENCODER_SPEED() * step;
+          } while (isValueAvailable && !isValueAvailable(value) && value <= vmax);
           setValue(value);
           onKeyPress();
         }
@@ -86,10 +86,10 @@ void NumberEdit::onEvent(event_t event)
 
       case EVT_ROTARY_LEFT: {
         int value = getValue();
-        do {
-          value -= ROTARY_ENCODER_SPEED() * step;
-        } while (isValueAvailable && !isValueAvailable(value) && value >= vmin);
-        if (value >= vmin) {
+        if (value > vmin) {
+          do {
+            value -= ROTARY_ENCODER_SPEED() * step;
+          } while (isValueAvailable && !isValueAvailable(value) && value >= vmin);
           setValue(value);
           onKeyPress();
         }

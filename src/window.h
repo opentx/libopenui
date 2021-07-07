@@ -319,6 +319,16 @@ class Window
       return scrollPositionY;
     }
 
+    void enableScroll(bool value = true)
+    {
+      scrollEnabled = value;
+    }
+
+    void disableScroll()
+    {
+      enableScroll(false);
+    }
+
     virtual void setScrollPositionX(coord_t value);
 
     virtual void setScrollPositionY(coord_t value);
@@ -385,6 +395,7 @@ class Window
     WindowFlags windowFlags;
     LcdFlags textFlags;
     bool _deleted = false;
+    bool scrollEnabled = true;
 
     static Window * focusWindow;
     static Window * slidingWindow;
