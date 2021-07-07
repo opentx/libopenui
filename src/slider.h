@@ -21,10 +21,11 @@
 
 #include "form.h"
 
-class Slider: public FormField {
+class Slider: public FormField
+{
   public:
-    Slider(Window * parent, const rect_t & rect, int32_t vmin, int32_t vmax, std::function<int()> getValue, std::function<void(int)> setValue):
-      FormField(parent, rect),
+    Slider(Window * parent, const rect_t & rect, int32_t vmin, int32_t vmax, std::function<int()> getValue, std::function<void(int)> setValue, WindowFlags windowFlags = 0):
+      FormField(parent, rect, windowFlags),
       vmin(vmin),
       vmax(vmax),
       getValue(std::move(getValue)),
@@ -42,6 +43,18 @@ class Slider: public FormField {
     void setValue(int value)
     {
       _setValue(limit(vmin, value, vmax));
+      invalidate();
+    }
+
+    void setMin(int value)
+    {
+      vmin = value;
+      invalidate();
+    }
+
+    void setMax(int value)
+    {
+      vmax = value;
       invalidate();
     }
 

@@ -49,17 +49,17 @@ class BaseNumberEdit: public FormField
       vdefault = value;
     }
 
-    int32_t getMin() const
+    int getMin() const
     {
       return vmin;
     }
 
-    int32_t getMax() const
+    int getMax() const
     {
       return vmax;
     }
 
-    int32_t getDefault() const
+    int getDefault() const
     {
       return vdefault;
     }
