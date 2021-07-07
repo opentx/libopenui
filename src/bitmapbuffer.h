@@ -233,6 +233,13 @@ class RLEBitmap:
     }
 };
 
+struct BitmapData
+{
+  uint16_t width;
+  uint16_t height;
+  uint8_t data[];
+};
+
 class BitmapBuffer: public BitmapBufferBase<pixel_t>
 {
   private:
