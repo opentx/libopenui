@@ -355,9 +355,10 @@ void BitmapBuffer::drawBitmapPatternPie(coord_t x, coord_t y, const uint8_t * im
 
   pixel_t color = lcdColorTable[COLOR_IDX(flags)];
 
-  coord_t width = *((uint16_t *)img);
-  coord_t height = *(((uint16_t *)img) + 1);
-  const uint8_t * q = img + 4;
+  auto bitmap = (BitmapData *)img;
+  coord_t width = bitmap->width;
+  coord_t height = bitmap->height;
+  const uint8_t * q = bitmap->data;
 
   int w2 = width / 2;
   int h2 = height / 2;
@@ -504,8 +505,9 @@ void BitmapBuffer::drawBitmapPattern(coord_t x, coord_t y, const uint8_t * bmp, 
 {
   APPLY_OFFSET();
 
-  coord_t w = *((uint16_t *)bmp);
-  coord_t height = *(((uint16_t *)bmp)+1);
+  auto bitmap = (BitmapData *)bmp;
+  coord_t w = bitmap->width;
+  coord_t height = bitmap->height;
 
   if (!width || width > w) {
     width = w;
@@ -524,7 +526,7 @@ void BitmapBuffer::drawBitmapPattern(coord_t x, coord_t y, const uint8_t * bmp, 
   for (coord_t row=0; row<height; row++) {
     if (y + row < ymin || y + row >= ymax)
       continue;
-    const uint8_t * q = bmp + 4 + row*w + offset;
+    const uint8_t * q = bitmap->data + row*w + offset;
     for (coord_t col=0; col<width; col++) {
       coord_t xpixel, ypixel;
       if (flags & VERTICAL) {
