@@ -52,7 +52,7 @@ class NumberKeyboard: public Keyboard
     static NumberKeyboard * _instance;
 };
 
-Cclass DefaultNumberKeyboard: public NumberKeyboard
+class DefaultNumberKeyboard: public NumberKeyboard
 {
   public:
     DefaultNumberKeyboard();
