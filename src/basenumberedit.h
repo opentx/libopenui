@@ -69,7 +69,7 @@ class BaseNumberEdit: public FormField
       step = value;
     }
 
-    int32_t getStep() const
+    int getStep() const
     {
       return step;
     }
