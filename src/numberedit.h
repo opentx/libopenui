@@ -74,6 +74,10 @@ class NumberEdit : public BaseNumberEdit
 
     void onFocusLost() override;
 
+#if defined(SOFTWARE_KEYBOARD)
+    void setEditMode(bool newEditMode) override;
+#endif
+
   protected:
     std::function<void(BitmapBuffer *, LcdFlags, int)> displayFunction;
     std::string prefix;

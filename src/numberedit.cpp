@@ -165,3 +165,13 @@ void NumberEdit::onFocusLost()
 
   FormField::onFocusLost();
 }
+
+#if defined(SOFTWARE_KEYBOARD)
+void NumberEdit::setEditMode(bool newEditMode)
+{
+  FormField::setEditMode(newEditMode);
+  if (editMode) {
+    NumberKeyboard::show(this);
+  }
+}
+#endif
