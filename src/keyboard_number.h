@@ -34,6 +34,11 @@ class NumberKeyboard: public Keyboard
       _instance = nullptr;
     }
 
+    static NumberKeyboard * instance()
+    {
+      return _instance;
+    }
+
 #if defined(DEBUG_WINDOWS)
     std::string getName() const override
     {
