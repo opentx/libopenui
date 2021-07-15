@@ -142,16 +142,11 @@ bool NumberEdit::onTouchEnd(coord_t, coord_t)
     return true;
   }
 
-  if (hasFocus()) {
-    setEditMode(true);
-  }
-  else {
+  if (!hasFocus()) {
     setFocus(SET_FOCUS_DEFAULT);
   }
 
-#if defined(SOFTWARE_KEYBOARD)
-  NumberKeyboard::show(this);
-#endif
+  setEditMode(true);
 
   return true;
 }
@@ -169,7 +164,7 @@ void NumberEdit::onFocusLost()
 #if defined(SOFTWARE_KEYBOARD)
 void NumberEdit::setEditMode(bool newEditMode)
 {
-  FormField::setEditMode(newEditMode);
+  BaseNumberEdit::setEditMode(newEditMode);
   if (editMode) {
     NumberKeyboard::show(this);
   }
