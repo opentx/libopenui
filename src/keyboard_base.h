@@ -42,6 +42,7 @@ class Keyboard: public FormWindow
     static Keyboard * activeKeyboard;
     FormField * field = nullptr;
     Window * fieldContainer = nullptr;
+    coord_t fieldContainerOriginalHeight = 0;
 
     virtual void setField(FormField * newField)
     {
@@ -53,10 +54,9 @@ class Keyboard: public FormWindow
       activeKeyboard = this;
       attach(MainWindow::instance());
       fieldContainer = getFieldContainer(newField);
-      auto backupHeight = fieldContainer->height();
+      fieldContainerOriginalHeight = fieldContainer->height();
       fieldContainer->setHeight(fieldContainer->height() - height());
       fieldContainer->scrollTo(newField);
-      fieldContainer->setHeight(backupHeight);
       fieldContainer->disableScroll();
       invalidate();
       newField->setEditMode(true);
@@ -67,6 +67,7 @@ class Keyboard: public FormWindow
     {
       detach();
       if (fieldContainer) {
+        fieldContainer->setHeight(fieldContainerOriginalHeight);
         fieldContainer->enableScroll();
         fieldContainer = nullptr;
       }
