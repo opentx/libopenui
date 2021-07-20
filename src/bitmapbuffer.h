@@ -253,7 +253,12 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
       this->format = format;
     }
 
-    inline void clear(LcdFlags flags=0)
+    inline void clear()
+    {
+      fillRect(0, 0, _width - offsetX, _height - offsetY, 0);
+    }
+
+    inline void clear(LcdFlags flags)
     {
       drawSolidFilledRect(0, 0, _width - offsetX, _height - offsetY, flags);
     }
@@ -568,6 +573,8 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
     void drawHorizontalLineAbs(coord_t x, coord_t y, coord_t w, uint8_t pat, LcdFlags flags);
 
     bool clipLine(coord_t& x1, coord_t& y1, coord_t& x2, coord_t& y2);
+
+    void fillRect(coord_t x, coord_t y, coord_t w, coord_t h, uint16_t color);
 
   private:
     bool dataAllocated;

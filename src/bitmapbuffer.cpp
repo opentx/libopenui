@@ -64,23 +64,23 @@ void BitmapBuffer::drawAlphaPixel(pixel_t * p, uint8_t alpha, uint16_t color)
   }
   else if (format == BMP_ARGB4444) {
     if (alpha == ALPHA_MAX) {
-      drawPixel(p, RGB_TO_ARGB(color, alpha));
+      drawPixel(p, RGB_TO_ARGB(color, 0xFF));
     }
     else if (alpha != 0) {
       // https://en.wikipedia.org/wiki/Alpha_compositing
       ARGB_SPLIT(*p, bgAlpha, bgRed, bgGreen, bgBlue);
       if (bgAlpha == 0) {
-        drawPixel(p, RGB_TO_ARGB(color, alpha));
+        drawPixel(p, RGB_TO_ARGB(color, alpha << 4));
       }
       else {
         RGB_SPLIT(color, red, green, blue);
         red >>= 1;
         green >>= 2;
         blue >>= 1;
-        uint8_t a = alpha + (bgAlpha * (ALPHA_MAX - alpha)) / ALPHA_MAX;
-        uint16_t r = (red * alpha + bgRed * bgAlpha * (ALPHA_MAX - alpha)) / a;
-        uint16_t g = (green * alpha + bgGreen * bgAlpha * (ALPHA_MAX - alpha)) / a;
-        uint16_t b = (blue * alpha + bgBlue * bgAlpha * (ALPHA_MAX - alpha)) / a;
+        uint16_t a = alpha + (bgAlpha * (ALPHA_MAX - alpha)) / ALPHA_MAX;
+        uint16_t r = min<uint8_t>(0x0F, (red * alpha + bgRed * bgAlpha) / a);
+        uint16_t g = min<uint8_t>(0x0F, (green * alpha + bgGreen * bgAlpha) / a);
+        uint16_t b = min<uint8_t>(0x0F, (blue * alpha + bgBlue * bgAlpha) / a);
         drawPixel(p, ARGB_JOIN(a, r, g, b));
       }
     }
@@ -311,18 +311,23 @@ void BitmapBuffer::drawRect(coord_t x, coord_t y, coord_t w, coord_t h, uint8_t 
   }
 }
 
-void BitmapBuffer::drawSolidFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, LcdFlags flags)
+void BitmapBuffer::fillRect(coord_t x, coord_t y, coord_t w, coord_t h, uint16_t color)
 {
   APPLY_OFFSET();
 
   if (!applyClippingRect(x, y, w, h))
     return;
 
+  DMAFillRect(data, _width, _height, x, y, w, h, color);
+}
+
+void BitmapBuffer::drawSolidFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, LcdFlags flags)
+{
   auto color = lcdColorTable[COLOR_IDX(flags)];
   if (format == BMP_RGB565)
-    DMAFillRect(data, _width, _height, x, y, w, h, color);
+    fillRect(x, y, w, h, color);
   else
-    DMAFillRect(data, _width, _height, x, y, w, h, RGB_TO_ARGB(color, ALPHA_MAX));
+    fillRect(x, y, w, h, RGB_TO_ARGB(color, 0xFF));
 }
 
 void BitmapBuffer::drawFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, uint8_t pat, LcdFlags flags)
