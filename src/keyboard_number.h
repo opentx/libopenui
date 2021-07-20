@@ -21,8 +21,6 @@
 
 #include "keyboard_base.h"
 
-constexpr coord_t NUMBER_KEYBOARD_HEIGHT = 90;
-
 class NumberKeyboard: public Keyboard
 {
   public:
