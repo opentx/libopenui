@@ -221,7 +221,7 @@ bool Window::hasOpaqueRect(const rect_t & testRect) const
   }
 
   const rect_t relativeRect = {testRect.x - rect.x, testRect.y - rect.y, testRect.w, testRect.h};
-  return std::any_of(children.begin(), children.end(), [relativeRect](auto child) { return child->hasOpaqueRect(relativeRect); });
+  return std::any_of(children.begin(), children.end(), [relativeRect](Window * child) { return child->hasOpaqueRect(relativeRect); });
 }
 
 void Window::fullPaint(BitmapBuffer * dc)

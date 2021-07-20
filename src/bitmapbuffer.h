@@ -242,39 +242,11 @@ struct BitmapData
 
 class BitmapBuffer: public BitmapBufferBase<pixel_t>
 {
-  private:
-    bool dataAllocated;
-#if defined(DEBUG)
-    bool leakReported;
-#endif
-
   public:
-    BitmapBuffer(uint8_t format, uint16_t width, uint16_t height):
-      BitmapBufferBase<uint16_t>(format, width, height, nullptr),
-      dataAllocated(true)
-#if defined(DEBUG)
-      , leakReported(false)
-#endif
-    {
-      data = (uint16_t *)malloc(align32(width * height * sizeof(uint16_t)));
-      data_end = data + (width * height);
-    }
+    BitmapBuffer(uint8_t format, uint16_t width, uint16_t height);
+    BitmapBuffer(uint8_t format, uint16_t width, uint16_t height, uint16_t * data);
 
-    BitmapBuffer(uint8_t format, uint16_t width, uint16_t height, uint16_t * data):
-      BitmapBufferBase<uint16_t>(format, width, height, data),
-      dataAllocated(false)
-#if defined(DEBUG)
-      , leakReported(false)
-#endif
-    {
-    }
-
-    ~BitmapBuffer()
-    {
-      if (dataAllocated) {
-        free(data);
-      }
-    }
+    ~BitmapBuffer();
 
     inline void setFormat(uint8_t format)
     {
@@ -581,7 +553,6 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
       return &data[y * _width + x];
     }
 
-
     inline void drawPixelAbs(coord_t x, coord_t y, pixel_t value)
     {
       pixel_t * p = getPixelPtrAbs(x, y);
@@ -595,6 +566,14 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
     }
 
     void drawHorizontalLineAbs(coord_t x, coord_t y, coord_t w, uint8_t pat, LcdFlags flags);
+
+    bool clipLine(coord_t& x1, coord_t& y1, coord_t& x2, coord_t& y2);
+
+  private:
+    bool dataAllocated;
+#if defined(DEBUG)
+    bool leakReported = false;
+#endif
 };
 
 extern BitmapBuffer * lcd;
