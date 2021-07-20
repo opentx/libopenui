@@ -62,11 +62,17 @@
   uint16_t g = ((color) & 0x07E0) >> 5; \
   uint16_t b = ((color) & 0x001F)
 
+#define ARGB_JOIN(a, r, g, b) \
+  (((a) << 12) + ((r) << 8) + ((g) << 4) + (b))
+
 #define RGB_JOIN(r, g, b) \
   (((r) << 11) + ((g) << 5) + (b))
 
 #define GET_RED(color) \
   (((color) & 0xF800) >> 8)
+
+#define RGB_TO_ARGB(color, alpha) \
+  ARGB(alpha, GET_RED(color), GET_GREEN(color), GET_BLUE(color))
 
 #define GET_GREEN(color) \
   (((color) & 0x07E0) >> 3)
@@ -74,7 +80,7 @@
 #define GET_BLUE(color) \
   (((color) & 0x001F) << 3)
 
-#define OPACITY_MAX                    0x0Fu
+#define ALPHA_MAX                      0x0Fu
 #define OPACITY(value)                 ((value) << 24u)
 
 #define RGB(r, g, b)                   (uint16_t)((((r) & 0xF8) << 8) + (((g) & 0xFC) << 3) + (((b) & 0xF8) >> 3))

@@ -25,19 +25,44 @@
 #include "libopenui_file.h"
 #include "font.h"
 
-void BitmapBuffer::drawAlphaPixel(pixel_t * p, uint8_t opacity, uint16_t color)
+void BitmapBuffer::drawAlphaPixel(pixel_t * p, uint8_t alpha, uint16_t color)
 {
-  if (opacity == OPACITY_MAX) {
-    drawPixel(p, color);
+  if (format == BMP_RGB565) {
+    if (alpha == ALPHA_MAX) {
+      drawPixel(p, color);
+    }
+    else if (alpha != 0) {
+      uint8_t bgWeight = ALPHA_MAX - alpha;
+      RGB_SPLIT(color, red, green, blue);
+      RGB_SPLIT(*p, bgRed, bgGreen, bgBlue);
+      uint16_t r = (bgRed * bgWeight + red * alpha) / ALPHA_MAX;
+      uint16_t g = (bgGreen * bgWeight + green * alpha) / ALPHA_MAX;
+      uint16_t b = (bgBlue * bgWeight + blue * alpha) / ALPHA_MAX;
+      drawPixel(p, RGB_JOIN(r, g, b));
+    }
   }
-  else if (opacity != 0) {
-    uint8_t bgWeight = OPACITY_MAX - opacity;
-    RGB_SPLIT(color, red, green, blue);
-    RGB_SPLIT(*p, bgRed, bgGreen, bgBlue);
-    uint16_t r = (bgRed * bgWeight + red * opacity) / OPACITY_MAX;
-    uint16_t g = (bgGreen * bgWeight + green * opacity) / OPACITY_MAX;
-    uint16_t b = (bgBlue * bgWeight + blue * opacity) / OPACITY_MAX;
-    drawPixel(p, RGB_JOIN(r, g, b));
+  else if (format == BMP_ARGB4444) {
+    if (alpha == ALPHA_MAX) {
+      drawPixel(p, RGB_TO_ARGB(color, alpha));
+    }
+    else if (alpha != 0) {
+      // https://en.wikipedia.org/wiki/Alpha_compositing
+      ARGB_SPLIT(*p, bgAlpha, bgRed, bgGreen, bgBlue);
+      if (bgAlpha == 0) {
+        drawPixel(p, RGB_TO_ARGB(color, alpha));
+      }
+      else {
+        RGB_SPLIT(color, red, green, blue);
+        red >>= 1;
+        green >>= 2;
+        blue >>= 1;
+        uint8_t a = alpha + (bgAlpha * (ALPHA_MAX - alpha)) / ALPHA_MAX;
+        uint16_t r = (red * alpha + bgRed * bgAlpha * (ALPHA_MAX - alpha)) / a;
+        uint16_t g = (green * alpha + bgGreen * bgAlpha * (ALPHA_MAX - alpha)) / a;
+        uint16_t b = (blue * alpha + bgBlue * bgAlpha * (ALPHA_MAX - alpha)) / a;
+        drawPixel(p, ARGB_JOIN(a, r, g, b));
+      }
+    }
   }
 }
 
@@ -180,7 +205,11 @@ void BitmapBuffer::drawSolidFilledRect(coord_t x, coord_t y, coord_t w, coord_t 
   if (!applyClippingRect(x, y, w, h))
     return;
 
-  DMAFillRect(data, _width, _height, x, y, w, h, lcdColorTable[COLOR_IDX(flags)]);
+  auto color = lcdColorTable[COLOR_IDX(flags)];
+  if (format == BMP_RGB565)
+    DMAFillRect(data, _width, _height, x, y, w, h, color);
+  else
+    DMAFillRect(data, _width, _height, x, y, w, h, RGB_TO_ARGB(color, ALPHA_MAX));
 }
 
 void BitmapBuffer::drawFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, uint8_t pat, LcdFlags flags)
@@ -539,8 +568,9 @@ void BitmapBuffer::drawBitmapPattern(coord_t x, coord_t y, const uint8_t * bmp, 
       }
       if (xpixel >= xmin && xpixel < xmax) {
         pixel_t * p = getPixelPtrAbs(xpixel, ypixel);
-        if (p)
+        if (p) {
           drawAlphaPixel(p, *q, color);
+        }
       }
       q++;
     }
@@ -724,7 +754,7 @@ BitmapBuffer * BitmapBuffer::loadMask(const char * filename)
   if (bitmap) {
     pixel_t * p = bitmap->getPixelPtrAbs(0, 0);
     for (int i = bitmap->width() * bitmap->height(); i > 0; i--) {
-      *((uint8_t *)p) = OPACITY_MAX - ((*p) >> 12);
+      *((uint8_t *)p) = ALPHA_MAX - ((*p) >> 12);
       MOVE_TO_NEXT_RIGHT_PIXEL(p);
     }
   }
@@ -738,7 +768,7 @@ BitmapBuffer * BitmapBuffer::invertMask() const
   pixel_t * destData = result->data;
   for (auto y = 0; y < height(); y++) {
     for (auto x = 0; x < width(); x++) {
-      destData[x] = OPACITY_MAX - (uint8_t)srcData[x];
+      destData[x] = ALPHA_MAX - (uint8_t)srcData[x];
     }
     srcData += width();
     destData += width();
