@@ -693,12 +693,19 @@ void BitmapBuffer::drawMask(coord_t x, coord_t y, const T * mask, LcdFlags flags
   coord_t maskWidth = mask->width();
   coord_t maskHeight = mask->height();
 
-  if (!srcw || srcw > maskWidth) {
+  if (!srcw) {
     srcw = maskWidth;
   }
 
-  if (x + srcw > xmax) {
-    srcw = xmax - x;
+  coord_t srcy = 0;
+  coord_t srch = maskHeight;
+
+  if (srcx + srcw > maskWidth) {
+    srcw = maskWidth - srcx;
+  }
+
+  if (srcy + srch > maskHeight) {
+    srch = maskHeight - srcy;
   }
 
   if (x < xmin) {
@@ -706,13 +713,25 @@ void BitmapBuffer::drawMask(coord_t x, coord_t y, const T * mask, LcdFlags flags
     srcx -= x - xmin;
     x = xmin;
   }
+  if (y < ymin) {
+    srch += y - ymin;
+    srcy -= y - ymin;
+    y = ymin;
+  }
+  if (x + srcw > xmax) {
+    srcw = xmax - x;
+  }
+  if (y + srch > ymax) {
+    srch = ymax - y;
+  }
 
-  if (y >= ymax || x >= xmax || srcw <= 0 || x + srcw < xmin || y + maskHeight < ymin)
+  if (srcw <= 0 || srch <= 0) {
     return;
+  }
 
   pixel_t color = lcdColorTable[COLOR_IDX(flags)];
 
-  DMACopyAlphaMask(data, _width, _height, x, y, mask->getData(), maskWidth, maskHeight, srcx, 0, srcw, maskHeight, color);
+  DMACopyAlphaMask(data, _width, _height, x, y, mask->getData(), maskWidth, maskHeight, srcx, srcy, srcw, srch, color);
 }
 
 template void BitmapBuffer::drawMask(int, int, const BitmapData *, LcdFlags, int, int);
