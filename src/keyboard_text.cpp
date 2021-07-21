@@ -123,7 +123,7 @@ void TextKeyboard::paint(BitmapBuffer * dc)
       }
       else if (*c == KEYBOARD_SPACE[0]) {
         // spacebar
-        dc->drawBitmapPattern(x, y, LBM_KEY_SPACEBAR, DEFAULT_COLOR);
+        dc->drawMask(x, y, LBM_KEY_SPACEBAR, DEFAULT_COLOR);
         x += 135;
       }
       else if (*c == KEYBOARD_ENTER[0]) {
@@ -133,7 +133,7 @@ void TextKeyboard::paint(BitmapBuffer * dc)
         x += 80;
       }
       else if (int8_t(*c) < 0) {
-        dc->drawBitmapPattern(x, y, LBM_SPECIAL_KEYS[uint8_t(*c - 128)], DEFAULT_COLOR);
+        dc->drawMask(x, y, LBM_SPECIAL_KEYS[uint8_t(*c - 128)], DEFAULT_COLOR);
         x += 45;
       }
       else {

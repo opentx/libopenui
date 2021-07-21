@@ -87,7 +87,7 @@ class StaticBitmap: public Window
 
     StaticBitmap(Window * parent, const rect_t & rect, const char * filename, bool scale = false):
       Window(parent, rect),
-      bitmap(BitmapBuffer::loadBitmap(filename)),
+      bitmap(BitmapBuffer::load(filename)),
       scale(scale)
     {
     }
@@ -99,9 +99,9 @@ class StaticBitmap: public Window
     {
     }
 
-    StaticBitmap(Window * parent, const rect_t & rect, const BitmapBuffer * mask, LcdFlags color, bool scale = false):
+    StaticBitmap(Window * parent, const rect_t & rect, const BitmapMask * mask, LcdFlags color, bool scale = false):
       Window(parent, rect),
-      bitmap(mask),
+      mask(mask),
       color(color),
       scale(scale)
     {
@@ -109,7 +109,7 @@ class StaticBitmap: public Window
 
     void setBitmap(const char * filename)
     {
-      setBitmap(BitmapBuffer::loadBitmap(filename));
+      setBitmap(BitmapBuffer::load(filename));
     }
 
     void setMaskColor(LcdFlags value)
@@ -124,6 +124,13 @@ class StaticBitmap: public Window
       invalidate();
     }
 
+    void setMask(const BitmapMask * newMask)
+    {
+      delete mask;
+      mask = newMask;
+      invalidate();
+    }
+
 #if defined(DEBUG_WINDOWS)
     std::string getName() const override
     {
@@ -133,10 +140,11 @@ class StaticBitmap: public Window
 
     void paint(BitmapBuffer * dc) override
     {
-      if (bitmap) {
-        if (color != 0xFFFFFFFF)
-          dc->drawMask(0, 0, bitmap, color);
-        else if (scale)
+      if (mask) {
+        dc->drawMask(0, 0, mask, color);
+      }
+      else if (bitmap) {
+        if (scale)
           dc->drawScaledBitmap(bitmap, 0, 0, width(), height());
         else
           dc->drawBitmap((width() - bitmap->width()) / 2, (height() - bitmap->height()) / 2, bitmap);
@@ -144,8 +152,9 @@ class StaticBitmap: public Window
     }
 
   protected:
+    const BitmapMask * mask = nullptr;
     const BitmapBuffer * bitmap = nullptr;
-    LcdFlags color = 0xFFFFFFFF;
+    LcdFlags color = 0;
     bool scale = false;
 };
 

@@ -154,13 +154,50 @@ class BitmapBufferBase
       return _width * _height * sizeof(T);
     }
 
-    inline const pixel_t * getPixelPtrAbs(coord_t x, coord_t y) const
+    inline T * getPixelPtrAbs(coord_t x, coord_t y)
     {
 #if defined(LCD_VERTICAL_INVERT)
       x = _width - x - 1;
       y = _height - y - 1;
 #endif
       return &data[y * _width + x];
+    }
+
+    inline const T * getPixelPtrAbs(coord_t x, coord_t y) const
+    {
+#if defined(LCD_VERTICAL_INVERT)
+      x = _width - x - 1;
+      y = _height - y - 1;
+#endif
+      return &data[y * _width + x];
+    }
+
+    template <class C>
+    C * horizontalFlip() const
+    {
+      auto * result = new C(format, width(), height());
+      auto * srcData = data;
+      auto * destData = result->data;
+      for (uint8_t y = 0; y < height(); y++) {
+        for (uint8_t x = 0; x < width(); x++) {
+          destData[x] = srcData[width() - 1 - x];
+        }
+        srcData += width();
+        destData += width();
+      }
+      return result;
+    }
+
+    template <class C>
+    C * verticalFlip() const
+    {
+      auto * result = new C(format, width(), height());
+      for (uint8_t y = 0; y < height(); y++) {
+        for (uint8_t x = 0; x < width(); x++) {
+          result->data[y * width() + x] = data[(height() - 1 - y) * width() + x];
+        }
+      }
+      return result;
     }
 
   protected:
@@ -179,8 +216,7 @@ class BitmapBufferBase
 
 typedef BitmapBufferBase<const uint16_t> Bitmap;
 
-class RLEBitmap:
-  public BitmapBufferBase<uint16_t>
+class RLEBitmap: public BitmapBufferBase<uint16_t>
 {
   public:
     RLEBitmap(uint8_t format, const uint8_t* rle_data) :
@@ -235,9 +271,55 @@ class RLEBitmap:
 
 struct BitmapData
 {
-  uint16_t width;
-  uint16_t height;
+  uint16_t _width;
+  uint16_t _height;
   uint8_t data[];
+
+  uint16_t width() const
+  {
+    return _width;
+  }
+
+  uint16_t height() const
+  {
+    return _height;
+  }
+
+  const uint8_t * getData() const
+  {
+    return data;
+  }
+};
+
+class BitmapMask: public BitmapBufferBase<uint8_t>
+{
+  public:
+    BitmapMask(uint8_t format, uint16_t width, uint16_t height):
+      BitmapBufferBase<uint8_t>(format, width, height, (uint8_t *)malloc(align32(width * height)))
+    {
+    }
+
+    ~BitmapMask()
+    {
+      free(data);
+    }
+
+    BitmapMask * invert() const
+    {
+      auto result = new BitmapMask(format, width(), height());
+      auto * srcData = data;
+      auto * destData = result->data;
+      for (auto y = 0; y < height(); y++) {
+        for (auto x = 0; x < width(); x++) {
+          destData[x] = 0xFF - srcData[x];
+        }
+        srcData += width();
+        destData += width();
+      }
+      return result;
+    }
+
+    static BitmapMask * load(const char * filename);
 };
 
 class BitmapBuffer: public BitmapBufferBase<pixel_t>
@@ -271,7 +353,7 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
       if (!applyClippingRect(x, y, w, h))
         return nullptr;
 
-      return getPixelPtrAbs(x, y);
+      return BitmapBufferBase::getPixelPtrAbs(x, y);
     }
 
     inline void drawPixel(coord_t x, coord_t y, pixel_t value)
@@ -340,17 +422,19 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
 
     void drawBitmapPatternPie(coord_t x0, coord_t y0, const uint8_t * img, LcdFlags flags, int startAngle, int endAngle);
 
-    static BitmapBuffer * loadBitmap(const char * filename);
-
-    static BitmapBuffer * loadMask(const char * filename);
+    static BitmapBuffer * load(const char * filename);
 
     static BitmapBuffer * loadMaskOnBackground(const char * filename, LcdFlags foreground, LcdFlags background);
 
-    void drawMask(coord_t x, coord_t y, const BitmapBuffer * mask, LcdFlags flags, coord_t offsetX = 0, coord_t width = 0);
+    template <class T>
+    void drawMask(coord_t x, coord_t y, const T * mask, LcdFlags flags, coord_t srcx = 0, coord_t srcw = 0);
 
-    void drawMask(coord_t x, coord_t y, const BitmapBuffer * mask, const BitmapBuffer * srcBitmap, coord_t offsetX = 0, coord_t offsetY = 0, coord_t width = 0, coord_t height = 0);
+    void drawMask(coord_t x, coord_t y, const uint8_t * mask, LcdFlags flags, coord_t srcx = 0, coord_t srcw = 0)
+    {
+      drawMask(x, y, (const BitmapData *)mask, flags, srcx, srcw);
+    }
 
-    void drawBitmapPattern(coord_t x, coord_t y, const uint8_t * bmp, LcdFlags flags, coord_t offset=0, coord_t width=0);
+    void drawMask(coord_t x, coord_t y, const BitmapMask * mask, const BitmapBuffer * srcBitmap, coord_t offsetX = 0, coord_t offsetY = 0, coord_t width = 0, coord_t height = 0);
 
     coord_t drawSizedText(coord_t x, coord_t y, const char * s, uint8_t len, LcdFlags flags=0);
 
@@ -368,124 +452,10 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
     coord_t drawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags = 0, uint8_t len = 0, const char * prefix = nullptr, const char * suffix = nullptr);
 
     template<class T>
-    void drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx = 0, coord_t srcy = 0, coord_t srcw = 0, coord_t srch = 0, float scale = 0)
-    {
-      if (!data || !bmp)
-        return;
-
-      APPLY_OFFSET();
-
-      if (x >= xmax || y >= ymax)
-        return;
-
-      coord_t bmpw = bmp->width();
-      coord_t bmph = bmp->height();
-
-      if (srcw == 0)
-        srcw = bmpw;
-      if (srch == 0)
-        srch = bmph;
-      if (srcx + srcw > bmpw)
-        srcw = bmpw - srcx;
-      if (srcy + srch > bmph)
-        srch = bmph - srcy;
-
-      if (scale == 0) {
-        if (x < xmin) {
-          srcw += x - xmin;
-          srcx -= x - xmin;
-          x = xmin;
-        }
-        if (y < ymin) {
-          srch += y - ymin;
-          srcy -= y - ymin;
-          y = ymin;
-        }
-        if (x + srcw > xmax) {
-          srcw = xmax - x;
-        }
-        if (y + srch > ymax) {
-          srch = ymax - y;
-        }
-      }
-      else {
-        if (x < xmin) {
-          srcw += (x - xmin) / scale;
-          srcx -= (x - xmin) / scale;
-          x = xmin;
-        }
-        if (y < ymin) {
-          srch += (y - ymin) / scale;
-          srcy -= (y - ymin) / scale;
-          y = ymin;
-        }
-        if (x + srcw * scale > xmax) {
-          srcw = (xmax - x) / scale;
-        }
-        if (y + srch * scale > ymax) {
-          srch = (ymax - y) / scale;
-        }
-      }
-
-      if (srcw <= 0 || srch <= 0) {
-        return;
-      }
-
-      if (scale == 0) {
-        if (bmp->getFormat() == BMP_ARGB4444) {
-          DMACopyAlphaBitmap(data, _width, _height, x, y, bmp->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
-        }
-        else {
-          DMACopyBitmap(data, _width, _height, x, y, bmp->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
-        }
-      }
-      else {
-        int scaledw = srcw * scale;
-        int scaledh = srch * scale;
-
-        if (x + scaledw > _width)
-          scaledw = _width - x;
-        if (y + scaledh > _height)
-          scaledh = _height - y;
-
-        for (int i = 0; i < scaledh; i++) {
-          pixel_t * p = getPixelPtrAbs(x, y + i);
-          const pixel_t * qstart = bmp->getPixelPtrAbs(srcx, srcy + int(i / scale));
-          for (int j = 0; j < scaledw; j++) {
-            const pixel_t * q = qstart;
-            MOVE_PIXEL_RIGHT(q, int(j / scale));
-            if (bmp->getFormat() == BMP_ARGB4444) {
-              ARGB_SPLIT(*q, a, r, g, b);
-              drawAlphaPixel(p, a, RGB_JOIN(r<<1, g<<2, b<<1));
-            }
-            else {
-              drawPixel(p, *q);
-            }
-            MOVE_TO_NEXT_RIGHT_PIXEL(p);
-          }
-        }
-      }
-    }
+    void drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx = 0, coord_t srcy = 0, coord_t srcw = 0, coord_t srch = 0, float scale = 0);
 
     template<class T>
-    void drawScaledBitmap(const T * bitmap, coord_t x, coord_t y, coord_t w, coord_t h)
-    {
-      if (bitmap) {
-        float vscale = float(h) / bitmap->height();
-        float hscale = float(w) / bitmap->width();
-        float scale = vscale < hscale ? vscale : hscale;
-
-        int xshift = (w - (bitmap->width() * scale)) / 2;
-        int yshift = (h - (bitmap->height() * scale)) / 2;
-        drawBitmap(x + xshift, y + yshift, bitmap, 0, 0, 0, 0, scale);
-      }
-    }
-
-    BitmapBuffer * horizontalFlip() const;
-
-    BitmapBuffer * verticalFlip() const;
-
-    BitmapBuffer * invertMask() const;
+    void drawScaledBitmap(const T * bitmap, coord_t x, coord_t y, coord_t w, coord_t h);
 
   protected:
     static BitmapBuffer * load_bmp(const char * filename);
@@ -538,24 +508,6 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
         TRACE("BitmapBuffer(%p).drawPixel(): buffer overrun, data: %p, written at: %p", this, data, p);
       }
 #endif
-    }
-
-    inline const pixel_t * getPixelPtrAbs(coord_t x, coord_t y) const
-    {
-#if defined(LCD_VERTICAL_INVERT)
-      x = _width - x - 1;
-      y = _height - y - 1;
-#endif
-      return &data[y * _width + x];
-    }
-
-    inline pixel_t * getPixelPtrAbs(coord_t x, coord_t y)
-    {
-#if defined(LCD_VERTICAL_INVERT)
-      x = _width - x - 1;
-      y = _height - y - 1;
-#endif
-      return &data[y * _width + x];
     }
 
     inline void drawPixelAbs(coord_t x, coord_t y, pixel_t value)

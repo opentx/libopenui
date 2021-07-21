@@ -46,6 +46,126 @@ BitmapBuffer::~BitmapBuffer()
   }
 }
 
+template<class T>
+void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx, coord_t srcy, coord_t srcw, coord_t srch, float scale)
+{
+  if (!data || !bmp)
+    return;
+
+  APPLY_OFFSET();
+
+  if (x >= xmax || y >= ymax)
+    return;
+
+  coord_t bmpw = bmp->width();
+  coord_t bmph = bmp->height();
+
+  if (srcw == 0)
+    srcw = bmpw;
+  if (srch == 0)
+    srch = bmph;
+  if (srcx + srcw > bmpw)
+    srcw = bmpw - srcx;
+  if (srcy + srch > bmph)
+    srch = bmph - srcy;
+
+  if (scale == 0) {
+    if (x < xmin) {
+      srcw += x - xmin;
+      srcx -= x - xmin;
+      x = xmin;
+    }
+    if (y < ymin) {
+      srch += y - ymin;
+      srcy -= y - ymin;
+      y = ymin;
+    }
+    if (x + srcw > xmax) {
+      srcw = xmax - x;
+    }
+    if (y + srch > ymax) {
+      srch = ymax - y;
+    }
+  }
+  else {
+    if (x < xmin) {
+      srcw += (x - xmin) / scale;
+      srcx -= (x - xmin) / scale;
+      x = xmin;
+    }
+    if (y < ymin) {
+      srch += (y - ymin) / scale;
+      srcy -= (y - ymin) / scale;
+      y = ymin;
+    }
+    if (x + srcw * scale > xmax) {
+      srcw = (xmax - x) / scale;
+    }
+    if (y + srch * scale > ymax) {
+      srch = (ymax - y) / scale;
+    }
+  }
+
+  if (srcw <= 0 || srch <= 0) {
+    return;
+  }
+
+  if (scale == 0) {
+    if (bmp->getFormat() == BMP_ARGB4444) {
+      DMACopyAlphaBitmap(data, _width, _height, x, y, bmp->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
+    }
+    else {
+      DMACopyBitmap(data, _width, _height, x, y, bmp->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
+    }
+  }
+  else {
+    int scaledw = srcw * scale;
+    int scaledh = srch * scale;
+
+    if (x + scaledw > _width)
+      scaledw = _width - x;
+    if (y + scaledh > _height)
+      scaledh = _height - y;
+
+    for (int i = 0; i < scaledh; i++) {
+      pixel_t * p = getPixelPtrAbs(x, y + i);
+      const pixel_t * qstart = bmp->getPixelPtrAbs(srcx, srcy + int(i / scale));
+      for (int j = 0; j < scaledw; j++) {
+        const pixel_t * q = qstart;
+        MOVE_PIXEL_RIGHT(q, int(j / scale));
+        if (bmp->getFormat() == BMP_ARGB4444) {
+          ARGB_SPLIT(*q, a, r, g, b);
+          drawAlphaPixel(p, a, RGB_JOIN(r<<1, g<<2, b<<1));
+        }
+        else {
+          drawPixel(p, *q);
+        }
+        MOVE_TO_NEXT_RIGHT_PIXEL(p);
+      }
+    }
+  }
+}
+
+template void BitmapBuffer::drawBitmap(coord_t, coord_t, BitmapBufferBase<const pixel_t> const *, coord_t, coord_t, coord_t, coord_t, float);
+template void BitmapBuffer::drawBitmap(coord_t, coord_t, const BitmapBuffer *, coord_t, coord_t, coord_t, coord_t, float);
+template void BitmapBuffer::drawBitmap(coord_t, coord_t, const RLEBitmap *, coord_t, coord_t, coord_t, coord_t, float);
+
+template<class T>
+void BitmapBuffer::drawScaledBitmap(const T * bitmap, coord_t x, coord_t y, coord_t w, coord_t h)
+{
+  if (bitmap) {
+    float vscale = float(h) / bitmap->height();
+    float hscale = float(w) / bitmap->width();
+    float scale = vscale < hscale ? vscale : hscale;
+
+    int xshift = (w - (bitmap->width() * scale)) / 2;
+    int yshift = (h - (bitmap->height() * scale)) / 2;
+    drawBitmap(x + xshift, y + yshift, bitmap, 0, 0, 0, 0, scale);
+  }
+}
+
+template void BitmapBuffer::drawScaledBitmap(const BitmapBuffer *, coord_t, coord_t, coord_t, coord_t);
+
 void BitmapBuffer::drawAlphaPixel(pixel_t * p, uint8_t alpha, uint16_t color)
 {
   if (format == BMP_RGB565) {
@@ -503,8 +623,8 @@ void BitmapBuffer::drawBitmapPatternPie(coord_t x, coord_t y, const uint8_t * im
   pixel_t color = lcdColorTable[COLOR_IDX(flags)];
 
   auto bitmap = (BitmapData *)img;
-  coord_t width = bitmap->width;
-  coord_t height = bitmap->height;
+  coord_t width = bitmap->width();
+  coord_t height = bitmap->height();
   const uint8_t * q = bitmap->data;
 
   int w2 = width / 2;
@@ -514,16 +634,16 @@ void BitmapBuffer::drawBitmapPatternPie(coord_t x, coord_t y, const uint8_t * im
     for (int x1 = w2 - 1; x1 >= 0; x1--) {
       Slope slope(false, x1 == 0 ? 99000 : y1 * 100 / x1);
       if (slope.isBetween(startSlope, endSlope)) {
-        drawAlphaPixel(x + w2 + x1, y + h2 - y1, q[(h2 - y1) * width + w2 + x1], color);
+        drawAlphaPixel(x + w2 + x1, y + h2 - y1, q[(h2 - y1) * width + w2 + x1] >> 4, color);
       }
       if (slope.invertVertical().isBetween(startSlope, endSlope)) {
-        drawAlphaPixel(x + w2 + x1, y + h2 + y1, q[(h2 + y1) * width + w2 + x1], color);
+        drawAlphaPixel(x + w2 + x1, y + h2 + y1, q[(h2 + y1) * width + w2 + x1] >> 4, color);
       }
       if (slope.invertHorizontal().isBetween(startSlope, endSlope)) {
-        drawAlphaPixel(x + w2 - x1, y + h2 + y1, q[(h2 + y1) * width + w2 - x1], color);
+        drawAlphaPixel(x + w2 - x1, y + h2 + y1, q[(h2 + y1) * width + w2 - x1] >> 4, color);
       }
       if (slope.invertVertical().isBetween(startSlope, endSlope)) {
-        drawAlphaPixel(x + w2 - x1, y + h2 - y1, q[(h2 - y1) * width + w2 - x1], color);
+        drawAlphaPixel(x + w2 - x1, y + h2 - y1, q[(h2 - y1) * width + w2 - x1] >> 4, color);
       }
     }
   }
@@ -562,49 +682,43 @@ void BitmapBuffer::drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadiu
   }
 }
 
-void BitmapBuffer::drawMask(coord_t x, coord_t y, const BitmapBuffer * mask, LcdFlags flags, coord_t offsetX, coord_t width)
+template <class T>
+void BitmapBuffer::drawMask(coord_t x, coord_t y, const T * mask, LcdFlags flags, coord_t srcx, coord_t srcw)
 {
   if (!mask)
     return;
 
   APPLY_OFFSET();
 
-  coord_t w = mask->width();
-  coord_t height = mask->height();
+  coord_t maskWidth = mask->width();
+  coord_t maskHeight = mask->height();
 
-  if (!width || width > w) {
-    width = w;
+  if (!srcw || srcw > maskWidth) {
+    srcw = maskWidth;
   }
 
-  if (x + width > xmax) {
-    width = xmax - x;
+  if (x + srcw > xmax) {
+    srcw = xmax - x;
   }
 
   if (x < xmin) {
-    width += x - xmin;
-    offsetX -= x - xmin;
+    srcw += x - xmin;
+    srcx -= x - xmin;
     x = xmin;
   }
 
-  if (y >= ymax || x >= xmax || width <= 0 || x + width < xmin || y + height < ymin)
+  if (y >= ymax || x >= xmax || srcw <= 0 || x + srcw < xmin || y + maskHeight < ymin)
     return;
 
   pixel_t color = lcdColorTable[COLOR_IDX(flags)];
 
-  for (coord_t row = 0; row < height; row++) {
-    if (y + row < ymin || y + row >= ymax)
-      continue;
-    pixel_t * p = getPixelPtrAbs(x, y + row);
-    const pixel_t * q = mask->getPixelPtrAbs(offsetX, row);
-    for (coord_t col = 0; col < width; col++) {
-      drawAlphaPixel(p, *((uint8_t *)q), color);
-      MOVE_TO_NEXT_RIGHT_PIXEL(p);
-      MOVE_TO_NEXT_RIGHT_PIXEL(q);
-    }
-  }
+  DMACopyAlphaMask(data, _width, _height, x, y, mask->getData(), maskWidth, maskHeight, srcx, 0, srcw, maskHeight, color);
 }
 
-void BitmapBuffer::drawMask(coord_t x, coord_t y, const BitmapBuffer * mask, const BitmapBuffer * srcBitmap, coord_t offsetX, coord_t offsetY, coord_t width, coord_t height)
+template void BitmapBuffer::drawMask(int, int, const BitmapData *, LcdFlags, int, int);
+template void BitmapBuffer::drawMask(int, int, const BitmapMask *, LcdFlags, int, int);
+
+void BitmapBuffer::drawMask(coord_t x, coord_t y, const BitmapMask * mask, const BitmapBuffer * srcBitmap, coord_t offsetX, coord_t offsetY, coord_t width, coord_t height)
 {
   if (!mask || !srcBitmap)
     return;
@@ -638,59 +752,12 @@ void BitmapBuffer::drawMask(coord_t x, coord_t y, const BitmapBuffer * mask, con
   for (coord_t row = 0; row < height; row++) {
     if (y + row < ymin || y + row >= ymax)
       continue;
-    pixel_t * p = getPixelPtrAbs(x, y + row);
-    const pixel_t * q = mask->getPixelPtrAbs(offsetX, offsetY + row);
+    auto * p = getPixelPtrAbs(x, y + row);
+    const auto * q = mask->getPixelPtrAbs(offsetX, offsetY + row);
     for (coord_t col = 0; col < width; col++) {
-      drawAlphaPixel(p, *((uint8_t *)q), *srcBitmap->getPixelPtrAbs(row, col));
+      drawAlphaPixel(p, (*q) >> 4, *srcBitmap->getPixelPtrAbs(row, col));
       MOVE_TO_NEXT_RIGHT_PIXEL(p);
       MOVE_TO_NEXT_RIGHT_PIXEL(q);
-    }
-  }
-}
-
-void BitmapBuffer::drawBitmapPattern(coord_t x, coord_t y, const uint8_t * bmp, LcdFlags flags, coord_t offset, coord_t width)
-{
-  APPLY_OFFSET();
-
-  auto bitmap = (BitmapData *)bmp;
-  coord_t w = bitmap->width;
-  coord_t height = bitmap->height;
-
-  if (!width || width > w) {
-    width = w;
-  }
-
-  if (x + width > xmax) {
-    width = xmax - x;
-  }
-
-  if (y >= ymax || x >= xmax || width <= 0 || x + width < xmin || y + height < ymin) {
-    return;
-  }
-
-  pixel_t color = lcdColorTable[COLOR_IDX(flags)];
-
-  for (coord_t row=0; row<height; row++) {
-    if (y + row < ymin || y + row >= ymax)
-      continue;
-    const uint8_t * q = bitmap->data + row*w + offset;
-    for (coord_t col=0; col<width; col++) {
-      coord_t xpixel, ypixel;
-      if (flags & VERTICAL) {
-        xpixel = x + row;
-        ypixel = y - col;
-      }
-      else {
-        xpixel = x + col;
-        ypixel = y + row;
-      }
-      if (xpixel >= xmin && xpixel < xmax) {
-        pixel_t * p = getPixelPtrAbs(xpixel, ypixel);
-        if (p) {
-          drawAlphaPixel(p, *q, color);
-        }
-      }
-      q++;
     }
   }
 }
@@ -700,7 +767,7 @@ uint8_t BitmapBuffer::drawChar(coord_t x, coord_t y, const uint8_t * font, const
   coord_t offset = spec[index + 1];
   coord_t width = spec[index + 2] - offset;
   if (width > 0) {
-    drawBitmapPattern(x, y, font, flags, offset, width);
+    drawMask(x, y, (const BitmapData *)font, flags, offset, width);
   }
   return width;
 }
@@ -857,7 +924,7 @@ void drawSolidRect(BitmapBuffer * dc, coord_t x, coord_t y, coord_t w, coord_t h
 //}
 //
 
-BitmapBuffer * BitmapBuffer::loadBitmap(const char * filename)
+BitmapBuffer * BitmapBuffer::load(const char * filename)
 {
   const char * ext = getFileExtension(filename);
   if (ext && !strcmp(ext, ".bmp"))
@@ -866,64 +933,27 @@ BitmapBuffer * BitmapBuffer::loadBitmap(const char * filename)
     return load_stb(filename);
 }
 
-BitmapBuffer * BitmapBuffer::loadMask(const char * filename)
+BitmapMask * BitmapMask::load(const char * filename)
 {
-  BitmapBuffer * bitmap = BitmapBuffer::loadBitmap(filename);
+  BitmapBuffer * bitmap = BitmapBuffer::load(filename);
   if (bitmap) {
-    pixel_t * p = bitmap->getPixelPtrAbs(0, 0);
+    BitmapMask * result = new BitmapMask(BMP_RGB565, bitmap->width(), bitmap->height());
+    const auto * p = bitmap->getPixelPtrAbs(0, 0);
+    uint8_t * q = (uint8_t *)result->getPixelPtrAbs(0, 0);
     for (int i = bitmap->width() * bitmap->height(); i > 0; i--) {
-      *((uint8_t *)p) = ALPHA_MAX - ((*p) >> 12);
+      *q = (ALPHA_MAX - ((*p) >> 12)) << 4;
       MOVE_TO_NEXT_RIGHT_PIXEL(p);
+      MOVE_TO_NEXT_RIGHT_PIXEL(q);
     }
+    return result;
   }
-  return bitmap;
-}
-
-BitmapBuffer * BitmapBuffer::invertMask() const
-{
-  BitmapBuffer * result = new BitmapBuffer(format, width(), height());
-  pixel_t * srcData = data;
-  pixel_t * destData = result->data;
-  for (auto y = 0; y < height(); y++) {
-    for (auto x = 0; x < width(); x++) {
-      destData[x] = ALPHA_MAX - (uint8_t)srcData[x];
-    }
-    srcData += width();
-    destData += width();
-  }
-  return result;
-}
-
-BitmapBuffer * BitmapBuffer::horizontalFlip() const
-{
-  BitmapBuffer * result = new BitmapBuffer(format, width(), height());
-  pixel_t * srcData = data;
-  pixel_t * destData = result->data;
-  for (uint8_t y = 0; y < height(); y++) {
-    for (uint8_t x = 0; x < width(); x++) {
-      destData[x] = srcData[width() - 1 - x];
-    }
-    srcData += width();
-    destData += width();
-  }
-  return result;
-}
-
-BitmapBuffer * BitmapBuffer::verticalFlip() const
-{
-  BitmapBuffer * result = new BitmapBuffer(format, width(), height());
-  for (uint8_t y = 0; y < height(); y++) {
-    for (uint8_t x = 0; x < width(); x++) {
-      result->data[y * width() + x] = data[(height() - 1 - y) * width() + x];
-    }
-  }
-  return result;
+  return nullptr;
 }
 
 BitmapBuffer * BitmapBuffer::loadMaskOnBackground(const char * filename, LcdFlags foreground, LcdFlags background)
 {
   BitmapBuffer * result = nullptr;
-  BitmapBuffer * mask = BitmapBuffer::loadMask(filename);
+  const auto * mask = BitmapMask::load(filename);
   if (mask) {
     result = new BitmapBuffer(BMP_RGB565, mask->width(), mask->height());
     if (result) {
