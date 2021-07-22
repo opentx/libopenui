@@ -964,6 +964,7 @@ BitmapMask * BitmapMask::load(const char * filename)
       MOVE_TO_NEXT_RIGHT_PIXEL(p);
       MOVE_TO_NEXT_RIGHT_PIXEL(q);
     }
+    delete bitmap;
     return result;
   }
   return nullptr;
