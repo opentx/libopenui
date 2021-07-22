@@ -66,6 +66,11 @@ class TextKeyboard: public Keyboard
       _instance = keyboard;
     }
 
+    static TextKeyboard * instance()
+    {
+      return _instance;
+    }
+
     static void show(FormField * field)
     {
       if (!_instance)
