@@ -162,7 +162,15 @@ class Window
 
     void scrollTo(Window * child);
 
-    static void clearFocus();
+    static void clearFocus(bool notify = true)
+    {
+      if (focusWindow) {
+        if (notify) {
+          focusWindow->onFocusLost();
+        }
+        focusWindow = nullptr;
+      }
+    }
 
     virtual void setFocus(uint8_t flag = SET_FOCUS_DEFAULT, Window * from = nullptr);
 

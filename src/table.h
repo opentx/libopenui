@@ -127,7 +127,7 @@ class Table: public FormField
         {
         }
 
-        ~Line()
+        virtual ~Line()
         {
           for (auto cell: cells) {
             delete cell;
@@ -250,7 +250,7 @@ class Table: public FormField
     };
 
   public:
-    Table(Window * parent, const rect_t & rect, uint8_t columnsCount, std::function<Table::Header *(Table *)> createHeader = nullptr, std::function<Table::Body *(Table *)> createBody = nullptr, WindowFlags windowFlags = OPAQUE | FORM_NO_BORDER):
+    Table(Window * parent, const rect_t & rect, uint8_t columnsCount, const std::function<Table::Header *(Table *)> & createHeader = nullptr, const std::function<Table::Body *(Table *)> & createBody = nullptr, WindowFlags windowFlags = OPAQUE | FORM_NO_BORDER):
       FormField(parent, rect, windowFlags),
       columnsCount(columnsCount),
       columnsWidth(columnsCount, width() / columnsCount),
@@ -339,6 +339,7 @@ class Table: public FormField
       body->setTop(TABLE_HEADER_HEIGHT);
       body->setHeight(height() - TABLE_HEADER_HEIGHT);
       for (uint8_t i = 0; i < columnsCount; i++) {
+        delete header->cells[i];
         header->cells[i] = new StringCell(values[i]);
       }
     }

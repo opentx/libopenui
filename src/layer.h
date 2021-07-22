@@ -54,9 +54,11 @@ class Layer
     {
       if (stack.back().main == window) {
         stack.pop_back();
-        const auto & back = stack.back();
-        if (back.focus) {
-          back.focus->setFocus(SET_FOCUS_DEFAULT);
+        if (!stack.empty()) {
+          const auto & back = stack.back();
+          if (back.focus) {
+            back.focus->setFocus(SET_FOCUS_DEFAULT);
+          }
         }
       }
       else {

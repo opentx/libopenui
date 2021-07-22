@@ -115,14 +115,6 @@ void Window::deleteChildren()
   children.clear();
 }
 
-void Window::clearFocus()
-{
-  if (focusWindow) {
-    focusWindow->onFocusLost();
-    focusWindow = nullptr;
-  }
-}
-
 void Window::setFocus(uint8_t flag, Window * from)
 {
   if (deleted())

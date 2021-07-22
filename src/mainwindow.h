@@ -37,7 +37,7 @@ class MainWindow: public Window
   public:
     ~MainWindow() override
     {
-      children.clear();
+      Layer::pop(this);
     }
 
     static MainWindow * instance()
@@ -48,10 +48,19 @@ class MainWindow: public Window
       return _instance;
     }
 
-#if defined(TESTS)
+#if defined(SIMU)
     static void create()
     {
       _instance = new MainWindow();
+    }
+
+    static void destroy()
+    {
+      if (_instance) {
+        _instance->deleteLater();
+        _instance = nullptr;
+        emptyTrash();
+      }
     }
 #endif
 

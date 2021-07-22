@@ -34,8 +34,11 @@ enum IconState {
   STATE_PRESSED,
 };
 
-class Theme {
+class Theme
+{
   public:
+    virtual ~Theme() = default;
+
     virtual void drawMessageBox(const char * title, const char * text, const char * action, LcdFlags flags) const = 0;
     virtual void drawProgressBar(BitmapBuffer * dc, coord_t x, coord_t y, coord_t w, coord_t h, int value) const = 0;
     virtual void drawCheckBox(BitmapBuffer * dc, CheckBox * checkBox) const
