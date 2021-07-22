@@ -209,19 +209,7 @@ class Table: public FormField
         {
           selection = index;
           if (scroll) {
-            coord_t y = index * TABLE_LINE_HEIGHT;
-            Window * window = this;
-            while (window->getWindowFlags() & FORWARD_SCROLL) {
-              y += window->top();
-              window = window->getParent();
-            }
-            const rect_t rect = {
-              0,
-              y,
-              width(),
-              TABLE_LINE_HEIGHT
-            };
-            window->scrollTo(rect);
+            scrollTo(index);
           }
           invalidate();
           if (index >= 0) {
@@ -230,6 +218,23 @@ class Table: public FormField
               onSelect();
             }
           }
+        }
+
+        void scrollTo(int index)
+        {
+          coord_t y = index * TABLE_LINE_HEIGHT;
+          Window * window = this;
+          while (window->getWindowFlags() & FORWARD_SCROLL) {
+            y += window->top();
+            window = window->getParent();
+          }
+          const rect_t rect = {
+            0,
+            y,
+            width(),
+            TABLE_LINE_HEIGHT
+          };
+          window->scrollTo(rect);
         }
 
         void paint(BitmapBuffer * dc) override;
