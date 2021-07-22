@@ -72,6 +72,18 @@ class NumberEdit : public BaseNumberEdit
     bool onTouchEnd(coord_t x, coord_t y) override;
 #endif
 
+    void enableKeyboard(bool enable)
+    {
+#if defined(SOFTWARE_KEYBOARD)
+      keyboardEnabled = enable;
+#endif
+    }
+
+    void disableKeyboard()
+    {
+      enableKeyboard(false);
+    }
+
     void onFocusLost() override;
 
 #if defined(SOFTWARE_KEYBOARD)
@@ -85,4 +97,7 @@ class NumberEdit : public BaseNumberEdit
     std::string zeroText;
     std::function<bool(int)> isValueAvailable;
     std::function<std::string(int)> getStringValue;
+#if defined(SOFTWARE_KEYBOARD)
+    bool keyboardEnabled = true;
+#endif
 };

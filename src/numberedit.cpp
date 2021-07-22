@@ -165,7 +165,7 @@ void NumberEdit::onFocusLost()
 void NumberEdit::setEditMode(bool newEditMode)
 {
   BaseNumberEdit::setEditMode(newEditMode);
-  if (editMode) {
+  if (editMode && keyboardEnabled) {
     NumberKeyboard::show(this);
   }
 }
