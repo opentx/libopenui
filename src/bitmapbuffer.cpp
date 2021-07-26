@@ -111,12 +111,10 @@ void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx,
   }
 
   if (scale == 0) {
-    if (bmp->getFormat() == BMP_ARGB4444) {
-      DMACopyAlphaBitmap(data, _width, _height, x, y, bmp->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
-    }
-    else {
+    if (bmp->getFormat() == BMP_ARGB4444)
+      DMACopyAlphaBitmap(data, format == BMP_ARGB4444, _width, _height, x, y, bmp->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
+    else
       DMACopyBitmap(data, _width, _height, x, y, bmp->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
-    }
   }
   else {
     int scaledw = srcw * scale;
@@ -730,8 +728,7 @@ void BitmapBuffer::drawMask(coord_t x, coord_t y, const T * mask, LcdFlags flags
   }
 
   pixel_t color = lcdColorTable[COLOR_IDX(flags)];
-
-  DMACopyAlphaMask(data, _width, _height, x, y, mask->getData(), maskWidth, maskHeight, srcx, srcy, srcw, srch, color);
+  DMACopyAlphaMask(data, format == BMP_ARGB4444, _width, _height, x, y, mask->getData(), maskWidth, maskHeight, srcx, srcy, srcw, srch, color);
 }
 
 template void BitmapBuffer::drawMask(int, int, const BitmapData *, LcdFlags, int, int);

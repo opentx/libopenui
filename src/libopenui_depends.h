@@ -24,8 +24,8 @@
 
 void lcdNextLayer();
 void DMACopyBitmap(uint16_t * dest, int destw, int desth, int x, int y, const uint16_t * src, int srcw, int srch, int srcx, int srcy, int w, int h);
-void DMACopyAlphaBitmap(uint16_t * dest, int destw, int desth, int x, int y, const uint16_t * src, int srcw, int srch, int srcx, int srcy, int w, int h);
-void DMACopyAlphaMask(uint16_t * dest, int destw, int desth, int x, int y, const uint8_t * src, int srcw, int srch, int srcx, int srcy, int w, int h, uint16_t color);
+void DMACopyAlphaBitmap(uint16_t * dest, bool destAlpha, int destw, int desth, int x, int y, const uint16_t * src, int srcw, int srch, int srcx, int srcy, int w, int h);
+void DMACopyAlphaMask(uint16_t * dest, bool destAlpha, int destw, int desth, int x, int y, const uint8_t * src, int srcw, int srch, int srcx, int srcy, int w, int h, uint16_t color);
 void onKeyPress();
 void onKeyError();
 void killEvents(event_t event);
