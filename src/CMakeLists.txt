@@ -10,7 +10,16 @@ if(SOFTWARE_KEYBOARD)
   add_definitions(-DSOFTWARE_KEYBOARD)
 endif()
 
+add_definitions(-DSPNG_USE_MINIZ)
+include_directories(
+  ${PROJECT_SOURCE_DIR}/thirdparty/libopenui/src/thirdparty/miniz
+  ${PROJECT_SOURCE_DIR}/thirdparty/libopenui/src/thirdparty/libspng
+  )
+
 set(LIBOPENUI_SRC
+  thirdparty/miniz/miniz.c
+  thirdparty/libspng/spng.c
+  libopenui_globals.cpp
   libopenui_file.cpp
   bitmapbuffer.cpp
   window.cpp
