@@ -459,7 +459,7 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
 
   protected:
     static BitmapBuffer * load_bmp(const char * filename);
-    static BitmapBuffer * load_stb(const char * filename);
+    static BitmapBuffer * load_png(const char * filename);
 
     inline bool applyClippingRect(coord_t & x, coord_t & y, coord_t & w, coord_t & h) const
     {
