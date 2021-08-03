@@ -192,12 +192,20 @@ class Window
       rect.y = (parent->height() - height()) / 2;
     }
 
+    void setMinHeight(coord_t value)
+    {
+      minHeight = value;
+      if (height() < minHeight) {
+        setHeight(minHeight);
+      }
+    }
+
     void setHeight(coord_t value)
     {
-      rect.h = value;
+      rect.h = max(minHeight, value);
       if (windowFlags & FORWARD_SCROLL)
-        innerHeight = value;
-      else if (innerHeight <= value) {
+        innerHeight = height();
+      else if (innerHeight <= height()) {
         setScrollPositionY(0);
       }
       invalidate();
@@ -302,7 +310,7 @@ class Window
     {
       innerHeight = h;
       if (windowFlags & FORWARD_SCROLL) {
-        rect.h = innerHeight;
+        rect.h = max(innerHeight, minHeight);
         parent->adjustInnerHeight();
       }
       else if (height() >= h) {
@@ -395,6 +403,7 @@ class Window
     std::list<Window *> children;
     rect_t rect;
     coord_t innerWidth;
+    coord_t minHeight = 0;
     coord_t innerHeight;
     coord_t pageWidth = 0;
     coord_t pageHeight = 0;

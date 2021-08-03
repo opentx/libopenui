@@ -381,6 +381,16 @@ class Table: public FormField
       return body->lines.size();
     }
 
+    Header * getHeader()
+    {
+      return header;
+    }
+
+    Body * getBody()
+    {
+      return body;
+    }
+
   protected:
     uint8_t columnsCount;
     std::vector<coord_t> columnsWidth;
