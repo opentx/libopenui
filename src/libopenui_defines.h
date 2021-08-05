@@ -28,14 +28,15 @@
 #define TIMEHOUR                       0
 
 /* drawText flags */
-#define LEFT                           0x00u /* align left */
-#define VCENTERED                      0x02u /* align center vertically */
-#define CENTERED                       0x04u /* align center */
-#define RIGHT                          0x08u /* align right */
-#define SHADOWED                       0x80u /* black copy at +1 +1 */
+constexpr uint32_t LEFT = 0x00u; // align left
+constexpr uint32_t VCENTERED = 0x02u; // align center vertically
+constexpr uint32_t CENTERED = 0x04u; // align center
+constexpr uint32_t RIGHT = 0x08u; // align right
+constexpr uint32_t SHADOWED = 0x80u; // black copy at +1 +1
+
 // unused 0x1000u
-#define SPACING_NUMBERS_CONST          0x2000u
-#define VERTICAL                       0x4000u
+constexpr uint32_t SPACING_NUMBERS_CONST = 0x2000u;
+constexpr uint32_t VERTICAL = 0x4000u;
 // unused 0x8000u
 
 /* drawNumber flags */
