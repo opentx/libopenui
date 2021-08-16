@@ -825,14 +825,10 @@ coord_t BitmapBuffer::drawSizedText(coord_t x, coord_t y, const char * s, uint8_
     if (!c) {
       break;
     }
-    else if (c >= 0xFE) {
+    else if (c >= CJK_BYTE1_MIN) {
       // CJK char
-      s++;
-      c = uint8_t(*s) + ((c & 0x01u) << 8u) - 1;
+      c = getCJKChar(c, *++s);
       // TRACE("CJK = %d", c);
-      if (c >= 0x100)
-        c -= 1;
-      c += CJK_FIRST_LETTER_INDEX;
       uint8_t width = drawChar(x, y, font, fontspecs, c, flags);
       INCREMENT_POS(width + CHAR_SPACING);
     }
