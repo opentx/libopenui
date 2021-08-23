@@ -34,6 +34,12 @@ struct point_t
   }
 };
 
+struct range_t
+{
+  coord_t left;
+  coord_t right;
+};
+
 struct rect_t
 {
   coord_t x, y, w, h;
