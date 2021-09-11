@@ -396,6 +396,8 @@ void Window::onEvent(event_t event)
 #if defined(HARDWARE_TOUCH)
 bool Window::onTouchStart(coord_t x, coord_t y)
 {
+  TRACE_WINDOWS("%s touch start", Window::getWindowDebugString("Window").c_str());
+
   for (auto it = children.rbegin(); it != children.rend(); ++it) {
     auto child = *it;
     if (child->rect.contains(x, y)) {
@@ -405,11 +407,13 @@ bool Window::onTouchStart(coord_t x, coord_t y)
     }
   }
 
-  return false;
+  return windowFlags & OPAQUE;
 }
 
 bool Window::onTouchLong(coord_t x, coord_t y)
 {
+  TRACE_WINDOWS("%s touch long", Window::getWindowDebugString("Window").c_str());
+
   for (auto it = children.rbegin(); it != children.rend(); ++it) {
     auto child = *it;
     if (child->rect.contains(x, y)) {
@@ -419,11 +423,13 @@ bool Window::onTouchLong(coord_t x, coord_t y)
     }
   }
 
-  return false;
+  return windowFlags & OPAQUE;
 }
 
-bool Window::forwardTouchEnd(coord_t x, coord_t y)
+bool Window::onTouchEnd(coord_t x, coord_t y)
 {
+  TRACE_WINDOWS("%s touch end", Window::getWindowDebugString("Window").c_str());
+
   for (auto it = children.rbegin(); it != children.rend(); ++it) {
     auto child = *it;
     if (child->rect.contains(x, y)) {
@@ -433,12 +439,7 @@ bool Window::forwardTouchEnd(coord_t x, coord_t y)
     }
   }
 
-  return false;
-}
-
-bool Window::onTouchEnd(coord_t x, coord_t y)
-{
-  return forwardTouchEnd(x, y) ? true : (windowFlags & OPAQUE);
+  return windowFlags & OPAQUE;
 }
 
 bool Window::onTouchSlide(coord_t x, coord_t y, coord_t startX, coord_t startY, coord_t slideX, coord_t slideY)

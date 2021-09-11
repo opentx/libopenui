@@ -466,8 +466,6 @@ class Window
     virtual bool onTouchSlide(coord_t x, coord_t y, coord_t startX, coord_t startY, coord_t slideX, coord_t slideY);
 #endif
 
-    bool forwardTouchEnd(coord_t x, coord_t y);
-
     bool hasOpaqueRect(const rect_t & testRect) const;
 };
 
