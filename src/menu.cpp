@@ -102,6 +102,10 @@ bool MenuBody::onTouchEnd(coord_t /*x*/, coord_t y)
 }
 #endif
 
+#if !defined(IS_TRANSLATION_RIGHT_TO_LEFT)
+  #define IS_TRANSLATION_RIGHT_TO_LEFT() false
+#endif
+
 void MenuBody::paint(BitmapBuffer * dc)
 {
   dc->clear(MENU_BGCOLOR);
@@ -120,7 +124,10 @@ void MenuBody::paint(BitmapBuffer * dc)
     }
     else {
       const char * text = line.text.data();
-      dc->drawText(10, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - getFontHeight(MENU_FONT)) / 2, text[0] == '\0' ? "---" : text, flags);
+      if (IS_TRANSLATION_RIGHT_TO_LEFT())
+        dc->drawText(width() - 10, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - getFontHeight(MENU_FONT)) / 2, text[0] == '\0' ? "---" : text, flags | RIGHT);
+      else
+        dc->drawText(10, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - getFontHeight(MENU_FONT)) / 2, text[0] == '\0' ? "---" : text, flags);
     }
 
     Menu * menu = getParentMenu();
