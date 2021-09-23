@@ -41,6 +41,8 @@ class StaticText: public Window
     }
 #endif
 
+    static void drawText(BitmapBuffer * dc, const rect_t & rect, const std::string & text, LcdFlags textFlags = 0);
+
     void paint(BitmapBuffer * dc) override;
 
     void setText(std::string value)
