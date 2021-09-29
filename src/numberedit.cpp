@@ -101,21 +101,41 @@ void NumberEdit::onEvent(event_t event)
 #endif
 
 #if defined(HARDWARE_TOUCH)
-      case EVT_VIRTUAL_KEY_PLUS:
-        setValue(getValue() + getStep());
+      case EVT_VIRTUAL_KEY_PLUS: {
+        int value = getValue();
+        if (value < vmax)
+          setValue(value + getStep());
+        else
+          onKeyError();
         break;
+      }
 
-      case EVT_VIRTUAL_KEY_MINUS:
-        setValue(getValue() - getStep());
+      case EVT_VIRTUAL_KEY_MINUS: {
+        int value = getValue();
+        if (value > vmin)
+          setValue(value - getStep());
+        else
+          onKeyError();
         break;
+      }
 
-      case EVT_VIRTUAL_KEY_FORWARD:
-        setValue(getValue() + 10 * getStep());
+      case EVT_VIRTUAL_KEY_FORWARD: {
+        int value = getValue();
+        if (value < vmax)
+          setValue(value + 10 * getStep());
+        else
+          onKeyError();
         break;
+      }
 
-      case EVT_VIRTUAL_KEY_BACKWARD:
-        setValue(getValue() - 10 * getStep());
+      case EVT_VIRTUAL_KEY_BACKWARD: {
+        int value = getValue();
+        if (value > vmin)
+          setValue(value - 10 * getStep());
+        else
+          onKeyError();
         break;
+      }
 
       case EVT_VIRTUAL_KEY_DEFAULT:
         setValue(getDefault());
