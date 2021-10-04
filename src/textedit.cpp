@@ -113,7 +113,7 @@ void TextEdit::onEvent(event_t event)
 #if defined(HARDWARE_KEYS)
   if (editMode) {
     char previousChar = (cursorPos > 0 ? value[cursorPos - 1] : 0);
-    int c = value[cursorPos];
+    int c = (cursorPos < length ? value[cursorPos] : 0);
     int v = c;
 
     switch (event) {
@@ -224,7 +224,7 @@ void TextEdit::onEvent(event_t event)
         break;
     }
 
-    if (c != v) {
+    if (cursorPos < length && c != v) {
       // TRACE("value[%d] = %d", cursorPos, v);
       value[cursorPos] = v;
       invalidate();
