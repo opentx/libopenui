@@ -57,16 +57,20 @@ class FormField: public Window
       return editMode;
     }
 
-    virtual void setEditMode(bool newEditMode)
+    virtual void setEditMode(bool value)
     {
-      editMode = newEditMode;
-      invalidate();
+      if (value != editMode) {
+        editMode = value;
+        invalidate();
+      }
     }
 
     void enable(bool value = true)
     {
-      enabled = value;
-      invalidate();
+      if (value != enabled) {
+        enabled = value;
+        invalidate();
+      }
     }
 
     bool isEnabled() const
