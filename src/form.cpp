@@ -187,6 +187,9 @@ void FormGroup::setFocus(uint8_t flag, Window * from)
           else if (next) {
             next->setFocus(SET_FOCUS_FORWARD, this);
           }
+          else {
+            setInsideParentScrollingArea();
+          }
         }
         else {
           if (first) {
@@ -194,6 +197,9 @@ void FormGroup::setFocus(uint8_t flag, Window * from)
           }
           else if (next) {
             next->setFocus(SET_FOCUS_FORWARD, this);
+          }
+          else {
+            setInsideParentScrollingArea();
           }
         }
         break;
