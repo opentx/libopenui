@@ -132,7 +132,7 @@ void MenuBody::paint(BitmapBuffer * dc)
 
     Menu * menu = getParentMenu();
     if (menu->multiple && line.isChecked) {
-      theme->drawCheckBox(dc, line.isChecked(), width() - 35, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - 20) / 2, 0);
+      theme->drawCheckBox(dc, line.isChecked(), IS_TRANSLATION_RIGHT_TO_LEFT() ? 10 : width() - 35, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - 20) / 2, 0);
     }
 
     if (i > 0) {
