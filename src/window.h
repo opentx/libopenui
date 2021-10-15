@@ -160,7 +160,7 @@ class Window
 
     void scrollTo(const rect_t & rect);
 
-    void scrollTo(Window * child);
+    void scrollTo(Window * child, bool bottom = false);
 
     static void clearFocus(bool notify = true)
     {
@@ -363,7 +363,7 @@ class Window
       return parent && right() >= parent->getScrollPositionX() && left() <= parent->getScrollPositionX() + parent->width();
     }
 
-    void setInsideParentScrollingArea();
+    void setInsideParentScrollingArea(bool bottom = false);
 
     void drawVerticalScrollbar(BitmapBuffer * dc);
 

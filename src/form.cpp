@@ -188,7 +188,7 @@ void FormGroup::setFocus(uint8_t flag, Window * from)
             next->setFocus(SET_FOCUS_FORWARD, this);
           }
           else {
-            setInsideParentScrollingArea();
+            setInsideParentScrollingArea(true);
           }
         }
         else {

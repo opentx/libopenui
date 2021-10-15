@@ -164,8 +164,10 @@ void Window::setScrollPositionY(coord_t value)
   }
 }
 
-void Window::scrollTo(Window * child)
+void Window::scrollTo(Window * child, bool bottom)
 {
+  TRACE_WINDOWS("%s scrollTo(%s)", getWindowDebugString().c_str(), child->getWindowDebugString().c_str());
+
   coord_t offsetX = 0;
   coord_t offsetY = 0;
 
@@ -178,9 +180,9 @@ void Window::scrollTo(Window * child)
 
   const rect_t scrollRect = {
     offsetX + child->left(),
-    offsetY + child->top(),
+    offsetY + (bottom ? child->bottom() : child->top()),
     min(child->width(), width()),
-    min(child->height(), height())
+    min(child->height(), bottom ? 0 : height())
   };
 
   scrollTo(scrollRect);
@@ -282,14 +284,14 @@ bool Window::isChildVisible(const Window * window) const
   return false;
 }
 
-void Window::setInsideParentScrollingArea()
+void Window::setInsideParentScrollingArea(bool bottom)
 {
   Window * parent = getParent();
   while (parent && parent->getWindowFlags() & FORWARD_SCROLL) {
     parent = parent->parent;
   }
   if (parent) {
-    parent->scrollTo(this);
+    parent->scrollTo(this, bottom);
     invalidate();
   }
 }
