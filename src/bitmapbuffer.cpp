@@ -108,18 +108,18 @@ void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx,
       y = ymin;
     }
     if (x + srcw * scale > xmax) {
-      srcw = int((xmax - x) / scale + 0.5);
+      srcw = int(ceil((xmax - x) / scale));
     }
     if (y + srch * scale > ymax) {
-      srch = int((ymax - y) / scale + 0.5);
+      srch = int(ceil((ymax - y) / scale));
     }
 
     if (srcw <= 0 || srch <= 0) {
       return;
     }
 
-    auto scaledw = int((scale * srcw) + 0.5);
-    auto scaledh = int((scale * srch) + 0.5);
+    auto scaledw = int(ceil(scale * srcw));
+    auto scaledh = int(ceil(scale * srch));
 
     if (x + scaledw > _width)
       scaledw = _width - x;
