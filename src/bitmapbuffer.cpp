@@ -86,6 +86,15 @@ void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx,
     if (y + srch > ymax) {
       srch = ymax - y;
     }
+
+    if (srcw <= 0 || srch <= 0) {
+      return;
+    }
+
+    if (bmp->getFormat() == BMP_ARGB4444)
+      DMACopyAlphaBitmap(data, format == BMP_ARGB4444, _width, _height, x, y, bmp->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
+    else
+      DMACopyBitmap(data, _width, _height, x, y, bmp->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
   }
   else {
     if (x < xmin) {
@@ -99,46 +108,58 @@ void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx,
       y = ymin;
     }
     if (x + srcw * scale > xmax) {
-      srcw = (xmax - x) / scale;
+      srcw = int((xmax - x) / scale + 0.5);
     }
     if (y + srch * scale > ymax) {
-      srch = (ymax - y) / scale;
+      srch = int((ymax - y) / scale + 0.5);
     }
-  }
 
-  if (srcw <= 0 || srch <= 0) {
-    return;
-  }
+    if (srcw <= 0 || srch <= 0) {
+      return;
+    }
 
-  if (scale == 0) {
-    if (bmp->getFormat() == BMP_ARGB4444)
-      DMACopyAlphaBitmap(data, format == BMP_ARGB4444, _width, _height, x, y, bmp->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
-    else
-      DMACopyBitmap(data, _width, _height, x, y, bmp->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
-  }
-  else {
-    int scaledw = srcw * scale;
-    int scaledh = srch * scale;
+    auto scaledw = int((scale * srcw) + 0.5);
+    auto scaledh = int((scale * srch) + 0.5);
 
     if (x + scaledw > _width)
       scaledw = _width - x;
     if (y + scaledh > _height)
       scaledh = _height - y;
 
-    for (int i = 0; i < scaledh; i++) {
-      pixel_t * p = getPixelPtrAbs(x, y + i);
-      const pixel_t * qstart = bmp->getPixelPtrAbs(srcx, srcy + int(i / scale));
-      for (int j = 0; j < scaledw; j++) {
-        const pixel_t * q = qstart;
-        MOVE_PIXEL_RIGHT(q, int(j / scale));
-        if (bmp->getFormat() == BMP_ARGB4444) {
-          ARGB_SPLIT(*q, a, r, g, b);
-          drawAlphaPixel(p, a, RGB_JOIN(r<<1, g<<2, b<<1));
+    if (format == BMP_ARGB4444)  {
+      for (int i = 0; i < scaledh; i++) {
+        pixel_t *p = getPixelPtrAbs(x, y + i);
+        const pixel_t *qstart = bmp->getPixelPtrAbs(srcx, srcy + int(i / scale));
+        for (int j = 0; j < scaledw; j++) {
+          const pixel_t *q = qstart;
+          MOVE_PIXEL_RIGHT(q, int(j / scale));
+          if (bmp->getFormat() == BMP_RGB565) {
+            RGB_SPLIT(*q, r, g, b);
+            drawPixel(p, ARGB_JOIN(0xF, r>>1, g>>2, b>>1));
+          }
+          else {  // bmp->getFormat() == BMP_ARGB4444
+            drawPixel(p, *q);
+          }
+          MOVE_TO_NEXT_RIGHT_PIXEL(p);
         }
-        else {
-          drawPixel(p, *q);
+      }
+    }
+    else {
+      for (int i = 0; i < scaledh; i++) {
+        pixel_t * p = getPixelPtrAbs(x, y + i);
+        const pixel_t * qstart = bmp->getPixelPtrAbs(srcx, srcy + int(i / scale));
+        for (int j = 0; j < scaledw; j++) {
+          const pixel_t * q = qstart;
+          MOVE_PIXEL_RIGHT(q, int(j / scale));
+          if (bmp->getFormat() == BMP_ARGB4444) {
+            ARGB_SPLIT(*q, a, r, g, b);
+            drawAlphaPixel(p, a, RGB_JOIN(r<<1, g<<2, b<<1));
+          }
+          else {
+            drawPixel(p, *q);
+          }
+          MOVE_TO_NEXT_RIGHT_PIXEL(p);
         }
-        MOVE_TO_NEXT_RIGHT_PIXEL(p);
       }
     }
   }
