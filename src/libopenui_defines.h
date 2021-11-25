@@ -40,6 +40,7 @@ constexpr uint32_t VERTICAL = 0x4000u;
 // unused 0x8000u
 
 /* drawNumber flags */
+#define PREC_MASK                      0x30u
 #define PREC1                          0x10u
 #define PREC2                          0x20u
 #define PREC3                          0x30u
