@@ -462,6 +462,11 @@ void BitmapBuffer::fillRect(coord_t x, coord_t y, coord_t w, coord_t h, uint16_t
 
 void BitmapBuffer::drawSolidFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, LcdFlags flags)
 {
+  APPLY_OFFSET();
+
+  if (!applyClippingRect(x, y, w, h))
+    return;
+
   auto color = lcdColorTable[COLOR_IDX(flags)];
   if (format == BMP_RGB565)
     fillRect(x, y, w, h, color);
@@ -484,6 +489,9 @@ void BitmapBuffer::drawFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, ui
 void BitmapBuffer::invertRect(coord_t x, coord_t y, coord_t w, coord_t h, LcdFlags flags)
 {
   APPLY_OFFSET();
+
+  if (!applyClippingRect(x, y, w, h))
+    return;
 
   pixel_t color = lcdColorTable[COLOR_IDX(flags)];
   RGB_SPLIT(color, red, green, blue);

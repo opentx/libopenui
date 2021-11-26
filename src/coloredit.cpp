@@ -24,7 +24,8 @@
 
 constexpr uint8_t PART_BITS[3][2] = { {0, 5}, {5, 6}, {11, 5} };
 
-class ColorBox: public Window {
+class ColorBox: public Window
+{
   public:
     ColorBox(Window * parent, const rect_t & rect, LcdFlags color):
       Window(parent, rect),
