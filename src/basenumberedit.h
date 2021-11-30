@@ -98,7 +98,7 @@ class BaseNumberEdit: public FormField
       _setValue = std::move(handler);
     }
 
-    int32_t getValue() const
+    int getValue() const
     {
       return (editMode && !instantChange) ? currentValue : _getValue();
     }
