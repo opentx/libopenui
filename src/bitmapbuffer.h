@@ -46,6 +46,8 @@ constexpr uint8_t STASHED = 0x33;
 
 #define USE_STB
 
+typedef uint16_t color_t;
+
 enum BitmapFormats
 {
   BMP_RGB565,
@@ -335,9 +337,9 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
       this->format = format;
     }
 
-    inline void clear()
+    inline void clear(color_t color = 0)
     {
-      fillRect(0, 0, _width - offsetX, _height - offsetY, 0);
+      fillRect(0, 0, _width - offsetX, _height - offsetY, color);
     }
 
     inline void clear(LcdFlags flags)
@@ -526,7 +528,7 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
 
     bool clipLine(coord_t& x1, coord_t& y1, coord_t& x2, coord_t& y2);
 
-    void fillRect(coord_t x, coord_t y, coord_t w, coord_t h, uint16_t color);
+    void fillRect(coord_t x, coord_t y, coord_t w, coord_t h, color_t color);
 
   private:
     bool dataAllocated;
