@@ -249,7 +249,7 @@ void Window::fullPaint(BitmapBuffer * dc)
     TRACE_WINDOWS_INDENT("%s%s", getWindowDebugString().c_str(), hasFocus() ? " (*)" : "");
     paint(dc);
 #if defined(WINDOWS_INSPECT_BORDER_COLOR)
-    dc->drawSolidRect(0, 0, width(), height(), 1, WINDOWS_INSPECT_BORDER_COLOR);
+    dc->drawSolidRect(0, 0, width(), height(), WINDOWS_INSPECT_BORDER_COLOR, 1);
 #endif
   }
   else {

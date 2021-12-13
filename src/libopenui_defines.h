@@ -73,8 +73,8 @@ constexpr uint32_t VERTICAL = 0x4000u;
 #define GET_RED(color) \
   (((color) & 0xF800) >> 8)
 
-#define RGB_TO_ARGB(color, alpha) \
-  ARGB(alpha, GET_RED(color), GET_GREEN(color), GET_BLUE(color))
+#define RGB565_TO_ARGB4444(color, alpha) \
+  ARGB4444(alpha, GET_RED(color), GET_GREEN(color), GET_BLUE(color))
 
 #define GET_GREEN(color) \
   (((color) & 0x07E0) >> 3)
@@ -83,36 +83,10 @@ constexpr uint32_t VERTICAL = 0x4000u;
   (((color) & 0x001F) << 3)
 
 #define ALPHA_MAX                      0x0Fu
-#define OPACITY(value)                 ((value) << 24u)
+#define ALPHA(value)                   ((value) << 24u)
 
-#define RGB(r, g, b)                   (uint16_t)((((r) & 0xF8) << 8) + (((g) & 0xFC) << 3) + (((b) & 0xF8) >> 3))
-#define ARGB(a, r, g, b)               (uint16_t)((((a) & 0xF0) << 8) + (((r) & 0xF0) << 4) + (((g) & 0xF0) << 0) + (((b) & 0xF0) >> 4))
+#define RGB565(r, g, b)                (uint16_t)((((r) & 0xF8) << 8) + (((g) & 0xFC) << 3) + (((b) & 0xF8) >> 3))
+#define ARGB4444(a, r, g, b)           (uint16_t)((((a) & 0xF0) << 8) + (((r) & 0xF0) << 4) + (((g) & 0xF0) << 0) + (((b) & 0xF0) >> 4))
 
-#define COLOR(index)                   LcdFlags(unsigned(index) << 16u)
-#define COLOR_IDX(flags)               uint8_t((flags) >> 16u)
-#define COLOR_MASK                     0xFFFF0000u
-
-inline LcdFlags replaceColor(LcdFlags flags, LcdFlags color)
-{
-  return (flags & ~COLOR_MASK) | color;
-}
-
-#define DEFAULT_COLOR                  COLOR(DEFAULT_COLOR_INDEX)
-#define DEFAULT_BGCOLOR                COLOR(DEFAULT_BGCOLOR_INDEX)
-#define FOCUS_COLOR                    COLOR(FOCUS_COLOR_INDEX)
-#define FOCUS_BGCOLOR                  COLOR(FOCUS_BGCOLOR_INDEX)
-#define DISABLE_COLOR                  COLOR(DISABLE_COLOR_INDEX)
-#define HIGHLIGHT_COLOR                COLOR(HIGHLIGHT_COLOR_INDEX)
-#define CHECKBOX_COLOR                 COLOR(CHECKBOX_COLOR_INDEX)
-#define SCROLLBAR_COLOR                COLOR(SCROLLBAR_COLOR_INDEX)
-#define MENU_COLOR                     COLOR(MENU_COLOR_INDEX)
-#define MENU_BGCOLOR                   COLOR(MENU_BGCOLOR_INDEX)
-#define MENU_TITLE_BGCOLOR             COLOR(MENU_TITLE_BGCOLOR_INDEX)
-#define MENU_LINE_COLOR                COLOR(MENU_LINE_COLOR_INDEX)
-#define MENU_HIGHLIGHT_COLOR           COLOR(MENU_HIGHLIGHT_COLOR_INDEX)
-#define MENU_HIGHLIGHT_BGCOLOR         COLOR(MENU_HIGHLIGHT_BGCOLOR_INDEX)
-#define OVERLAY_COLOR                  COLOR(OVERLAY_COLOR_INDEX)
-#define TABLE_BGCOLOR                  COLOR(TABLE_BGCOLOR_INDEX)
-#define TABLE_HEADER_BGCOLOR           COLOR(TABLE_HEADER_BGCOLOR_INDEX)
-#define CUSTOM_COLOR                   COLOR(CUSTOM_COLOR_INDEX)
-
+#define COLOR_TO_RGB565(color)         uint16_t(color)
+#define COLOR_TO_A4(color)             (color >> 24)

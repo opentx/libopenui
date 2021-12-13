@@ -377,6 +377,8 @@ class Window
 
     void moveWindowsTop(coord_t y, coord_t delta);
 
+    virtual void invalidate(const rect_t & rect);
+
     void invalidate()
     {
       invalidate({0, 0, rect.w, rect.h});
@@ -434,8 +436,6 @@ class Window
       children.remove(window);
       invalidate();
     }
-
-    virtual void invalidate(const rect_t & rect);
 
     void paintChildren(BitmapBuffer * dc, std::list<Window *>::iterator it);
 

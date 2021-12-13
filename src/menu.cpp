@@ -112,22 +112,22 @@ void MenuBody::paint(BitmapBuffer * dc)
 
   for (unsigned i = 0; i < lines.size(); i++) {
     auto & line = lines[i];
-    LcdFlags flags = MENU_COLOR | MENU_FONT;
+    LcdColor color = MENU_COLOR;
     if (selectedIndex == (int)i) {
-      flags = MENU_HIGHLIGHT_COLOR | MENU_FONT;
+      color = MENU_HIGHLIGHT_COLOR;
       if (MENU_HIGHLIGHT_BGCOLOR != MENU_BGCOLOR) {
         dc->drawSolidFilledRect(0, i * MENUS_LINE_HEIGHT, width(), MENUS_LINE_HEIGHT, MENU_HIGHLIGHT_BGCOLOR);
       }
     }
     if (line.drawLine) {
-      line.drawLine(dc, 0, i * MENUS_LINE_HEIGHT, flags);
+      line.drawLine(dc, 0, i * MENUS_LINE_HEIGHT, color);
     }
     else {
       const char * text = line.text.data();
       if (IS_TRANSLATION_RIGHT_TO_LEFT())
-        dc->drawText(width() - 10, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - getFontHeight(MENU_FONT)) / 2, text[0] == '\0' ? "---" : text, flags | RIGHT);
+        dc->drawText(width() - 10, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - getFontHeight(MENU_FONT)) / 2, text[0] == '\0' ? "---" : text, color, MENU_FONT | RIGHT);
       else
-        dc->drawText(10, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - getFontHeight(MENU_FONT)) / 2, text[0] == '\0' ? "---" : text, flags);
+        dc->drawText(10, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - getFontHeight(MENU_FONT)) / 2, text[0] == '\0' ? "---" : text, color, MENU_FONT);
     }
 
     Menu * menu = getParentMenu();
@@ -155,7 +155,7 @@ void MenuWindowContent::paint(BitmapBuffer * dc)
 
   // the title
   if (!title.empty()) {
-    dc->drawText(MENUS_WIDTH / 2, (POPUP_HEADER_HEIGHT - getFontHeight(MENU_HEADER_FONT)) / 2, title.c_str(), CENTERED | MENU_HEADER_FONT);
+    dc->drawText(MENUS_WIDTH / 2, (POPUP_HEADER_HEIGHT - getFontHeight(MENU_HEADER_FONT)) / 2, title.c_str(), DEFAULT_COLOR, CENTERED | MENU_HEADER_FONT);
     dc->drawSolidHorizontalLine(0, POPUP_HEADER_HEIGHT - 1, MENUS_WIDTH, MENU_LINE_COLOR);
   }
 }

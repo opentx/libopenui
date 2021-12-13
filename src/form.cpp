@@ -97,10 +97,10 @@ void FormField::paint(BitmapBuffer * dc)
   }
   else if (!(windowFlags & FORM_NO_BORDER)) {
     if (hasFocus()) {
-      dc->drawSolidRect(0, 0, rect.w, rect.h, 2, FOCUS_BGCOLOR);
+      dc->drawSolidRect(0, 0, rect.w, rect.h, FOCUS_BGCOLOR, 2);
     }
     else if (!(windowFlags & FORM_BORDER_FOCUS_ONLY)) {
-      dc->drawSolidRect(0, 0, rect.w, rect.h, 1, DISABLE_COLOR);
+      dc->drawSolidRect(0, 0, rect.w, rect.h, DISABLE_COLOR, 1);
     }
   }
 }
@@ -270,10 +270,10 @@ void FormGroup::paint(BitmapBuffer * dc)
 {
   if (!(windowFlags & (FORM_NO_BORDER | FORM_FORWARD_FOCUS))) {
     if (!editMode && hasFocus()) {
-      dc->drawSolidRect(0, 0, rect.w, rect.h, 2, FOCUS_BGCOLOR);
+      dc->drawSolidRect(0, 0, rect.w, rect.h, FOCUS_BGCOLOR, 2);
     }
     else if (!(windowFlags & FORM_BORDER_FOCUS_ONLY)) {
-      dc->drawSolidRect(0, 0, rect.w, rect.h, 1, DISABLE_COLOR);
+      dc->drawSolidRect(0, 0, rect.w, rect.h, DISABLE_COLOR, 1);
     }
   }
 }

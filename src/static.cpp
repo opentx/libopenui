@@ -20,7 +20,7 @@
 #include "static.h"
 #include "font.h"
 
-void StaticText::drawText(BitmapBuffer * dc, const rect_t & rect, const std::string & text, LcdFlags textFlags)
+void StaticText::drawText(BitmapBuffer * dc, const rect_t & rect, const std::string & text, LcdColor textColor, LcdFlags textFlags)
 {
   coord_t x = rect.x;
   if (textFlags & CENTERED)
@@ -39,13 +39,13 @@ void StaticText::drawText(BitmapBuffer * dc, const rect_t & rect, const std::str
   auto nextline = findNextLine(start);
   if (nextline) {
     do {
-      dc->drawText(x, y, text.substr(current - start, nextline - current).c_str(), textFlags);
+      dc->drawText(x, y, text.substr(current - start, nextline - current).c_str(), textColor, textFlags);
       current = nextline + 1;
       nextline = findNextLine(current);
       y += getFontHeight(textFlags) + 2;
     } while (nextline);
   }
-  dc->drawText(x, y, current, textFlags);
+  dc->drawText(x, y, current, textColor, textFlags);
 }
 
 void StaticText::paint(BitmapBuffer * dc)
@@ -54,5 +54,5 @@ void StaticText::paint(BitmapBuffer * dc)
     dc->drawSolidFilledRect(0, 0, rect.w, rect.h, bgColor);
   }
 
-  drawText(dc, {0, 0, rect.w, rect.h}, text, textFlags);
+  drawText(dc, {0, 0, rect.w, rect.h}, text, textColor, textFlags);
 }

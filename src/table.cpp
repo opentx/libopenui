@@ -28,7 +28,7 @@ void Table::Header::paint(BitmapBuffer * dc)
     for (unsigned i = 0; i < cells.size(); i++) {
       auto cell = cells[i];
       if (cell) {
-        cell->paint(dc, x, 0, TABLE_HEADER_FONT);
+        cell->paint(dc, x, 0, DEFAULT_COLOR, TABLE_HEADER_FONT);
       }
       x += static_cast<Table *>(parent)->columnsWidth[i];
     }
@@ -69,8 +69,7 @@ void Table::Body::paint(BitmapBuffer * dc)
     for (unsigned i = 0; i < line->cells.size(); i++) {
       auto cell = line->cells[i];
       if (cell) {
-        auto flags = highlight ? replaceColor(line->flags, MENU_HIGHLIGHT_COLOR) : line->flags;
-        cell->paint(dc, x, y, flags);
+        cell->paint(dc, x, y, highlight ? MENU_HIGHLIGHT_COLOR : line->color, line->font);
       }
       x += static_cast<Table *>(parent)->columnsWidth[i];
     }

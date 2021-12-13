@@ -108,10 +108,21 @@ class TextButton: public Button
       }
     }
 
+    LcdColor getTextColor() const
+    {
+      return textColor;
+    }
+
+    void setTextColor(LcdColor value)
+    {
+      textColor = value;
+    }
+
     void paint(BitmapBuffer * dc) override;
 
   protected:
     std::string text;
+    LcdColor textColor = DEFAULT_COLOR;
 };
 
 class IconButton: public Button

@@ -33,7 +33,7 @@ class Table: public FormField
       public:
         virtual ~Cell() = default;
 
-        virtual void paint(BitmapBuffer * dc, coord_t x, coord_t y, LcdFlags flags) = 0;
+        virtual void paint(BitmapBuffer * dc, coord_t x, coord_t y, LcdColor color, LcdFlags flags) = 0;
 
         virtual bool needsInvalidate() = 0;
     };
@@ -48,9 +48,9 @@ class Table: public FormField
         {
         }
 
-        void paint(BitmapBuffer * dc, coord_t x, coord_t y, LcdFlags flags) override
+        void paint(BitmapBuffer * dc, coord_t x, coord_t y, LcdColor color, LcdFlags flags) override
         {
-          dc->drawText(x, y - 2 + (TABLE_LINE_HEIGHT - getFontHeight(TABLE_HEADER_FONT)) / 2 + 3, value.c_str(), flags);
+          dc->drawText(x, y - 2 + (TABLE_LINE_HEIGHT - getFontHeight(TABLE_HEADER_FONT)) / 2 + 3, value.c_str(), color, flags);
         }
 
         bool needsInvalidate() override
@@ -82,10 +82,10 @@ class Table: public FormField
         {
         }
 
-        void paint(BitmapBuffer * dc, coord_t x, coord_t y, LcdFlags flags) override
+        void paint(BitmapBuffer * dc, coord_t x, coord_t y, LcdColor color, LcdFlags flags) override
         {
           auto text = getText();
-          dc->drawText(x, y - 2 + (TABLE_LINE_HEIGHT - getFontHeight(TABLE_BODY_FONT)) / 2 + 3, text.c_str(), SPACING_NUMBERS_CONST | flags);
+          dc->drawText(x, y - 2 + (TABLE_LINE_HEIGHT - getFontHeight(TABLE_BODY_FONT)) / 2 + 3, text.c_str(), color, SPACING_NUMBERS_CONST | flags);
         }
 
         bool needsInvalidate() override
@@ -100,14 +100,14 @@ class Table: public FormField
     class CustomCell : public Cell
     {
       public:
-        explicit CustomCell(std::function<void(BitmapBuffer * /*dc*/, coord_t /*x*/, coord_t /*y*/, LcdFlags /*flags*/)> paintFunction):
+        explicit CustomCell(std::function<void(BitmapBuffer * /*dc*/, coord_t /*x*/, coord_t /*y*/, LcdColor /*color*/, LcdFlags /*flags*/)> paintFunction):
           paintFunction(std::move(paintFunction))
         {
         }
 
-        void paint(BitmapBuffer * dc, coord_t x, coord_t y, LcdFlags flags) override
+        void paint(BitmapBuffer * dc, coord_t x, coord_t y, LcdColor color, LcdFlags flags) override
         {
-          paintFunction(dc, x, y, flags);
+          paintFunction(dc, x, y, color, flags);
         }
 
         bool needsInvalidate() override
@@ -116,7 +116,7 @@ class Table: public FormField
         }
 
       protected:
-        std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, LcdFlags flags)> paintFunction;
+        std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, LcdColor color, LcdFlags flags)> paintFunction;
     };
 
     class Line
@@ -136,7 +136,8 @@ class Table: public FormField
         std::vector<Cell *> cells;
         std::function<void()> onPress;
         std::function<void()> onSelect;
-        LcdFlags flags = TABLE_BODY_FONT;
+        LcdFlags font = TABLE_BODY_FONT;
+        LcdColor color = DEFAULT_COLOR;
     };
 
     class Header: public Window, public Line
@@ -189,10 +190,18 @@ class Table: public FormField
           }
         }
 
-        void setLineFlags(uint8_t index, LcdFlags flags)
+        void setLineFont(uint8_t index, LcdFlags font)
         {
-          if (lines[index]->flags != flags) {
-            lines[index]->flags = flags;
+          if (lines[index]->font != font) {
+            lines[index]->font = font;
+            invalidate({0, index * TABLE_LINE_HEIGHT - scrollPositionY, width(), TABLE_LINE_HEIGHT});
+          }
+        }
+
+        void setLineColor(uint8_t index, LcdColor color)
+        {
+          if (lines[index]->color != color) {
+            lines[index]->color = color;
             invalidate({0, index * TABLE_LINE_HEIGHT - scrollPositionY, width(), TABLE_LINE_HEIGHT});
           }
         }
@@ -333,9 +342,14 @@ class Table: public FormField
       body->select(index, scroll);
     }
 
-    void setLineFlags(uint8_t index, LcdFlags flags)
+    void setLineFont(uint8_t index, LcdFlags font)
     {
-      body->setLineFlags(index, flags);
+      body->setLineFont(index, font);
+    }
+
+    void setLineColor(uint8_t index, LcdColor color)
+    {
+      body->setLineColor(index, color);
     }
 
     void setHeader(const char * const values[])

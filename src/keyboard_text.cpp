@@ -110,8 +110,7 @@ void TextKeyboard::paint(BitmapBuffer * dc)
 {
   auto layout = KEYBOARDS[layoutIndex];
 
-  lcdSetColor(RGB(0xE0, 0xE0, 0xE0));
-  dc->clear(CUSTOM_COLOR);
+  dc->clear(RGB565(0xE0, 0xE0, 0xE0));
 
   for (uint8_t i = 0; i < 4; i++) {
     coord_t y = 15 + i * 40;
@@ -123,21 +122,21 @@ void TextKeyboard::paint(BitmapBuffer * dc)
       }
       else if (*c == KEYBOARD_SPACE[0]) {
         // spacebar
-        dc->drawMask(x, y, LBM_KEY_SPACEBAR, DEFAULT_COLOR);
+        dc->drawMask(x, y, (const BitmapData *)LBM_KEY_SPACEBAR, DEFAULT_COLOR);
         x += 135;
       }
       else if (*c == KEYBOARD_ENTER[0]) {
         // enter
         dc->drawSolidFilledRect(x, y - 2, 80, 25, DISABLE_COLOR);
-        dc->drawText(x+40, y, "ENTER", CENTERED);
+        dc->drawText(x+40, y, "ENTER", DEFAULT_COLOR, CENTERED);
         x += 80;
       }
       else if (int8_t(*c) < 0) {
-        dc->drawMask(x, y, LBM_SPECIAL_KEYS[uint8_t(*c - 128)], DEFAULT_COLOR);
+        dc->drawMask(x, y, (const BitmapData *)LBM_SPECIAL_KEYS[uint8_t(*c - 128)], DEFAULT_COLOR);
         x += 45;
       }
       else {
-        dc->drawSizedText(x, y, c, 1);
+        dc->drawSizedText(x, y, c, 1, DEFAULT_COLOR);
         x += 30;
       }
       c++;

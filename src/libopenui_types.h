@@ -79,5 +79,6 @@ static const rect_t nullRect = {0, 0, 0, 0};
 
 typedef uint32_t LcdFlags;
 typedef uint16_t event_t;
-
+typedef uint16_t Color565;
+typedef uint32_t LcdColor;
 typedef uint8_t charSuite[2];

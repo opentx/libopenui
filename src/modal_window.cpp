@@ -29,7 +29,7 @@ ModalWindow::ModalWindow(Window * parent, bool closeWhenClickOutside):
   Layer::push(this);
 }
 
-void ModalWindow::deleteLater(bool detach, bool trash)
+void ModalWindow::deleteLater(bool detach, bool trash) // NOLINT(google-default-arguments)
 {
   if (_deleted)
     return;
@@ -41,7 +41,7 @@ void ModalWindow::deleteLater(bool detach, bool trash)
 
 void ModalWindow::paint(BitmapBuffer * dc)
 {
-  dc->drawFilledRect(0, 0, width(), height(), SOLID, OVERLAY_COLOR | OPACITY(5));
+  dc->drawFilledRect(0, 0, width(), height(), OVERLAY_COLOR | ALPHA(5), SOLID);
 }
 
 void ModalWindowContent::paint(BitmapBuffer * dc)
