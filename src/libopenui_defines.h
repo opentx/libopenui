@@ -82,11 +82,23 @@ constexpr uint32_t VERTICAL = 0x4000u;
 #define GET_BLUE(color) \
   (((color) & 0x001F) << 3)
 
-#define ALPHA_MAX                      0x0Fu
+constexpr uint8_t ALPHA_MAX = 0x0Fu;
 #define ALPHA(value)                   ((value) << 24u)
 
-#define RGB565(r, g, b)                (uint16_t)((((r) & 0xF8) << 8) + (((g) & 0xFC) << 3) + (((b) & 0xF8) >> 3))
-#define ARGB4444(a, r, g, b)           (uint16_t)((((a) & 0xF0) << 8) + (((r) & 0xF0) << 4) + (((g) & 0xF0) << 0) + (((b) & 0xF0) >> 4))
+constexpr Color565 RGB565(uint8_t r, uint8_t g, uint8_t b)
+{
+  return (((r) & 0xF8) << 8) + (((g) & 0xFC) << 3) + (((b) & 0xF8) >> 3);
+}
 
-#define COLOR_TO_RGB565(color)         uint16_t(color)
+constexpr Color565 GREY(uint8_t v)
+{
+  return RGB565(v, v, v);
+}
+
+inline uint16_t ARGB4444(uint8_t a, uint8_t r, uint8_t g, uint8_t b)
+{
+  return (((a) & 0xF0) << 8) + (((r) & 0xF0) << 4) + (((g) & 0xF0) << 0) + (((b) & 0xF0) >> 4);
+}
+
+#define COLOR_TO_RGB565(color)         Color565(color)
 #define COLOR_TO_A4(color)             (color >> 24)
