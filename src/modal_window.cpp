@@ -41,7 +41,7 @@ void ModalWindow::deleteLater(bool detach, bool trash) // NOLINT(google-default-
 
 void ModalWindow::paint(BitmapBuffer * dc)
 {
-  dc->drawFilledRect(0, 0, width(), height(), OVERLAY_COLOR | ALPHA(5), SOLID);
+  dc->drawFilledRect(0, 0, width(), height(), OVERLAY_COLOR, SOLID);
 }
 
 void ModalWindowContent::paint(BitmapBuffer * dc)

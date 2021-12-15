@@ -241,18 +241,18 @@ void BitmapBuffer::drawHorizontalLineAbs(coord_t x, coord_t y, coord_t w, LcdCol
 {
   pixel_t * p = getPixelPtrAbs(x, y);
   auto rgb565 = COLOR_TO_RGB565(color);
-  uint8_t opacity = 0x0F - COLOR_TO_A4(color);
+  uint8_t alpha = GET_COLOR_ALPHA(color);
 
   if (pat == SOLID) {
     while (w--) {
-      drawAlphaPixel(p, opacity, rgb565);
+      drawAlphaPixel(p, alpha, rgb565);
       MOVE_TO_NEXT_RIGHT_PIXEL(p);
     }
   }
   else {
     while (w--) {
       if (pat & 1) {
-        drawAlphaPixel(p, opacity, rgb565);
+        drawAlphaPixel(p, alpha, rgb565);
         pat = (pat >> 1) | 0x80;
       }
       else {
@@ -272,11 +272,11 @@ void BitmapBuffer::drawVerticalLine(coord_t x, coord_t y, coord_t h, LcdColor co
     return;
 
   auto rgb565 = COLOR_TO_RGB565(color);
-  uint8_t opacity = 0x0F - COLOR_TO_A4(color);
+  uint8_t alpha = GET_COLOR_ALPHA(color);
 
   if (pat == SOLID) {
     while (h--) {
-      drawAlphaPixelAbs(x, y, opacity, rgb565);
+      drawAlphaPixelAbs(x, y, alpha, rgb565);
       y++;
     }
   }
@@ -286,7 +286,7 @@ void BitmapBuffer::drawVerticalLine(coord_t x, coord_t y, coord_t h, LcdColor co
     }
     while (h--) {
       if (pat & 1) {
-        drawAlphaPixelAbs(x, y, opacity, color);
+        drawAlphaPixelAbs(x, y, alpha, color);
         pat = (pat >> 1) | 0x80;
       }
       else {
@@ -670,13 +670,13 @@ void BitmapBuffer::drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadiu
       if (dist >= internalDist && dist <= externalDist) {
         Slope slope(false, x1 == 0 ? 99000 : y1 * 100 / x1);
         if (slope.isBetween(startSlope, endSlope))
-          drawPixelAbs(x + x1, y - y1, rgb565);
+          drawPixelAbsWithClipping(x + x1, y - y1, rgb565);
         if (slope.invertVertical().isBetween(startSlope, endSlope))
-          drawPixelAbs(x + x1, y + y1, rgb565);
+          drawPixelAbsWithClipping(x + x1, y + y1, rgb565);
         if (slope.invertHorizontal().isBetween(startSlope, endSlope))
-          drawPixelAbs(x - x1, y + y1, rgb565);
+          drawPixelAbsWithClipping(x - x1, y + y1, rgb565);
         if (slope.invertVertical().isBetween(startSlope, endSlope))
-          drawPixelAbs(x - x1, y - y1, rgb565);
+          drawPixelAbsWithClipping(x - x1, y - y1, rgb565);
       }
     }
   }
@@ -767,13 +767,13 @@ void BitmapBuffer::drawMask(coord_t x, coord_t y, const BitmapMask * mask, const
   if (y >= ymax || x >= xmax || width <= 0 || x + width < xmin || y + height < ymin)
     return;
 
-  for (coord_t row = 0; row < height; row++) {
-    if (y + row < ymin || y + row >= ymax)
+  for (coord_t yCur = 0; yCur < height; yCur++) {
+    if (y + yCur < ymin || y + yCur >= ymax)
       continue;
-    auto * p = getPixelPtrAbs(x, y + row);
-    const auto * q = mask->getPixelPtrAbs(offsetX, offsetY + row);
-    for (coord_t col = 0; col < width; col++) {
-      drawAlphaPixel(p, (*q) >> 4, *srcBitmap->getPixelPtrAbs(row, col));
+    auto * p = getPixelPtrAbs(x, y + yCur);
+    const auto * q = mask->getPixelPtrAbs(offsetX, offsetY + yCur);
+    for (coord_t xCur = 0; xCur < width; xCur++) {
+      drawAlphaPixel(p, (*q) >> 4, *srcBitmap->getPixelPtrAbs(xCur, yCur));
       MOVE_TO_NEXT_RIGHT_PIXEL(p);
       MOVE_TO_NEXT_RIGHT_PIXEL(q);
     }

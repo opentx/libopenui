@@ -82,6 +82,8 @@ constexpr uint32_t VERTICAL = 0x4000u;
 #define GET_BLUE(color) \
   (((color) & 0x001F) << 3)
 
+#define ALPHA_MASK 0x0F000000
+
 constexpr uint8_t ALPHA_MAX = 0x0Fu;
 #define ALPHA(value)                   ((value) << 24u)
 
@@ -100,5 +102,14 @@ inline uint16_t ARGB4444(uint8_t a, uint8_t r, uint8_t g, uint8_t b)
   return (((a) & 0xF0) << 8) + (((r) & 0xF0) << 4) + (((g) & 0xF0) << 0) + (((b) & 0xF0) >> 4);
 }
 
+inline bool IS_COLOR_OPAQUE(LcdColor color)
+{
+  return (color & ALPHA_MASK) == ALPHA(ALPHA_MAX);
+}
+
+inline uint8_t GET_COLOR_ALPHA(LcdColor color)
+{
+  return color >> 24;
+}
+
 #define COLOR_TO_RGB565(color)         Color565(color)
-#define COLOR_TO_A4(color)             (color >> 24)

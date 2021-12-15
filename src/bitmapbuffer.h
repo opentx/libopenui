@@ -346,8 +346,7 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
     {
       APPLY_OFFSET();
 
-      coord_t w = 1, h = 1;
-      if (!applyClippingRect(x, y, w, h))
+      if (!applyPixelClippingRect(x, y))
         return nullptr;
 
       return BitmapBufferBase::getPixelPtrAbs(x, y);
@@ -356,12 +355,7 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
     inline void drawPixel(coord_t x, coord_t y, pixel_t value)
     {
       APPLY_OFFSET();
-
-      coord_t w = 1, h = 1;
-      if (!applyClippingRect(x, y, w, h))
-        return;
-
-      drawPixelAbs(x, y, value);
+      drawPixelAbsWithClipping(x, y, value);
     }
 
     void drawAlphaPixel(pixel_t * p, uint8_t opacity, Color565 color);
@@ -370,8 +364,7 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
     {
       APPLY_OFFSET();
 
-      coord_t w = 1, h = 1;
-      if (!applyClippingRect(x, y, w, h))
+      if (!applyPixelClippingRect(x, y))
         return;
 
       drawAlphaPixelAbs(x, y, opacity, value);
@@ -488,6 +481,12 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
       return data && h > 0 && w > 0;
     }
 
+    inline bool applyPixelClippingRect(coord_t x, coord_t y) const
+    {
+      coord_t w = 1, h = 1;
+      return applyClippingRect(x, y, w, h);
+    }
+
     uint8_t drawChar(coord_t x, coord_t y, const uint8_t * font, const uint16_t * spec, unsigned int index, LcdColor color);
 
     inline void drawPixel(pixel_t * p, pixel_t value)
@@ -513,6 +512,13 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
     {
       pixel_t * p = getPixelPtrAbs(x, y);
       drawAlphaPixel(p, opacity, color);
+    }
+
+    inline void drawPixelAbsWithClipping(coord_t x, coord_t y, pixel_t value)
+    {
+      if (applyPixelClippingRect(x, y)) {
+        drawPixelAbs(x, y, value);
+      }
     }
 
     void drawHorizontalLineAbs(coord_t x, coord_t y, coord_t w, LcdColor color, uint8_t pat = SOLID);
