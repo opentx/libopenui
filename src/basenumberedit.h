@@ -77,9 +77,10 @@ class BaseNumberEdit: public FormField
     void setValue(int value)
     {
       currentValue = limit(vmin, value, vmax);
-      if (instantChange) {
+      if (instantChange)
         _setValue(currentValue);
-      }
+      else
+        dirty = true;
       invalidate();
     }
 
@@ -111,8 +112,9 @@ class BaseNumberEdit: public FormField
         if (!previousEditMode && newEditMode) {
           currentValue = _getValue();
         }
-        else if (previousEditMode && !newEditMode) {
+        else if (previousEditMode && !newEditMode && dirty) {
           _setValue(currentValue);
+          dirty = false;
         }
       }
     }
@@ -124,6 +126,7 @@ class BaseNumberEdit: public FormField
     int step = 1;
     int currentValue;
     bool instantChange = true;
+    bool dirty = false;
     std::function<int()> _getValue;
     std::function<void(int)> _setValue;
 };
