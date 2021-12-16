@@ -508,10 +508,10 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
       drawPixel(p, value);
     }
 
-    inline void drawAlphaPixelAbs(coord_t x, coord_t y, uint8_t opacity, Color565 color)
+    inline void drawAlphaPixelAbs(coord_t x, coord_t y, uint8_t alpha, Color565 color)
     {
       pixel_t * p = getPixelPtrAbs(x, y);
-      drawAlphaPixel(p, opacity, color);
+      drawAlphaPixel(p, alpha, color);
     }
 
     inline void drawPixelAbsWithClipping(coord_t x, coord_t y, pixel_t value)

@@ -398,6 +398,7 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdC
     return;
 
   auto rgb565 = COLOR_TO_RGB565(color);
+  uint8_t alpha = GET_COLOR_ALPHA(color);
 
   int dx = x2 - x1;      /* the horizontal distance of the line */
   int dy = y2 - y1;      /* the vertical distance of the line */
@@ -414,7 +415,7 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdC
     /* the line is more horizontal than vertical */
     for (int i = 0; i <= dxabs; i++) {
       if ((1 << (px % 8)) & pat) {
-        drawPixelAbs(px, py, rgb565);
+        drawAlphaPixelAbs(px, py, alpha, rgb565);
       }
       y += dyabs;
       if (y >= dxabs) {
