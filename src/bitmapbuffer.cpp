@@ -394,12 +394,8 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdC
   x2 += offsetX;
   y2 += offsetY;
 
-  TRACE("");
-  TRACE("AVANT %d %d %d %d", x1, y1, x2, y2);
   if (!clipLine(x1, y1, x2, y2))
     return;
-  TRACE("CLIPPING %d-%d %d-%d", xmin, xmax, ymin, ymax);
-  TRACE("APRES %d %d %d %d", x1, y1, x2, y2);
 
   auto rgb565 = COLOR_TO_RGB565(color);
 
