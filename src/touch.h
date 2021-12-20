@@ -64,6 +64,11 @@ struct TouchState
     }
     return result;
   }
+
+  bool isScrolling() const
+  {
+    return state == TE_SLIDE || lastDeltaX != 0 || lastDeltaY != 0;
+  }
 };
 
 extern TouchState touchState;
