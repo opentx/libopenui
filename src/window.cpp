@@ -472,14 +472,24 @@ bool Window::onTouchSlide(coord_t x, coord_t y, coord_t startX, coord_t startY, 
   }
 
   if (slideY && innerHeight > rect.h) {
-    setScrollPositionY(scrollPositionY - slideY);
-    slidingWindow = this;
+    if (touchState.isScrollingByInertia() && (scrollPositionY == 0 || scrollPositionY == innerHeight - height())) {
+      touchState.stopInertia();
+    }
+    else {
+      setScrollPositionY(scrollPositionY - slideY);
+      slidingWindow = this;
+    }
     return true;
   }
 
   if (slideX && innerWidth > rect.w) {
-    setScrollPositionX(scrollPositionX - slideX);
-    slidingWindow = this;
+    if (touchState.isScrollingByInertia() && (scrollPositionX == 0 || scrollPositionX == innerWidth - width())) {
+      touchState.stopInertia();
+    }
+    else {
+      setScrollPositionX(scrollPositionX - slideX);
+      slidingWindow = this;
+    }
     return true;
   }
 
