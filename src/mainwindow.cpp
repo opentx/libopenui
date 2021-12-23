@@ -58,10 +58,6 @@ void MainWindow::checkEvents()
   else if (touchEvent == TE_SLIDE) {
     if (touchState.deltaX || touchState.deltaY) {
       onTouchSlide(touchState.x, touchState.y, touchState.startX, touchState.startY, touchState.deltaX, touchState.deltaY);
-      touchState.lastDeltaX = touchState.deltaX;
-      touchState.lastDeltaY = touchState.deltaY;
-      touchState.deltaX = 0;
-      touchState.deltaY = 0;
     }
   }
   else if (touchEvent == TE_SLIDE_END && slidingWindow) {

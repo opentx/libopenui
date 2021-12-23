@@ -478,6 +478,10 @@ bool Window::onTouchSlide(coord_t x, coord_t y, coord_t startX, coord_t startY, 
     else {
       setScrollPositionY(scrollPositionY - slideY);
       slidingWindow = this;
+      touchState.lastDeltaX = touchState.deltaX;
+      touchState.lastDeltaY = touchState.deltaY;
+      touchState.deltaX = 0;
+      touchState.deltaY = 0;
     }
     return true;
   }
@@ -489,6 +493,10 @@ bool Window::onTouchSlide(coord_t x, coord_t y, coord_t startX, coord_t startY, 
     else {
       setScrollPositionX(scrollPositionX - slideX);
       slidingWindow = this;
+      touchState.lastDeltaX = touchState.deltaX;
+      touchState.lastDeltaY = touchState.deltaY;
+      touchState.deltaX = 0;
+      touchState.deltaY = 0;
     }
     return true;
   }
