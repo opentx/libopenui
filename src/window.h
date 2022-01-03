@@ -431,6 +431,7 @@ class Window
         children.push_front(window);
       else
         children.push_back(window);
+      invalidate();
     }
 
     void removeChild(Window * window)
