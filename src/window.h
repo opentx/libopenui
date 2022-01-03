@@ -160,6 +160,8 @@ class Window
 
     void scrollTo(const rect_t & rect);
 
+    void scrollToPage(unsigned pageIndex);
+
     void scrollTo(Window * child, bool bottom = false);
 
     static void clearFocus(bool notify = true)

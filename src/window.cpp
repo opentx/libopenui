@@ -205,6 +205,11 @@ void Window::scrollTo(const rect_t & rect)
   }
 }
 
+void Window::scrollToPage(unsigned pageIndex)
+{
+  scrollTo({coord_t(pageWidth * pageIndex), 0, pageWidth, 0});
+}
+
 bool Window::hasOpaqueRect(const rect_t & testRect) const
 {
   if (!rect.contains(testRect))
