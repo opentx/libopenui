@@ -25,7 +25,12 @@ void MenuBody::select(int index)
 {
   selectedIndex = index;
   if (innerHeight > height()) {
-    setScrollPositionY(MENUS_LINE_HEIGHT * index - 3 * MENUS_LINE_HEIGHT);
+    if (scrollPositionY + height() < MENUS_LINE_HEIGHT * (index + 1)) {
+      setScrollPositionY(MENUS_LINE_HEIGHT * (index + 1) - height());
+    }
+    else if (scrollPositionY > MENUS_LINE_HEIGHT * index) {
+      setScrollPositionY(MENUS_LINE_HEIGHT * index);
+    }
   }
   invalidate();
 }
