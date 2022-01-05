@@ -45,6 +45,15 @@ class Roller: public Choice
       init(label);
     }
 
+    void enable(bool value = true)
+    {
+      if (value != enabled) {
+        enabled = value;
+        setInnerHeight(value ? INFINITE_HEIGHT : height());
+        invalidate();
+      }
+    }
+
     void init(const char * label)
     {
       if (label) {

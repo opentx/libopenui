@@ -219,7 +219,7 @@ bool Window::hasOpaqueRect(const rect_t & testRect) const
     return true;
   }
 
-  const rect_t relativeRect = {testRect.x - rect.x, testRect.y - rect.y, testRect.w, testRect.h};
+  const rect_t relativeRect = {testRect.x - rect.x + getScrollPositionX(), testRect.y - rect.y + getScrollPositionY(), testRect.w, testRect.h};
   return std::any_of(children.begin(), children.end(), [relativeRect](Window * child) { return child->hasOpaqueRect(relativeRect); });
 }
 
