@@ -52,22 +52,6 @@ Window::~Window()
   deleteChildren();
 }
 
-void Window::attach(Window * newParent)
-{
-  if (parent)
-    detach();
-  parent = newParent;
-  newParent->addChild(this);
-}
-
-void Window::detach()
-{
-  if (parent) {
-    parent->removeChild(this);
-    parent = nullptr;
-  }
-}
-
 void Window::deleteLater(bool detach, bool trash)
 {
   if (_deleted)
@@ -243,6 +227,7 @@ void Window::fullPaint(BitmapBuffer * dc)
     rect_t relativeRect = {xmin - x, ymin - y, xmax - xmin, ymax - ymin};
     while (firstChild != children.begin()) {
       auto child = *(--firstChild);
+      TRACE("CHILD SENS INVERSE = %s", child->getWindowDebugString().c_str());
       if (child->hasOpaqueRect(relativeRect)) {
         paintNeeded = false;
         break;

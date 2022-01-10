@@ -393,9 +393,21 @@ class Window
 
     virtual void checkEvents();
 
-    void attach(Window * window);
+    void attach(Window * newParent, bool front = false)
+    {
+      if (parent)
+        detach();
+      parent = newParent;
+      newParent->addChild(this, front);
+    }
 
-    void detach();
+    void detach()
+    {
+      if (parent) {
+        parent->removeChild(this);
+        parent = nullptr;
+      }
+    }
 
     bool deleted() const
     {
