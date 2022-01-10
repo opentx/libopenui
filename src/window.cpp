@@ -227,7 +227,6 @@ void Window::fullPaint(BitmapBuffer * dc)
     rect_t relativeRect = {xmin - x, ymin - y, xmax - xmin, ymax - ymin};
     while (firstChild != children.begin()) {
       auto child = *(--firstChild);
-      TRACE("CHILD SENS INVERSE = %s", child->getWindowDebugString().c_str());
       if (child->hasOpaqueRect(relativeRect)) {
         paintNeeded = false;
         break;
