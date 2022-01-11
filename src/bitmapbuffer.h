@@ -394,11 +394,13 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
       drawSolidFilledRect(x, y+h-thickness, w, thickness, color);
     }
 
-    void drawSolidFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, Color565 color);
-
     void drawFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, LcdColor color, uint8_t pat = SOLID);
 
+    void drawSolidFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, Color565 color);
+
     void drawCircle(coord_t x, coord_t y, coord_t radius, LcdColor color);
+
+    void drawFilledCircle(coord_t x, coord_t y, coord_t radius, LcdColor color, uint8_t pat = SOLID);
 
     void drawSolidFilledCircle(coord_t x, coord_t y, coord_t radius, Color565 color);
 

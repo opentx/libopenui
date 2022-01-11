@@ -487,16 +487,17 @@ void BitmapBuffer::drawCircle(coord_t x, coord_t y, coord_t radius, LcdColor col
   int y1 = 0;
   int decisionOver2 = 1 - x1;
   auto rgb565 = COLOR_TO_RGB565(color);
+  uint8_t alpha = GET_COLOR_ALPHA(color);
 
   while (y1 <= x1) {
-    drawPixel(x1 + x, y1 + y, rgb565);
-    drawPixel(y1 + x, x1 + y, rgb565);
-    drawPixel(-x1 + x, y1 + y, rgb565);
-    drawPixel(-y1 + x, x1 + y, rgb565);
-    drawPixel(-x1 + x, -y1 + y, rgb565);
-    drawPixel(-y1 + x, -x1 + y, rgb565);
-    drawPixel(x1 + x, -y1 + y, rgb565);
-    drawPixel(y1 + x, -x1 + y, rgb565);
+    drawAlphaPixel(x1 + x, y1 + y, alpha, color);
+    drawAlphaPixel(y1 + x, x1 + y, alpha, rgb565);
+    drawAlphaPixel(-x1 + x, y1 + y, alpha, rgb565);
+    drawAlphaPixel(-y1 + x, x1 + y, alpha, rgb565);
+    drawAlphaPixel(-x1 + x, -y1 + y, alpha, rgb565);
+    drawAlphaPixel(-y1 + x, -x1 + y, alpha, rgb565);
+    drawAlphaPixel(x1 + x, -y1 + y, alpha, rgb565);
+    drawAlphaPixel(y1 + x, -x1 + y, alpha, rgb565);
     y1++;
     if (decisionOver2 <= 0) {
       decisionOver2 += 2 * y1 + 1;
@@ -526,6 +527,27 @@ void BitmapBuffer::drawSolidFilledCircle(coord_t x, coord_t y, coord_t radius, C
     // Draw lines from inside (center)
     drawSolidHorizontalLine(x - x1, y + i, x1 * 2, color);
     drawSolidHorizontalLine(x - x1, y - i, x1 * 2, color);
+  }
+}
+
+void BitmapBuffer::drawFilledCircle(coord_t x, coord_t y, coord_t radius, LcdColor color, uint8_t pat)
+{
+  coord_t imax = ((coord_t)((coord_t)radius * 707)) / 1000 + 1;
+  coord_t sqmax = (coord_t)radius * (coord_t)radius + (coord_t)radius / 2;
+  coord_t x1 = radius;
+  drawHorizontalLine(x - radius, y, radius * 2, color, pat);
+  for (coord_t i = 1; i <= imax; i++) {
+    if ((i * i + x1 * x1) > sqmax) {
+      // Draw lines from outside
+      if (x1 > imax) {
+        drawHorizontalLine(x - i + 1, y + x1, (i - 1) * 2, color, pat);
+        drawHorizontalLine(x - i + 1, y - x1, (i - 1) * 2, color, pat);
+      }
+      x1--;
+    }
+    // Draw lines from inside (center)
+    drawHorizontalLine(x - x1, y + i, x1 * 2, color, pat);
+    drawHorizontalLine(x - x1, y - i, x1 * 2, color, pat);
   }
 }
 
