@@ -109,7 +109,12 @@ class Window
 
     Window * getFullScreenWindow()
     {
-      return (width() == LCD_W && height() == LCD_H) ? this : parent->getFullScreenWindow();
+      if (width() == LCD_W && height() == LCD_H)
+        return this;
+      else if (parent)
+        return parent->getFullScreenWindow();
+      else
+        return nullptr;
     }
 
     WindowFlags getWindowFlags() const
