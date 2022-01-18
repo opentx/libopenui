@@ -81,4 +81,5 @@ typedef uint32_t LcdFlags;
 typedef uint16_t event_t;
 typedef uint16_t Color565;
 typedef uint32_t LcdColor;
+typedef uint32_t WindowFlags;
 typedef uint8_t charSuite[2];

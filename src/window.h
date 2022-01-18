@@ -31,8 +31,6 @@
 #include "libopenui_helpers.h"
 #include "libopenui_config.h"
 
-typedef uint32_t WindowFlags;
-
 #if !defined(_GNUC_)
   #undef OPAQUE
   #undef TRANSPARENT
