@@ -32,7 +32,8 @@ class MenuBody: public Window
   friend class MenuWindowContent;
   friend class Menu;
 
-  class MenuLine {
+  class MenuLine
+  {
     friend class MenuBody;
 
     public:
@@ -235,4 +236,3 @@ Menu * MenuBody::getParentMenu()
 {
   return static_cast<Menu *>(getParent()->getParent());
 }
-

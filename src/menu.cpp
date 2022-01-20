@@ -59,7 +59,7 @@ void MenuBody::onEvent(event_t event)
         select(0);
       }
       else {
-        Menu * menu = getParentMenu();
+        auto menu = getParentMenu();
         if (menu->multiple) {
           lines[selectedIndex].onPress();
           menu->invalidate();
