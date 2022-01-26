@@ -969,8 +969,6 @@ BitmapBuffer * BitmapBuffer::load(const char * filename)
       return load_bmp(filename);
     else if (!strcmp(ext, ".png"))
       return load_png(filename);
-//    else
-//      return load_jpg(filename);
   }
   return nullptr;
 }
@@ -1252,6 +1250,7 @@ BitmapBuffer * BitmapBuffer::load_png(const char * filename)
   auto ctx = spng_ctx_new(0);
   if (!ctx) {
     TRACE("load_png: spng_ctx_new failed");
+    free(imgFile);
     return nullptr;
   }
 
@@ -1265,6 +1264,7 @@ BitmapBuffer * BitmapBuffer::load_png(const char * filename)
   if (r) {
     TRACE("load_png: spng_get_ihdr failed");
     spng_ctx_free(ctx);
+    free(imgFile);
     return nullptr;
   }
 
@@ -1273,6 +1273,7 @@ BitmapBuffer * BitmapBuffer::load_png(const char * filename)
   if (r && r != SPNG_ECHUNKAVAIL) {
     TRACE("load_png: spng_get_plte failed %d", r);
     spng_ctx_free(ctx);
+    free(imgFile);
     return nullptr;
   }
 
@@ -1283,6 +1284,7 @@ BitmapBuffer * BitmapBuffer::load_png(const char * filename)
   if (r) {
     TRACE("load_png: spng_decoded_image_size failed");
     spng_ctx_free(ctx);
+    free(imgFile);
     return nullptr;
   }
 
@@ -1292,6 +1294,7 @@ BitmapBuffer * BitmapBuffer::load_png(const char * filename)
   if (!bmp) {
     TRACE("load_png() bitmap alloc failed");
     spng_ctx_free(ctx);
+    free(imgFile);
     return nullptr;
   }
 
@@ -1299,6 +1302,7 @@ BitmapBuffer * BitmapBuffer::load_png(const char * filename)
   if (r) {
     TRACE("spng_decode_image failed");
     spng_ctx_free(ctx);
+    free(imgFile);
     return nullptr;
   }
 
@@ -1332,6 +1336,7 @@ BitmapBuffer * BitmapBuffer::load_png(const char * filename)
   }
   while (!r);
 
+  free(imgFile);
   free(out);
   spng_ctx_free(ctx);
 
