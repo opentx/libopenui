@@ -87,7 +87,7 @@ class Button: public FormField
 class TextButton: public Button
 {
   public:
-    TextButton(FormGroup * parent, const rect_t & rect, std::string text, std::function<uint8_t(void)> pressHandler = nullptr, WindowFlags windowFlags = BUTTON_BACKGROUND | OPAQUE, LcdFlags textFlags = 0):
+    TextButton(FormGroup * parent, const rect_t & rect, std::string text, std::function<uint8_t(void)> pressHandler = nullptr, WindowFlags windowFlags = DEFAULT_TEXT_BUTTON_FLAGS, LcdFlags textFlags = 0):
       Button(parent, rect, std::move(pressHandler), windowFlags, textFlags),
       text(std::move(text))
     {
@@ -108,10 +108,21 @@ class TextButton: public Button
       }
     }
 
+    LcdColor getTextColor() const
+    {
+      return textColor;
+    }
+
+    void setTextColor(LcdColor value)
+    {
+      textColor = value;
+    }
+
     void paint(BitmapBuffer * dc) override;
 
   protected:
     std::string text;
+    LcdColor textColor = DEFAULT_COLOR;
 };
 
 class IconButton: public Button

@@ -46,7 +46,7 @@ class Theme
       drawCheckBox(dc, checkBox->getValue(), 0, FIELD_PADDING_TOP, checkBox->hasFocus());
       const char * label = checkBox->getLabel();
       if (label)
-        dc->drawText(22, FIELD_PADDING_TOP, label);
+        dc->drawText(22, FIELD_PADDING_TOP, label, DEFAULT_COLOR);
     }
     virtual void drawCheckBox(BitmapBuffer * dc, bool checked, coord_t x, coord_t y, bool focus = false) const = 0;
     virtual void drawChoice(BitmapBuffer * dc, ChoiceBase * choice, const char * str) const = 0;

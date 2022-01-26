@@ -46,6 +46,8 @@ constexpr uint8_t STASHED = 0x33;
 
 #define USE_STB
 
+typedef uint16_t pixel_t;
+
 enum BitmapFormats
 {
   BMP_RGB565,
@@ -335,22 +337,16 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
       this->format = format;
     }
 
-    inline void clear()
+    inline void clear(Color565 color = 0 /*black*/)
     {
-      fillRect(0, 0, _width - offsetX, _height - offsetY, 0);
-    }
-
-    inline void clear(LcdFlags flags)
-    {
-      drawSolidFilledRect(0, 0, _width - offsetX, _height - offsetY, flags);
+      fillRect(0, 0, _width - offsetX, _height - offsetY, color);
     }
 
     inline const pixel_t * getPixelPtr(coord_t x, coord_t y) const
     {
       APPLY_OFFSET();
 
-      coord_t w = 1, h = 1;
-      if (!applyClippingRect(x, y, w, h))
+      if (!applyPixelClippingRect(x, y))
         return nullptr;
 
       return BitmapBufferBase::getPixelPtrAbs(x, y);
@@ -359,97 +355,89 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
     inline void drawPixel(coord_t x, coord_t y, pixel_t value)
     {
       APPLY_OFFSET();
-
-      coord_t w = 1, h = 1;
-      if (!applyClippingRect(x, y, w, h))
-        return;
-
-      drawPixelAbs(x, y, value);
+      drawPixelAbsWithClipping(x, y, value);
     }
 
-    void drawAlphaPixel(pixel_t * p, uint8_t opacity, uint16_t color);
+    void drawAlphaPixel(pixel_t * p, uint8_t opacity, Color565 color);
 
     inline void drawAlphaPixel(coord_t x, coord_t y, uint8_t opacity, pixel_t value)
     {
       APPLY_OFFSET();
 
-      coord_t w = 1, h = 1;
-      if (!applyClippingRect(x, y, w, h))
+      if (!applyPixelClippingRect(x, y))
         return;
 
       drawAlphaPixelAbs(x, y, opacity, value);
     }
 
-    void drawHorizontalLine(coord_t x, coord_t y, coord_t w, uint8_t pat = SOLID, LcdFlags flags = 0);
-
-    void drawVerticalLine(coord_t x, coord_t y, coord_t h, uint8_t pat = SOLID, LcdFlags flags = 0);
-
-    void drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, uint8_t pat, LcdFlags att);
-
-    inline void drawSolidHorizontalLine(coord_t x, coord_t y, coord_t w, LcdFlags flags)
+    void drawHorizontalLine(coord_t x, coord_t y, coord_t w, LcdColor color, uint8_t pat);
+    inline void drawSolidHorizontalLine(coord_t x, coord_t y, coord_t w, Color565 color)
     {
-      drawSolidFilledRect(x, y, w, 1, flags);
+      drawSolidFilledRect(x, y, w, 1, color);
     }
 
-    inline void drawSolidVerticalLine(coord_t x, coord_t y, coord_t h, LcdFlags flags)
+    void drawVerticalLine(coord_t x, coord_t y, coord_t h, LcdColor color, uint8_t pat);
+    inline void drawSolidVerticalLine(coord_t x, coord_t y, coord_t h, Color565 color)
     {
-      drawSolidFilledRect(x, y, 1, h, flags);
+      drawSolidFilledRect(x, y, 1, h, color);
     }
 
-    void drawRect(coord_t x, coord_t y, coord_t w, coord_t h, uint8_t thickness = 1, uint8_t pat = SOLID, LcdFlags flags = 0);
+    void drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdColor color, uint8_t pat = SOLID);
 
-    inline void drawSolidRect(coord_t x, coord_t y, coord_t w, coord_t h, uint8_t thickness = 1, LcdFlags flags = 0)
+    void drawRect(coord_t x, coord_t y, coord_t w, coord_t h, LcdColor color, uint8_t thickness = 1, uint8_t pat = SOLID);
+
+    inline void drawSolidRect(coord_t x, coord_t y, coord_t w, coord_t h, Color565 color, uint8_t thickness = 1)
     {
-      drawSolidFilledRect(x, y, thickness, h, flags);
-      drawSolidFilledRect(x+w-thickness, y, thickness, h, flags);
-      drawSolidFilledRect(x, y, w, thickness, flags);
-      drawSolidFilledRect(x, y+h-thickness, w, thickness, flags);
+      drawSolidFilledRect(x, y, thickness, h, color);
+      drawSolidFilledRect(x+w-thickness, y, thickness, h, color);
+      drawSolidFilledRect(x, y, w, thickness, color);
+      drawSolidFilledRect(x, y+h-thickness, w, thickness, color);
     }
 
-    void drawSolidFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, LcdFlags flags = 0);
+    void drawFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, LcdColor color, uint8_t pat = SOLID);
 
-    void drawFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, uint8_t pat = SOLID, LcdFlags flags = 0);
+    void drawSolidFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, Color565 color);
 
-    void invertRect(coord_t x, coord_t y, coord_t w, coord_t h, LcdFlags flags = 0);
+    void drawCircle(coord_t x, coord_t y, coord_t radius, LcdColor color);
 
-    void drawCircle(coord_t x, coord_t y, coord_t radius, LcdFlags flags = 0);
+    void drawFilledCircle(coord_t x, coord_t y, coord_t radius, LcdColor color, uint8_t pat = SOLID);
 
-    void drawFilledCircle(coord_t x, coord_t y, coord_t radius, LcdFlags flags = 0);
+    void drawSolidFilledCircle(coord_t x, coord_t y, coord_t radius, Color565 color);
 
-    void drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadius, coord_t externalRadius, int startAngle, int endAngle, LcdFlags flags = 0);
+    void drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadius, coord_t externalRadius, LcdColor color, int startAngle, int endAngle);
 
     void drawBitmapPie(int x0, int y0, const uint16_t * img, int startAngle, int endAngle);
 
-    void drawBitmapPatternPie(coord_t x0, coord_t y0, const uint8_t * img, LcdFlags flags, int startAngle, int endAngle);
+    void drawBitmapPatternPie(coord_t x0, coord_t y0, const uint8_t * img, LcdColor color, int startAngle, int endAngle);
 
     static BitmapBuffer * load(const char * filename);
 
-    static BitmapBuffer * loadMaskOnBackground(const char * filename, LcdFlags foreground, LcdFlags background);
+    static BitmapBuffer * loadMaskOnBackground(const char * filename, Color565 foreground, Color565 background);
 
     template <class T>
-    void drawMask(coord_t x, coord_t y, const T * mask, LcdFlags flags, coord_t srcx = 0, coord_t srcw = 0);
+    void drawMask(coord_t x, coord_t y, const T * mask, Color565 color, coord_t srcx = 0, coord_t srcw = 0);
 
-    void drawMask(coord_t x, coord_t y, const uint8_t * mask, LcdFlags flags, coord_t srcx = 0, coord_t srcw = 0)
-    {
-      drawMask(x, y, (const BitmapData *)mask, flags, srcx, srcw);
-    }
+//    void drawMask(coord_t x, coord_t y, const uint8_t * mask, Color565 color, coord_t srcx = 0, coord_t srcw = 0)
+//    {
+//      drawMask(x, y, (const BitmapData *)mask, flags, srcx, srcw);
+//    }
 
     void drawMask(coord_t x, coord_t y, const BitmapMask * mask, const BitmapBuffer * srcBitmap, coord_t offsetX = 0, coord_t offsetY = 0, coord_t width = 0, coord_t height = 0);
 
-    coord_t drawSizedText(coord_t x, coord_t y, const char * s, uint8_t len, LcdFlags flags=0);
+    coord_t drawSizedText(coord_t x, coord_t y, const char * s, uint8_t len, LcdColor color, LcdFlags flags = 0);
 
-    coord_t drawText(coord_t x, coord_t y, const char * s, LcdFlags flags = 0)
+    coord_t drawText(coord_t x, coord_t y, const char * s, LcdColor color, LcdFlags flags = 0)
     {
-      return drawSizedText(x, y, s, 255, flags);
+      return drawSizedText(x, y, s, 255, color, flags);
     }
 
-    coord_t drawTextAtIndex(coord_t x, coord_t y, const char * s, uint8_t idx, LcdFlags flags = 0)
+    coord_t drawTextAtIndex(coord_t x, coord_t y, const char * s, uint8_t idx, LcdColor color, LcdFlags flags = 0)
     {
       char length = *s++;
-      return drawSizedText(x, y, s+length*idx, length, flags);
+      return drawSizedText(x, y, s+length*idx, length, color, flags);
     }
 
-    coord_t drawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags = 0, uint8_t len = 0, const char * prefix = nullptr, const char * suffix = nullptr);
+    coord_t drawNumber(coord_t x, coord_t y, int32_t val, LcdColor color, LcdFlags flags = 0, uint8_t len = 0, const char * prefix = nullptr, const char * suffix = nullptr);
 
     template<class T>
     void drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx = 0, coord_t srcy = 0, coord_t srcw = 0, coord_t srch = 0, float scale = 0);
@@ -495,7 +483,13 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
       return data && h > 0 && w > 0;
     }
 
-    uint8_t drawChar(coord_t x, coord_t y, const uint8_t * font, const uint16_t * spec, unsigned int index, LcdFlags flags);
+    inline bool applyPixelClippingRect(coord_t x, coord_t y) const
+    {
+      coord_t w = 1, h = 1;
+      return applyClippingRect(x, y, w, h);
+    }
+
+    uint8_t drawChar(coord_t x, coord_t y, const uint8_t * font, const uint16_t * spec, unsigned int index, LcdColor color);
 
     inline void drawPixel(pixel_t * p, pixel_t value)
     {
@@ -516,17 +510,24 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
       drawPixel(p, value);
     }
 
-    inline void drawAlphaPixelAbs(coord_t x, coord_t y, uint8_t opacity, uint16_t color)
+    inline void drawAlphaPixelAbs(coord_t x, coord_t y, uint8_t alpha, Color565 color)
     {
       pixel_t * p = getPixelPtrAbs(x, y);
-      drawAlphaPixel(p, opacity, color);
+      drawAlphaPixel(p, alpha, color);
     }
 
-    void drawHorizontalLineAbs(coord_t x, coord_t y, coord_t w, uint8_t pat, LcdFlags flags);
+    inline void drawPixelAbsWithClipping(coord_t x, coord_t y, pixel_t value)
+    {
+      if (applyPixelClippingRect(x, y)) {
+        drawPixelAbs(x, y, value);
+      }
+    }
+
+    void drawHorizontalLineAbs(coord_t x, coord_t y, coord_t w, LcdColor color, uint8_t pat = SOLID);
 
     bool clipLine(coord_t& x1, coord_t& y1, coord_t& x2, coord_t& y2);
 
-    void fillRect(coord_t x, coord_t y, coord_t w, coord_t h, uint16_t color);
+    void fillRect(coord_t x, coord_t y, coord_t w, coord_t h, pixel_t color);
 
   private:
     bool dataAllocated;

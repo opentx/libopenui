@@ -64,6 +64,21 @@ struct TouchState
     }
     return result;
   }
+
+  bool isScrolling() const
+  {
+    return state == TE_SLIDE || isScrollingByInertia();
+  }
+
+  bool isScrollingByInertia() const
+  {
+    return lastDeltaX != 0 || lastDeltaY != 0;
+  }
+
+  void stopInertia()
+  {
+    lastDeltaX = lastDeltaY = 0;
+  }
 };
 
 extern TouchState touchState;

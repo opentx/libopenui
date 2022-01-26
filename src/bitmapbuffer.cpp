@@ -86,6 +86,15 @@ void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx,
     if (y + srch > ymax) {
       srch = ymax - y;
     }
+
+    if (srcw <= 0 || srch <= 0) {
+      return;
+    }
+
+    if (bmp->getFormat() == BMP_ARGB4444)
+      DMACopyAlphaBitmap(data, format == BMP_ARGB4444, _width, _height, x, y, bmp->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
+    else
+      DMACopyBitmap(data, _width, _height, x, y, bmp->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
   }
   else {
     if (x < xmin) {
@@ -99,46 +108,58 @@ void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx,
       y = ymin;
     }
     if (x + srcw * scale > xmax) {
-      srcw = (xmax - x) / scale;
+      srcw = int(ceil((xmax - x) / scale));
     }
     if (y + srch * scale > ymax) {
-      srch = (ymax - y) / scale;
+      srch = int(ceil((ymax - y) / scale));
     }
-  }
 
-  if (srcw <= 0 || srch <= 0) {
-    return;
-  }
+    if (srcw <= 0 || srch <= 0) {
+      return;
+    }
 
-  if (scale == 0) {
-    if (bmp->getFormat() == BMP_ARGB4444)
-      DMACopyAlphaBitmap(data, format == BMP_ARGB4444, _width, _height, x, y, bmp->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
-    else
-      DMACopyBitmap(data, _width, _height, x, y, bmp->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
-  }
-  else {
-    int scaledw = srcw * scale;
-    int scaledh = srch * scale;
+    auto scaledw = int(ceil(scale * srcw));
+    auto scaledh = int(ceil(scale * srch));
 
     if (x + scaledw > _width)
       scaledw = _width - x;
     if (y + scaledh > _height)
       scaledh = _height - y;
 
-    for (int i = 0; i < scaledh; i++) {
-      pixel_t * p = getPixelPtrAbs(x, y + i);
-      const pixel_t * qstart = bmp->getPixelPtrAbs(srcx, srcy + int(i / scale));
-      for (int j = 0; j < scaledw; j++) {
-        const pixel_t * q = qstart;
-        MOVE_PIXEL_RIGHT(q, int(j / scale));
-        if (bmp->getFormat() == BMP_ARGB4444) {
-          ARGB_SPLIT(*q, a, r, g, b);
-          drawAlphaPixel(p, a, RGB_JOIN(r<<1, g<<2, b<<1));
+    if (format == BMP_ARGB4444)  {
+      for (int i = 0; i < scaledh; i++) {
+        pixel_t *p = getPixelPtrAbs(x, y + i);
+        const pixel_t *qstart = bmp->getPixelPtrAbs(srcx, srcy + int(i / scale));
+        for (int j = 0; j < scaledw; j++) {
+          const pixel_t *q = qstart;
+          MOVE_PIXEL_RIGHT(q, int(j / scale));
+          if (bmp->getFormat() == BMP_RGB565) {
+            RGB_SPLIT(*q, r, g, b);
+            drawPixel(p, ARGB_JOIN(0xF, r>>1, g>>2, b>>1));
+          }
+          else {  // bmp->getFormat() == BMP_ARGB4444
+            drawPixel(p, *q);
+          }
+          MOVE_TO_NEXT_RIGHT_PIXEL(p);
         }
-        else {
-          drawPixel(p, *q);
+      }
+    }
+    else {
+      for (int i = 0; i < scaledh; i++) {
+        pixel_t * p = getPixelPtrAbs(x, y + i);
+        const pixel_t * qstart = bmp->getPixelPtrAbs(srcx, srcy + int(i / scale));
+        for (int j = 0; j < scaledw; j++) {
+          const pixel_t * q = qstart;
+          MOVE_PIXEL_RIGHT(q, int(j / scale));
+          if (bmp->getFormat() == BMP_ARGB4444) {
+            ARGB_SPLIT(*q, a, r, g, b);
+            drawAlphaPixel(p, a, RGB_JOIN(r<<1, g<<2, b<<1));
+          }
+          else {
+            drawPixel(p, *q);
+          }
+          MOVE_TO_NEXT_RIGHT_PIXEL(p);
         }
-        MOVE_TO_NEXT_RIGHT_PIXEL(p);
       }
     }
   }
@@ -164,7 +185,7 @@ void BitmapBuffer::drawScaledBitmap(const T * bitmap, coord_t x, coord_t y, coor
 
 template void BitmapBuffer::drawScaledBitmap(const BitmapBuffer *, coord_t, coord_t, coord_t, coord_t);
 
-void BitmapBuffer::drawAlphaPixel(pixel_t * p, uint8_t alpha, uint16_t color)
+void BitmapBuffer::drawAlphaPixel(pixel_t * p, uint8_t alpha, Color565 color)
 {
   if (format == BMP_RGB565) {
     if (alpha == ALPHA_MAX) {
@@ -182,13 +203,13 @@ void BitmapBuffer::drawAlphaPixel(pixel_t * p, uint8_t alpha, uint16_t color)
   }
   else if (format == BMP_ARGB4444) {
     if (alpha == ALPHA_MAX) {
-      drawPixel(p, RGB_TO_ARGB(color, 0xFF));
+      drawPixel(p, RGB565_TO_ARGB4444(color, 0xFF));
     }
     else if (alpha != 0) {
       // https://en.wikipedia.org/wiki/Alpha_compositing
       ARGB_SPLIT(*p, bgAlpha, bgRed, bgGreen, bgBlue);
       if (bgAlpha == 0) {
-        drawPixel(p, RGB_TO_ARGB(color, alpha << 4));
+        drawPixel(p, RGB565_TO_ARGB4444(color, alpha << 4));
       }
       else {
         RGB_SPLIT(color, red, green, blue);
@@ -205,7 +226,7 @@ void BitmapBuffer::drawAlphaPixel(pixel_t * p, uint8_t alpha, uint16_t color)
   }
 }
 
-void BitmapBuffer::drawHorizontalLine(coord_t x, coord_t y, coord_t w, uint8_t pat, LcdFlags flags)
+void BitmapBuffer::drawHorizontalLine(coord_t x, coord_t y, coord_t w, LcdColor color, uint8_t pat)
 {
   APPLY_OFFSET();
 
@@ -213,25 +234,25 @@ void BitmapBuffer::drawHorizontalLine(coord_t x, coord_t y, coord_t w, uint8_t p
   if (!applyClippingRect(x, y, w, h))
     return;
 
-  drawHorizontalLineAbs(x, y, w, pat, flags);
+  drawHorizontalLineAbs(x, y, w, color, pat);
 }
 
-void BitmapBuffer::drawHorizontalLineAbs(coord_t x, coord_t y, coord_t w, uint8_t pat, LcdFlags flags)
+void BitmapBuffer::drawHorizontalLineAbs(coord_t x, coord_t y, coord_t w, LcdColor color, uint8_t pat)
 {
   pixel_t * p = getPixelPtrAbs(x, y);
-  pixel_t color = lcdColorTable[COLOR_IDX(flags)];
-  uint8_t opacity = 0x0F - (flags >> 24);
+  auto rgb565 = COLOR_TO_RGB565(color);
+  uint8_t alpha = GET_COLOR_ALPHA(color);
 
   if (pat == SOLID) {
     while (w--) {
-      drawAlphaPixel(p, opacity, color);
+      drawAlphaPixel(p, alpha, rgb565);
       MOVE_TO_NEXT_RIGHT_PIXEL(p);
     }
   }
   else {
     while (w--) {
       if (pat & 1) {
-        drawAlphaPixel(p, opacity, color);
+        drawAlphaPixel(p, alpha, rgb565);
         pat = (pat >> 1) | 0x80;
       }
       else {
@@ -242,7 +263,7 @@ void BitmapBuffer::drawHorizontalLineAbs(coord_t x, coord_t y, coord_t w, uint8_
   }
 }
 
-void BitmapBuffer::drawVerticalLine(coord_t x, coord_t y, coord_t h, uint8_t pat, LcdFlags flags)
+void BitmapBuffer::drawVerticalLine(coord_t x, coord_t y, coord_t h, LcdColor color, uint8_t pat)
 {
   APPLY_OFFSET();
 
@@ -250,12 +271,12 @@ void BitmapBuffer::drawVerticalLine(coord_t x, coord_t y, coord_t h, uint8_t pat
   if (!applyClippingRect(x, y, w, h))
     return;
 
-  pixel_t color = lcdColorTable[COLOR_IDX(flags)];
-  uint8_t opacity = 0x0F - (flags >> 24);
+  auto rgb565 = COLOR_TO_RGB565(color);
+  uint8_t alpha = GET_COLOR_ALPHA(color);
 
   if (pat == SOLID) {
     while (h--) {
-      drawAlphaPixelAbs(x, y, opacity, color);
+      drawAlphaPixelAbs(x, y, alpha, rgb565);
       y++;
     }
   }
@@ -265,7 +286,7 @@ void BitmapBuffer::drawVerticalLine(coord_t x, coord_t y, coord_t h, uint8_t pat
     }
     while (h--) {
       if (pat & 1) {
-        drawAlphaPixelAbs(x, y, opacity, color);
+        drawAlphaPixelAbs(x, y, alpha, color);
         pat = (pat >> 1) | 0x80;
       }
       else {
@@ -305,9 +326,9 @@ bool BitmapBuffer::clipLine(coord_t & x1, coord_t & y1, coord_t & x2, coord_t & 
   float p4 = -p3;
 
   float q1 = x1 - xmin;
-  float q2 = xmax - x1;
+  float q2 = xmax - 1 - x1;
   float q3 = y1 - ymin;
-  float q4 = ymax - y1;
+  float q4 = ymax - 1 - y1;
 
   float posarr[5], negarr[5];
   int posind = 1, negind = 1;
@@ -365,7 +386,7 @@ bool BitmapBuffer::clipLine(coord_t & x1, coord_t & y1, coord_t & x2, coord_t & 
   return true;
 }
 
-void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, uint8_t pat, LcdFlags flags)
+void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdColor color, uint8_t pat)
 {
   // Offsets
   x1 += offsetX;
@@ -376,7 +397,8 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, uint
   if (!clipLine(x1, y1, x2, y2))
     return;
 
-  pixel_t color = lcdColorTable[COLOR_IDX(flags)];
+  auto rgb565 = COLOR_TO_RGB565(color);
+  uint8_t alpha = GET_COLOR_ALPHA(color);
 
   int dx = x2 - x1;      /* the horizontal distance of the line */
   int dy = y2 - y1;      /* the vertical distance of the line */
@@ -393,7 +415,7 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, uint
     /* the line is more horizontal than vertical */
     for (int i = 0; i <= dxabs; i++) {
       if ((1 << (px % 8)) & pat) {
-        drawPixelAbs(px, py, color);
+        drawAlphaPixelAbs(px, py, alpha, rgb565);
       }
       y += dyabs;
       if (y >= dxabs) {
@@ -407,7 +429,7 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, uint
     /* the line is more vertical than horizontal */
     for (int i = 0; i <= dyabs; i++) {
       if ((1 << (py % 8)) & pat) {
-        drawPixelAbs(px, py, color);
+        drawPixelAbs(px, py, rgb565);
       }
       x += dxabs;
       if (x >= dyabs) {
@@ -419,36 +441,35 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, uint
   }
 }
 
-void BitmapBuffer::drawRect(coord_t x, coord_t y, coord_t w, coord_t h, uint8_t thickness, uint8_t pat, LcdFlags flags)
+void BitmapBuffer::drawRect(coord_t x, coord_t y, coord_t w, coord_t h, LcdColor color, uint8_t thickness, uint8_t pat)
 {
   for (unsigned i = 0; i < thickness; i++) {
-    drawVerticalLine(x + i, y, h, pat, flags);
-    drawVerticalLine(x + w - 1 - i, y, h, pat, flags);
-    drawHorizontalLine(x, y + h - 1 - i, w, pat, flags);
-    drawHorizontalLine(x, y + i, w, pat, flags);
+    drawVerticalLine(x + i, y, h, color, pat);
+    drawVerticalLine(x + w - 1 - i, y, h, color, pat);
+    drawHorizontalLine(x, y + h - 1 - i, w, color, pat);
+    drawHorizontalLine(x, y + i, w, color, pat);
   }
 }
 
-void BitmapBuffer::fillRect(coord_t x, coord_t y, coord_t w, coord_t h, uint16_t color)
+void BitmapBuffer::fillRect(coord_t x, coord_t y, coord_t w, coord_t h, pixel_t pixel)
 {
   APPLY_OFFSET();
 
   if (!applyClippingRect(x, y, w, h))
     return;
 
-  DMAFillRect(data, _width, _height, x, y, w, h, color);
+  DMAFillRect(data, _width, _height, x, y, w, h, pixel);
 }
 
-void BitmapBuffer::drawSolidFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, LcdFlags flags)
+void BitmapBuffer::drawSolidFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, Color565 color)
 {
-  auto color = lcdColorTable[COLOR_IDX(flags)];
   if (format == BMP_RGB565)
     fillRect(x, y, w, h, color);
   else
-    fillRect(x, y, w, h, RGB_TO_ARGB(color, 0xFF));
+    fillRect(x, y, w, h, RGB565_TO_ARGB4444(color, 0xFF));
 }
 
-void BitmapBuffer::drawFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, uint8_t pat, LcdFlags flags)
+void BitmapBuffer::drawFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, LcdColor color, uint8_t pat)
 {
   APPLY_OFFSET();
 
@@ -456,44 +477,27 @@ void BitmapBuffer::drawFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, ui
     return;
 
   for (coord_t i = y; i < y + h; i++) {
-    drawHorizontalLineAbs(x, i, w, pat, flags);
+    drawHorizontalLineAbs(x, i, w, color, pat);
   }
 }
 
-void BitmapBuffer::invertRect(coord_t x, coord_t y, coord_t w, coord_t h, LcdFlags flags)
-{
-  APPLY_OFFSET();
-
-  pixel_t color = lcdColorTable[COLOR_IDX(flags)];
-  RGB_SPLIT(color, red, green, blue);
-
-  for (int i = y; i < y + h; i++) {
-    pixel_t * p = getPixelPtrAbs(x, i);
-    for (int j = 0; j < w; j++) {
-      // TODO ASSERT_IN_DISPLAY(p);
-      RGB_SPLIT(*p, bgRed, bgGreen, bgBlue);
-      drawPixel(p, RGB_JOIN(0x1F + red - bgRed, 0x3F + green - bgGreen, 0x1F + blue - bgBlue));
-      MOVE_TO_NEXT_RIGHT_PIXEL(p);
-    }
-  }
-}
-
-void BitmapBuffer::drawCircle(coord_t x, coord_t y, coord_t radius, LcdFlags flags)
+void BitmapBuffer::drawCircle(coord_t x, coord_t y, coord_t radius, LcdColor color)
 {
   int x1 = radius;
   int y1 = 0;
   int decisionOver2 = 1 - x1;
-  pixel_t color = lcdColorTable[COLOR_IDX(flags)];
+  auto rgb565 = COLOR_TO_RGB565(color);
+  uint8_t alpha = GET_COLOR_ALPHA(color);
 
   while (y1 <= x1) {
-    drawPixel(x1 + x, y1 + y, color);
-    drawPixel(y1 + x, x1 + y, color);
-    drawPixel(-x1 + x, y1 + y, color);
-    drawPixel(-y1 + x, x1 + y, color);
-    drawPixel(-x1 + x, -y1 + y, color);
-    drawPixel(-y1 + x, -x1 + y, color);
-    drawPixel(x1 + x, -y1 + y, color);
-    drawPixel(y1 + x, -x1 + y, color);
+    drawAlphaPixel(x1 + x, y1 + y, alpha, color);
+    drawAlphaPixel(y1 + x, x1 + y, alpha, rgb565);
+    drawAlphaPixel(-x1 + x, y1 + y, alpha, rgb565);
+    drawAlphaPixel(-y1 + x, x1 + y, alpha, rgb565);
+    drawAlphaPixel(-x1 + x, -y1 + y, alpha, rgb565);
+    drawAlphaPixel(-y1 + x, -x1 + y, alpha, rgb565);
+    drawAlphaPixel(x1 + x, -y1 + y, alpha, rgb565);
+    drawAlphaPixel(y1 + x, -x1 + y, alpha, rgb565);
     y1++;
     if (decisionOver2 <= 0) {
       decisionOver2 += 2 * y1 + 1;
@@ -505,24 +509,45 @@ void BitmapBuffer::drawCircle(coord_t x, coord_t y, coord_t radius, LcdFlags fla
   }
 }
 
-void BitmapBuffer::drawFilledCircle(coord_t x, coord_t y, coord_t radius, LcdFlags flags)
+void BitmapBuffer::drawSolidFilledCircle(coord_t x, coord_t y, coord_t radius, Color565 color)
 {
   coord_t imax = ((coord_t)((coord_t)radius * 707)) / 1000 + 1;
   coord_t sqmax = (coord_t)radius * (coord_t)radius + (coord_t)radius / 2;
   coord_t x1 = radius;
-  drawSolidHorizontalLine(x - radius, y, radius * 2, flags);
+  drawSolidHorizontalLine(x - radius, y, radius * 2, color);
   for (coord_t i = 1; i <= imax; i++) {
     if ((i * i + x1 * x1) > sqmax) {
       // Draw lines from outside
       if (x1 > imax) {
-        drawSolidHorizontalLine(x - i + 1, y + x1, (i - 1) * 2, flags);
-        drawSolidHorizontalLine(x - i + 1, y - x1, (i - 1) * 2, flags);
+        drawSolidHorizontalLine(x - i + 1, y + x1, (i - 1) * 2, color);
+        drawSolidHorizontalLine(x - i + 1, y - x1, (i - 1) * 2, color);
       }
       x1--;
     }
     // Draw lines from inside (center)
-    drawSolidHorizontalLine(x - x1, y + i, x1 * 2, flags);
-    drawSolidHorizontalLine(x - x1, y - i, x1 * 2, flags);
+    drawSolidHorizontalLine(x - x1, y + i, x1 * 2, color);
+    drawSolidHorizontalLine(x - x1, y - i, x1 * 2, color);
+  }
+}
+
+void BitmapBuffer::drawFilledCircle(coord_t x, coord_t y, coord_t radius, LcdColor color, uint8_t pat)
+{
+  coord_t imax = ((coord_t)((coord_t)radius * 707)) / 1000 + 1;
+  coord_t sqmax = (coord_t)radius * (coord_t)radius + (coord_t)radius / 2;
+  coord_t x1 = radius;
+  drawHorizontalLine(x - radius, y, radius * 2, color, pat);
+  for (coord_t i = 1; i <= imax; i++) {
+    if ((i * i + x1 * x1) > sqmax) {
+      // Draw lines from outside
+      if (x1 > imax) {
+        drawHorizontalLine(x - i + 1, y + x1, (i - 1) * 2, color, pat);
+        drawHorizontalLine(x - i + 1, y - x1, (i - 1) * 2, color, pat);
+      }
+      x1--;
+    }
+    // Draw lines from inside (center)
+    drawHorizontalLine(x - x1, y + i, x1 * 2, color, pat);
+    drawHorizontalLine(x - x1, y - i, x1 * 2, color, pat);
   }
 }
 
@@ -609,7 +634,7 @@ class Slope
     int value;
 };
 
-void BitmapBuffer::drawBitmapPatternPie(coord_t x, coord_t y, const uint8_t * img, LcdFlags flags, int startAngle, int endAngle)
+void BitmapBuffer::drawBitmapPatternPie(coord_t x, coord_t y, const uint8_t * img, LcdColor color, int startAngle, int endAngle)
 {
   if (endAngle == startAngle) {
     endAngle += 1;
@@ -618,7 +643,7 @@ void BitmapBuffer::drawBitmapPatternPie(coord_t x, coord_t y, const uint8_t * im
   Slope startSlope(startAngle);
   Slope endSlope(endAngle);
 
-  pixel_t color = lcdColorTable[COLOR_IDX(flags)];
+  auto rgb565 = COLOR_TO_RGB565(color);
 
   auto bitmap = (BitmapData *)img;
   coord_t width = bitmap->width();
@@ -632,22 +657,22 @@ void BitmapBuffer::drawBitmapPatternPie(coord_t x, coord_t y, const uint8_t * im
     for (int x1 = w2 - 1; x1 >= 0; x1--) {
       Slope slope(false, x1 == 0 ? 99000 : y1 * 100 / x1);
       if (slope.isBetween(startSlope, endSlope)) {
-        drawAlphaPixel(x + w2 + x1, y + h2 - y1, q[(h2 - y1) * width + w2 + x1] >> 4, color);
+        drawAlphaPixel(x + w2 + x1, y + h2 - y1, q[(h2 - y1) * width + w2 + x1] >> 4, rgb565);
       }
       if (slope.invertVertical().isBetween(startSlope, endSlope)) {
-        drawAlphaPixel(x + w2 + x1, y + h2 + y1, q[(h2 + y1) * width + w2 + x1] >> 4, color);
+        drawAlphaPixel(x + w2 + x1, y + h2 + y1, q[(h2 + y1) * width + w2 + x1] >> 4, rgb565);
       }
       if (slope.invertHorizontal().isBetween(startSlope, endSlope)) {
-        drawAlphaPixel(x + w2 - x1, y + h2 + y1, q[(h2 + y1) * width + w2 - x1] >> 4, color);
+        drawAlphaPixel(x + w2 - x1, y + h2 + y1, q[(h2 + y1) * width + w2 - x1] >> 4, rgb565);
       }
       if (slope.invertVertical().isBetween(startSlope, endSlope)) {
-        drawAlphaPixel(x + w2 - x1, y + h2 - y1, q[(h2 - y1) * width + w2 - x1] >> 4, color);
+        drawAlphaPixel(x + w2 - x1, y + h2 - y1, q[(h2 - y1) * width + w2 - x1] >> 4, rgb565);
       }
     }
   }
 }
 
-void BitmapBuffer::drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadius, coord_t externalRadius, int startAngle, int endAngle, LcdFlags flags)
+void BitmapBuffer::drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadius, coord_t externalRadius, LcdColor color, int startAngle, int endAngle)
 {
   if (endAngle == startAngle) {
     endAngle += 1;
@@ -656,7 +681,7 @@ void BitmapBuffer::drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadiu
   Slope startSlope(startAngle);
   Slope endSlope(endAngle);
 
-  pixel_t color = lcdColorTable[COLOR_IDX(flags)];
+  auto rgb565 = COLOR_TO_RGB565(color);
   APPLY_OFFSET();
 
   coord_t internalDist = internalRadius * internalRadius;
@@ -668,20 +693,20 @@ void BitmapBuffer::drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadiu
       if (dist >= internalDist && dist <= externalDist) {
         Slope slope(false, x1 == 0 ? 99000 : y1 * 100 / x1);
         if (slope.isBetween(startSlope, endSlope))
-          drawPixelAbs(x + x1, y - y1, color);
+          drawPixelAbsWithClipping(x + x1, y - y1, rgb565);
         if (slope.invertVertical().isBetween(startSlope, endSlope))
-          drawPixelAbs(x + x1, y + y1, color);
+          drawPixelAbsWithClipping(x + x1, y + y1, rgb565);
         if (slope.invertHorizontal().isBetween(startSlope, endSlope))
-          drawPixelAbs(x - x1, y + y1, color);
+          drawPixelAbsWithClipping(x - x1, y + y1, rgb565);
         if (slope.invertVertical().isBetween(startSlope, endSlope))
-          drawPixelAbs(x - x1, y - y1, color);
+          drawPixelAbsWithClipping(x - x1, y - y1, rgb565);
       }
     }
   }
 }
 
 template <class T>
-void BitmapBuffer::drawMask(coord_t x, coord_t y, const T * mask, LcdFlags flags, coord_t srcx, coord_t srcw)
+void BitmapBuffer::drawMask(coord_t x, coord_t y, const T * mask, Color565 color, coord_t srcx, coord_t srcw)
 {
   if (!mask)
     return;
@@ -727,12 +752,12 @@ void BitmapBuffer::drawMask(coord_t x, coord_t y, const T * mask, LcdFlags flags
     return;
   }
 
-  pixel_t color = lcdColorTable[COLOR_IDX(flags)];
-  DMACopyAlphaMask(data, format == BMP_ARGB4444, _width, _height, x, y, mask->getData(), maskWidth, maskHeight, srcx, srcy, srcw, srch, color);
+  auto rgb565 = COLOR_TO_RGB565(color);
+  DMACopyAlphaMask(data, format == BMP_ARGB4444, _width, _height, x, y, mask->getData(), maskWidth, maskHeight, srcx, srcy, srcw, srch, rgb565);
 }
 
-template void BitmapBuffer::drawMask(int, int, const BitmapData *, LcdFlags, int, int);
-template void BitmapBuffer::drawMask(int, int, const BitmapMask *, LcdFlags, int, int);
+template void BitmapBuffer::drawMask(int, int, const BitmapData *, Color565, int, int);
+template void BitmapBuffer::drawMask(int, int, const BitmapMask *, Color565, int, int);
 
 void BitmapBuffer::drawMask(coord_t x, coord_t y, const BitmapMask * mask, const BitmapBuffer * srcBitmap, coord_t offsetX, coord_t offsetY, coord_t width, coord_t height)
 {
@@ -765,32 +790,32 @@ void BitmapBuffer::drawMask(coord_t x, coord_t y, const BitmapMask * mask, const
   if (y >= ymax || x >= xmax || width <= 0 || x + width < xmin || y + height < ymin)
     return;
 
-  for (coord_t row = 0; row < height; row++) {
-    if (y + row < ymin || y + row >= ymax)
+  for (coord_t yCur = 0; yCur < height; yCur++) {
+    if (y + yCur < ymin || y + yCur >= ymax)
       continue;
-    auto * p = getPixelPtrAbs(x, y + row);
-    const auto * q = mask->getPixelPtrAbs(offsetX, offsetY + row);
-    for (coord_t col = 0; col < width; col++) {
-      drawAlphaPixel(p, (*q) >> 4, *srcBitmap->getPixelPtrAbs(row, col));
+    auto * p = getPixelPtrAbs(x, y + yCur);
+    const auto * q = mask->getPixelPtrAbs(offsetX, offsetY + yCur);
+    for (coord_t xCur = 0; xCur < width; xCur++) {
+      drawAlphaPixel(p, (*q) >> 4, *srcBitmap->getPixelPtrAbs(xCur, yCur));
       MOVE_TO_NEXT_RIGHT_PIXEL(p);
       MOVE_TO_NEXT_RIGHT_PIXEL(q);
     }
   }
 }
 
-uint8_t BitmapBuffer::drawChar(coord_t x, coord_t y, const uint8_t * font, const uint16_t * spec, unsigned int index, LcdFlags flags)
+uint8_t BitmapBuffer::drawChar(coord_t x, coord_t y, const uint8_t * font, const uint16_t * spec, unsigned int index, LcdColor color)
 {
   coord_t offset = spec[index + 1];
   coord_t width = spec[index + 2] - offset;
   if (width > 0) {
-    drawMask(x, y, (const BitmapData *)font, flags, offset, width);
+    drawMask(x, y, (const BitmapData *)font, color, offset, width);
   }
   return width;
 }
 
 #define INCREMENT_POS(delta)    do { if (flags & VERTICAL) y -= delta; else x += delta; } while(0)
 
-coord_t BitmapBuffer::drawSizedText(coord_t x, coord_t y, const char * s, uint8_t len, LcdFlags flags)
+coord_t BitmapBuffer::drawSizedText(coord_t x, coord_t y, const char * s, uint8_t len, LcdColor color, LcdFlags flags)
 {
   MOVE_OFFSET();
 
@@ -825,19 +850,15 @@ coord_t BitmapBuffer::drawSizedText(coord_t x, coord_t y, const char * s, uint8_
     if (!c) {
       break;
     }
-    else if (c >= 0xFE) {
+    else if (c >= CJK_BYTE1_MIN) {
       // CJK char
-      s++;
-      c = uint8_t(*s) + ((c & 0x01u) << 8u) - 1;
+      c = getCJKChar(c, *++s);
       // TRACE("CJK = %d", c);
-      if (c >= 0x100)
-        c -= 1;
-      c += CJK_FIRST_LETTER_INDEX;
-      uint8_t width = drawChar(x, y, font, fontspecs, c, flags);
+      uint8_t width = drawChar(x, y, font, fontspecs, c, color);
       INCREMENT_POS(width + CHAR_SPACING);
     }
     else if (c >= 0x20) {
-      uint8_t width = drawChar(x, y, font, fontspecs, getMappedChar(c), flags);
+      uint8_t width = drawChar(x, y, font, fontspecs, getMappedChar(c), color);
       if ((flags & SPACING_NUMBERS_CONST) && c >= '0' && c <= '9')
         INCREMENT_POS(getCharWidth('9', fontspecs) + CHAR_SPACING);
       else
@@ -859,7 +880,7 @@ coord_t BitmapBuffer::drawSizedText(coord_t x, coord_t y, const char * s, uint8_
   return ((flags & RIGHT) ? orig_pos : pos) - offsetX;
 }
 
-coord_t BitmapBuffer::drawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, uint8_t len, const char * prefix, const char * suffix)
+coord_t BitmapBuffer::drawNumber(coord_t x, coord_t y, int32_t val, LcdColor color, LcdFlags flags, uint8_t len, const char * prefix, const char * suffix)
 {
   char str[48+1]; // max=16 for the prefix, 16 chars for the number, 16 chars for the suffix
   char *s = str + 32;
@@ -896,15 +917,15 @@ coord_t BitmapBuffer::drawNumber(coord_t x, coord_t y, int32_t val, LcdFlags fla
     strncpy(&str[32], suffix, 16);
   }
   flags &= ~LEADING0;
-  return drawText(x, y, s, flags);
+  return drawText(x, y, s, color, flags);
 }
 
-void drawSolidRect(BitmapBuffer * dc, coord_t x, coord_t y, coord_t w, coord_t h, uint8_t thickness, LcdFlags flags)
+void drawSolidRect(BitmapBuffer * dc, coord_t x, coord_t y, coord_t w, coord_t h, Color565 color, uint8_t thickness)
 {
-  dc->drawSolidFilledRect(x, y, thickness, h, flags);
-  dc->drawSolidFilledRect(x+w-thickness, y, thickness, h, flags);
-  dc->drawSolidFilledRect(x, y, w, thickness, flags);
-  dc->drawSolidFilledRect(x, y+h-thickness, w, thickness, flags);
+  dc->drawSolidFilledRect(x, y, thickness, h, color);
+  dc->drawSolidFilledRect(x+w-thickness, y, thickness, h, color);
+  dc->drawSolidFilledRect(x, y, w, thickness, color);
+  dc->drawSolidFilledRect(x, y+h-thickness, w, thickness, color);
 }
 
 //void BitmapBuffer::drawBitmapPie(int x0, int y0, const uint16_t * img, int startAngle, int endAngle)
@@ -972,7 +993,7 @@ BitmapMask * BitmapMask::load(const char * filename)
   return nullptr;
 }
 
-BitmapBuffer * BitmapBuffer::loadMaskOnBackground(const char * filename, LcdFlags foreground, LcdFlags background)
+BitmapBuffer * BitmapBuffer::loadMaskOnBackground(const char * filename, Color565 foreground, Color565 background)
 {
   BitmapBuffer * result = nullptr;
   const auto * mask = BitmapMask::load(filename);
@@ -987,43 +1008,49 @@ BitmapBuffer * BitmapBuffer::loadMaskOnBackground(const char * filename, LcdFlag
   return result;
 }
 
-FIL imgFile __DMA;
-
 BitmapBuffer * BitmapBuffer::load_bmp(const char * filename)
 {
   UINT read;
   uint8_t palette[16];
   uint8_t bmpBuf[LCD_W]; /* maximum with LCD_W */
   uint8_t * buf = &bmpBuf[0];
+  auto imgFile = (FIL *)malloc(sizeof(FIL));
+  if (!imgFile)
+    return nullptr;
 
-  FRESULT result = f_open(&imgFile, filename, FA_OPEN_EXISTING | FA_READ);
+  FRESULT result = f_open(imgFile, filename, FA_OPEN_EXISTING | FA_READ);
   if (result != FR_OK) {
+    free(imgFile);
     return nullptr;
   }
 
-  if (f_size(&imgFile) < 14) {
-    f_close(&imgFile);
+  if (f_size(imgFile) < 14) {
+    f_close(imgFile);
+    free(imgFile);
     return nullptr;
   }
 
-  result = f_read(&imgFile, buf, 14, &read);
+  result = f_read(imgFile, buf, 14, &read);
   if (result != FR_OK || read != 14) {
-    f_close(&imgFile);
+    f_close(imgFile);
+    free(imgFile);
     return nullptr;
   }
 
   if (buf[0] != 'B' || buf[1] != 'M') {
-    f_close(&imgFile);
+    f_close(imgFile);
+    free(imgFile);
     return nullptr;
   }
 
   uint32_t fsize  = *((uint32_t *)&buf[2]);
   uint32_t hsize  = *((uint32_t *)&buf[10]); /* header size */
 
-  uint32_t len = limit<uint32_t>(4, hsize - 14, 32);
-  result = f_read(&imgFile, buf, len, &read);
+  auto len = limit<uint32_t>(4, hsize - 14, 32);
+  result = f_read(imgFile, buf, len, &read);
   if (result != FR_OK || read != len) {
-    f_close(&imgFile);
+    f_close(imgFile);
+    free(imgFile);
     return nullptr;
   }
 
@@ -1031,17 +1058,19 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename)
 
   /* invalid extra header size */
   if (ihsize + 14 > hsize) {
-    f_close(&imgFile);
+    f_close(imgFile);
+    free(imgFile);
     return nullptr;
   }
 
   /* sometimes file size is set to some headers size, set a real size in that case */
   if (fsize == 14 || fsize == ihsize + 14)
-    fsize = f_size(&imgFile) - 2;
+    fsize = f_size(imgFile) - 2;
 
   /* declared file size less than header size */
   if (fsize <= hsize) {
-    f_close(&imgFile);
+    f_close(imgFile);
+    free(imgFile);
     return nullptr;
   }
 
@@ -1063,12 +1092,14 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename)
       buf += 8;
       break;
     default:
-      f_close(&imgFile);
+      f_close(imgFile);
+      free(imgFile);
       return nullptr;
   }
 
   if (*((uint16_t *)&buf[0]) != 1) { /* planes */
-    f_close(&imgFile);
+    f_close(imgFile);
+    free(imgFile);
     return nullptr;
   }
 
@@ -1077,8 +1108,9 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename)
   buf = &bmpBuf[0];
 
   if (depth == 4) {
-    if (f_lseek(&imgFile, hsize - 64) != FR_OK || f_read(&imgFile, buf, 64, &read) != FR_OK || read != 64) {
-      f_close(&imgFile);
+    if (f_lseek(imgFile, hsize - 64) != FR_OK || f_read(imgFile, buf, 64, &read) != FR_OK || read != 64) {
+      f_close(imgFile);
+      free(imgFile);
       return nullptr;
     }
     for (uint8_t i = 0; i < 16; i++) {
@@ -1086,15 +1118,17 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename)
     }
   }
   else {
-    if (f_lseek(&imgFile, hsize) != FR_OK) {
-      f_close(&imgFile);
+    if (f_lseek(imgFile, hsize) != FR_OK) {
+      f_close(imgFile);
+      free(imgFile);
       return nullptr;
     }
   }
 
-  BitmapBuffer * bmp = new BitmapBuffer(BMP_RGB565, w, h);
+  auto bmp = new BitmapBuffer(BMP_RGB565, w, h);
   if (bmp == nullptr || bmp->getData() == nullptr) {
-    f_close(&imgFile);
+    f_close(imgFile);
+    free(imgFile);
     return nullptr;
   }
 
@@ -1106,9 +1140,10 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename)
       for (int i = h - 1; i >= 0; i--) {
         pixel_t * dst = bmp->getPixelPtrAbs(0, i);
         for (unsigned int j = 0; j < w; j++) {
-          result = f_read(&imgFile, (uint8_t *)dst, 2, &read);
+          result = f_read(imgFile, (uint8_t *)dst, 2, &read);
           if (result != FR_OK || read != 2) {
-            f_close(&imgFile);
+            f_close(imgFile);
+            free(imgFile);
             delete bmp;
             return nullptr;
           }
@@ -1122,18 +1157,19 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename)
         pixel_t * dst = bmp->getPixelPtrAbs(0, i);
         for (unsigned int j = 0; j < w; j++) {
           uint32_t pixel;
-          result = f_read(&imgFile, (uint8_t *)&pixel, 4, &read);
+          result = f_read(imgFile, (uint8_t *)&pixel, 4, &read);
           if (result != FR_OK || read != 4) {
-            f_close(&imgFile);
+            f_close(imgFile);
+            free(imgFile);
             delete bmp;
             return nullptr;
           }
           if (hasAlpha) {
-            *dst = ARGB((pixel >> 24) & 0xFF, (pixel >> 16) & 0xFF, (pixel >> 8) & 0xFF, (pixel >> 0) & 0xFF);
+            *dst = ARGB4444((pixel >> 24) & 0xFF, (pixel >> 16) & 0xFF, (pixel >> 8) & 0xFF, (pixel >> 0) & 0xFF);
           }
           else {
             if ((pixel & 0xFF) == 0xFF) {
-              *dst = RGB(pixel >> 24, (pixel >> 16) & 0xFF, (pixel >> 8) & 0xFF);
+              *dst = RGB565(pixel >> 24, (pixel >> 16) & 0xFF, (pixel >> 8) & 0xFF);
             }
             else {
               hasAlpha = true;
@@ -1142,7 +1178,7 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename)
                 pixel_t tmp = *p;
                 *p = ((tmp >> 1) & 0x0f) + (((tmp >> 7) & 0x0f) << 4) + (((tmp >> 12) & 0x0f) << 8);
               }
-              *dst = ARGB(pixel & 0xFF, (pixel >> 24) & 0xFF, (pixel >> 16) & 0xFF, (pixel >> 8) & 0xFF);
+              *dst = ARGB4444(pixel & 0xFF, (pixel >> 24) & 0xFF, (pixel >> 16) & 0xFF, (pixel >> 8) & 0xFF);
             }
           }
           MOVE_TO_NEXT_RIGHT_PIXEL(dst);
@@ -1155,10 +1191,11 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename)
 
     case 4:
       rowSize = ((4*w+31)/32)*4;
-      for (int32_t i=h-1; i>=0; i--) {
-        result = f_read(&imgFile, buf, rowSize, &read);
+      for (int32_t i = h - 1; i >= 0; i--) {
+        result = f_read(imgFile, buf, rowSize, &read);
         if (result != FR_OK || read != rowSize) {
-          f_close(&imgFile);
+          f_close(imgFile);
+          free(imgFile);
           delete bmp;
           return nullptr;
         }
@@ -1166,19 +1203,21 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename)
         for (uint32_t j=0; j<w; j++) {
           uint8_t index = (buf[j/2] >> ((j & 1) ? 0 : 4)) & 0x0F;
           uint8_t val = palette[index];
-          *dst = RGB(val, val, val);
+          *dst = RGB565(val, val, val);
           MOVE_TO_NEXT_RIGHT_PIXEL(dst);
         }
       }
       break;
 
     default:
-      f_close(&imgFile);
+      f_close(imgFile);
+      free(imgFile);
       delete bmp;
       return nullptr;
   }
 
-  f_close(&imgFile);
+  f_close(imgFile);
+  free(imgFile);
   return bmp;
 }
 
@@ -1199,9 +1238,14 @@ static int fatfs_file_read_fn(spng_ctx *ctx, void *user, void *data, size_t n)
 
 BitmapBuffer * BitmapBuffer::load_png(const char * filename)
 {
-  FRESULT result = f_open(&imgFile, filename, FA_OPEN_EXISTING | FA_READ);
+  auto imgFile = (FIL *)malloc(sizeof(FIL));
+  if (!imgFile)
+    return nullptr;
+
+  FRESULT result = f_open(imgFile, filename, FA_OPEN_EXISTING | FA_READ);
   if (result != FR_OK) {
     TRACE("load_png: f_open failed");
+    free(imgFile);
     return nullptr;
   }
 
@@ -1273,14 +1317,14 @@ BitmapBuffer * BitmapBuffer::load_png(const char * filename)
     const uint8_t * p = (uint8_t *)out;
     if (fmt == SPNG_FMT_RGBA8) {
       for (unsigned col = 0; col < ihdr.width; ++col) {
-        *dest = ARGB(p[3], p[0], p[1], p[2]);
+        *dest = ARGB4444(p[3], p[0], p[1], p[2]);
         MOVE_TO_NEXT_RIGHT_PIXEL(dest);
         p += 4;
       }
     }
     else {
       for (unsigned col = 0; col < ihdr.width; ++col) {
-        *dest = RGB(p[0], p[1], p[2]);
+        *dest = RGB565(p[0], p[1], p[2]);
         MOVE_TO_NEXT_RIGHT_PIXEL(dest);
         p += 3;
       }

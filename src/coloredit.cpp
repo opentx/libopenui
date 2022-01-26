@@ -24,7 +24,8 @@
 
 constexpr uint8_t PART_BITS[3][2] = { {0, 5}, {5, 6}, {11, 5} };
 
-class ColorBox: public Window {
+class ColorBox: public Window
+{
   public:
     ColorBox(Window * parent, const rect_t & rect, LcdFlags color):
       Window(parent, rect),
@@ -41,9 +42,8 @@ class ColorBox: public Window {
 
     void paint(BitmapBuffer * dc) override
     {
-      lcdSetColor(color);
       dc->drawSolidFilledRect(0, 0, width(), height(), DEFAULT_COLOR);
-      dc->drawSolidFilledRect(1, 1, width() - 2, height() - 2, CUSTOM_COLOR);
+      dc->drawSolidFilledRect(1, 1, width() - 2, height() - 2, color);
     }
 
     void setColor(LcdFlags value)

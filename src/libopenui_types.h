@@ -34,6 +34,12 @@ struct point_t
   }
 };
 
+struct range_t
+{
+  coord_t left;
+  coord_t right;
+};
+
 struct rect_t
 {
   coord_t x, y, w, h;
@@ -73,5 +79,7 @@ static const rect_t nullRect = {0, 0, 0, 0};
 
 typedef uint32_t LcdFlags;
 typedef uint16_t event_t;
-
+typedef uint16_t Color565;
+typedef uint32_t LcdColor;
+typedef uint32_t WindowFlags;
 typedef uint8_t charSuite[2];

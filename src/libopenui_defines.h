@@ -28,17 +28,19 @@
 #define TIMEHOUR                       0
 
 /* drawText flags */
-#define LEFT                           0x00u /* align left */
-#define VCENTERED                      0x02u /* align center vertically */
-#define CENTERED                       0x04u /* align center */
-#define RIGHT                          0x08u /* align right */
-#define SHADOWED                       0x80u /* black copy at +1 +1 */
+constexpr uint32_t LEFT = 0x00u; // align left
+constexpr uint32_t VCENTERED = 0x02u; // align center vertically
+constexpr uint32_t CENTERED = 0x04u; // align center
+constexpr uint32_t RIGHT = 0x08u; // align right
+constexpr uint32_t SHADOWED = 0x80u; // black copy at +1 +1
+
 // unused 0x1000u
-#define SPACING_NUMBERS_CONST          0x2000u
-#define VERTICAL                       0x4000u
+constexpr uint32_t SPACING_NUMBERS_CONST = 0x2000u;
+constexpr uint32_t VERTICAL = 0x4000u;
 // unused 0x8000u
 
 /* drawNumber flags */
+#define PREC_MASK                      0x30u
 #define PREC1                          0x10u
 #define PREC2                          0x20u
 #define PREC3                          0x30u
@@ -71,8 +73,8 @@
 #define GET_RED(color) \
   (((color) & 0xF800) >> 8)
 
-#define RGB_TO_ARGB(color, alpha) \
-  ARGB(alpha, GET_RED(color), GET_GREEN(color), GET_BLUE(color))
+#define RGB565_TO_ARGB4444(color, alpha) \
+  ARGB4444(alpha, GET_RED(color), GET_GREEN(color), GET_BLUE(color))
 
 #define GET_GREEN(color) \
   (((color) & 0x07E0) >> 3)
@@ -80,37 +82,34 @@
 #define GET_BLUE(color) \
   (((color) & 0x001F) << 3)
 
-#define ALPHA_MAX                      0x0Fu
-#define OPACITY(value)                 ((value) << 24u)
+#define ALPHA_MASK 0x0F000000
 
-#define RGB(r, g, b)                   (uint16_t)((((r) & 0xF8) << 8) + (((g) & 0xFC) << 3) + (((b) & 0xF8) >> 3))
-#define ARGB(a, r, g, b)               (uint16_t)((((a) & 0xF0) << 8) + (((r) & 0xF0) << 4) + (((g) & 0xF0) << 0) + (((b) & 0xF0) >> 4))
+constexpr uint8_t ALPHA_MAX = 0x0Fu;
+#define ALPHA(value)                   ((value) << 24u)
 
-#define COLOR(index)                   LcdFlags(unsigned(index) << 16u)
-#define COLOR_IDX(flags)               uint8_t((flags) >> 16u)
-#define COLOR_MASK                     0xFFFF0000u
-
-inline LcdFlags replaceColor(LcdFlags flags, LcdFlags color)
+constexpr Color565 RGB565(uint8_t r, uint8_t g, uint8_t b)
 {
-  return (flags & ~COLOR_MASK) | color;
+  return (((r) & 0xF8) << 8) + (((g) & 0xFC) << 3) + (((b) & 0xF8) >> 3);
 }
 
-#define DEFAULT_COLOR                  COLOR(DEFAULT_COLOR_INDEX)
-#define DEFAULT_BGCOLOR                COLOR(DEFAULT_BGCOLOR_INDEX)
-#define FOCUS_COLOR                    COLOR(FOCUS_COLOR_INDEX)
-#define FOCUS_BGCOLOR                  COLOR(FOCUS_BGCOLOR_INDEX)
-#define DISABLE_COLOR                  COLOR(DISABLE_COLOR_INDEX)
-#define HIGHLIGHT_COLOR                COLOR(HIGHLIGHT_COLOR_INDEX)
-#define CHECKBOX_COLOR                 COLOR(CHECKBOX_COLOR_INDEX)
-#define SCROLLBAR_COLOR                COLOR(SCROLLBAR_COLOR_INDEX)
-#define MENU_COLOR                     COLOR(MENU_COLOR_INDEX)
-#define MENU_BGCOLOR                   COLOR(MENU_BGCOLOR_INDEX)
-#define MENU_TITLE_BGCOLOR             COLOR(MENU_TITLE_BGCOLOR_INDEX)
-#define MENU_LINE_COLOR                COLOR(MENU_LINE_COLOR_INDEX)
-#define MENU_HIGHLIGHT_COLOR           COLOR(MENU_HIGHLIGHT_COLOR_INDEX)
-#define MENU_HIGHLIGHT_BGCOLOR         COLOR(MENU_HIGHLIGHT_BGCOLOR_INDEX)
-#define OVERLAY_COLOR                  COLOR(OVERLAY_COLOR_INDEX)
-#define TABLE_BGCOLOR                  COLOR(TABLE_BGCOLOR_INDEX)
-#define TABLE_HEADER_BGCOLOR           COLOR(TABLE_HEADER_BGCOLOR_INDEX)
-#define CUSTOM_COLOR                   COLOR(CUSTOM_COLOR_INDEX)
+constexpr Color565 GREY(uint8_t v)
+{
+  return RGB565(v, v, v);
+}
 
+inline uint16_t ARGB4444(uint8_t a, uint8_t r, uint8_t g, uint8_t b)
+{
+  return (((a) & 0xF0) << 8) + (((r) & 0xF0) << 4) + (((g) & 0xF0) << 0) + (((b) & 0xF0) >> 4);
+}
+
+inline bool IS_COLOR_OPAQUE(LcdColor color)
+{
+  return (color & ALPHA_MASK) == ALPHA(ALPHA_MAX);
+}
+
+inline uint8_t GET_COLOR_ALPHA(LcdColor color)
+{
+  return color >> 24;
+}
+
+#define COLOR_TO_RGB565(color)         Color565(color)

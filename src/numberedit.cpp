@@ -48,17 +48,17 @@ void NumberEdit::paint(BitmapBuffer * dc)
     displayFunction(dc, textColor, value);
   }
   else if (value == 0 && !zeroText.empty()) {
-    dc->drawText(FIELD_PADDING_LEFT, FIELD_PADDING_TOP, zeroText.c_str(), textColor | textFlags);
+    dc->drawText(FIELD_PADDING_LEFT, FIELD_PADDING_TOP, zeroText.c_str(), textColor, textFlags);
     if (textFlags & RIGHT)
-      dc->drawText(rect.w - FIELD_PADDING_LEFT, FIELD_PADDING_TOP, zeroText.c_str(), textColor | textFlags);
+      dc->drawText(rect.w - FIELD_PADDING_LEFT, FIELD_PADDING_TOP, zeroText.c_str(), textColor, textFlags);
     else
-      dc->drawText(FIELD_PADDING_LEFT, FIELD_PADDING_TOP, zeroText.c_str(), textColor | textFlags);
+      dc->drawText(FIELD_PADDING_LEFT, FIELD_PADDING_TOP, zeroText.c_str(), textColor, textFlags);
   }
   else {
     if (textFlags & RIGHT)
-      dc->drawNumber(rect.w - FIELD_PADDING_LEFT, FIELD_PADDING_TOP, value, textColor | textFlags, 0, prefix.c_str(), suffix.c_str());
+      dc->drawNumber(rect.w - FIELD_PADDING_LEFT, FIELD_PADDING_TOP, value, textColor, textFlags, 0, prefix.c_str(), suffix.c_str());
     else
-      dc->drawNumber(FIELD_PADDING_LEFT, FIELD_PADDING_TOP, value, textColor | textFlags, 0, prefix.c_str(), suffix.c_str());
+      dc->drawNumber(FIELD_PADDING_LEFT, FIELD_PADDING_TOP, value, textColor, textFlags, 0, prefix.c_str(), suffix.c_str());
   }
 }
 
@@ -101,21 +101,41 @@ void NumberEdit::onEvent(event_t event)
 #endif
 
 #if defined(HARDWARE_TOUCH)
-      case EVT_VIRTUAL_KEY_PLUS:
-        setValue(getValue() + getStep());
+      case EVT_VIRTUAL_KEY_PLUS: {
+        int value = getValue();
+        if (value < vmax)
+          setValue(value + getStep());
+        else
+          onKeyError();
         break;
+      }
 
-      case EVT_VIRTUAL_KEY_MINUS:
-        setValue(getValue() - getStep());
+      case EVT_VIRTUAL_KEY_MINUS: {
+        int value = getValue();
+        if (value > vmin)
+          setValue(value - getStep());
+        else
+          onKeyError();
         break;
+      }
 
-      case EVT_VIRTUAL_KEY_FORWARD:
-        setValue(getValue() + 10 * getStep());
+      case EVT_VIRTUAL_KEY_FORWARD: {
+        int value = getValue();
+        if (value < vmax)
+          setValue(value + 10 * getStep());
+        else
+          onKeyError();
         break;
+      }
 
-      case EVT_VIRTUAL_KEY_BACKWARD:
-        setValue(getValue() - 10 * getStep());
+      case EVT_VIRTUAL_KEY_BACKWARD: {
+        int value = getValue();
+        if (value > vmin)
+          setValue(value - 10 * getStep());
+        else
+          onKeyError();
         break;
+      }
 
       case EVT_VIRTUAL_KEY_DEFAULT:
         setValue(getDefault());

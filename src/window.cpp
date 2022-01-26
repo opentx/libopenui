@@ -52,22 +52,6 @@ Window::~Window()
   deleteChildren();
 }
 
-void Window::attach(Window * newParent)
-{
-  if (parent)
-    detach();
-  parent = newParent;
-  newParent->addChild(this);
-}
-
-void Window::detach()
-{
-  if (parent) {
-    parent->removeChild(this);
-    parent = nullptr;
-  }
-}
-
 void Window::deleteLater(bool detach, bool trash)
 {
   if (_deleted)
@@ -164,8 +148,10 @@ void Window::setScrollPositionY(coord_t value)
   }
 }
 
-void Window::scrollTo(Window * child)
+void Window::scrollTo(Window * child, bool bottom)
 {
+  TRACE_WINDOWS("%s scrollTo(%s)", getWindowDebugString().c_str(), child->getWindowDebugString().c_str());
+
   coord_t offsetX = 0;
   coord_t offsetY = 0;
 
@@ -178,9 +164,9 @@ void Window::scrollTo(Window * child)
 
   const rect_t scrollRect = {
     offsetX + child->left(),
-    offsetY + child->top(),
+    offsetY + (bottom ? child->bottom() : child->top()),
     min(child->width(), width()),
-    min(child->height(), height())
+    min(child->height(), bottom ? 0 : height())
   };
 
   scrollTo(scrollRect);
@@ -203,6 +189,11 @@ void Window::scrollTo(const rect_t & rect)
   }
 }
 
+void Window::scrollToPage(unsigned pageIndex)
+{
+  scrollTo({coord_t(pageWidth * pageIndex), 0, pageWidth, 0});
+}
+
 bool Window::hasOpaqueRect(const rect_t & testRect) const
 {
   if (!rect.contains(testRect))
@@ -212,7 +203,7 @@ bool Window::hasOpaqueRect(const rect_t & testRect) const
     return true;
   }
 
-  const rect_t relativeRect = {testRect.x - rect.x, testRect.y - rect.y, testRect.w, testRect.h};
+  const rect_t relativeRect = {testRect.x - rect.x + getScrollPositionX(), testRect.y - rect.y + getScrollPositionY(), testRect.w, testRect.h};
   return std::any_of(children.begin(), children.end(), [relativeRect](Window * child) { return child->hasOpaqueRect(relativeRect); });
 }
 
@@ -247,7 +238,7 @@ void Window::fullPaint(BitmapBuffer * dc)
     TRACE_WINDOWS_INDENT("%s%s", getWindowDebugString().c_str(), hasFocus() ? " (*)" : "");
     paint(dc);
 #if defined(WINDOWS_INSPECT_BORDER_COLOR)
-    dc->drawSolidRect(0, 0, width(), height(), 1, WINDOWS_INSPECT_BORDER_COLOR);
+    dc->drawSolidRect(0, 0, width(), height(), WINDOWS_INSPECT_BORDER_COLOR, 1);
 #endif
   }
   else {
@@ -282,14 +273,14 @@ bool Window::isChildVisible(const Window * window) const
   return false;
 }
 
-void Window::setInsideParentScrollingArea()
+void Window::setInsideParentScrollingArea(bool bottom)
 {
   Window * parent = getParent();
   while (parent && parent->getWindowFlags() & FORWARD_SCROLL) {
     parent = parent->parent;
   }
   if (parent) {
-    parent->scrollTo(this);
+    parent->scrollTo(this, bottom);
     invalidate();
   }
 }
@@ -368,7 +359,7 @@ void Window::checkEvents()
   }
 
 #if defined(HARDWARE_TOUCH)
-  if (touchState.state != TE_SLIDE && touchState.lastDeltaX == 0 && touchState.lastDeltaY == 0) {
+  if (!touchState.isScrolling()) {
     if (pageWidth) {
       coord_t relativeScrollPosition = getScrollPositionX() % pageWidth;
       if (relativeScrollPosition) {
@@ -396,6 +387,8 @@ void Window::onEvent(event_t event)
 #if defined(HARDWARE_TOUCH)
 bool Window::onTouchStart(coord_t x, coord_t y)
 {
+  TRACE_WINDOWS("%s touch start", Window::getWindowDebugString("Window").c_str());
+
   for (auto it = children.rbegin(); it != children.rend(); ++it) {
     auto child = *it;
     if (child->rect.contains(x, y)) {
@@ -405,11 +398,13 @@ bool Window::onTouchStart(coord_t x, coord_t y)
     }
   }
 
-  return false;
+  return windowFlags & OPAQUE;
 }
 
 bool Window::onTouchLong(coord_t x, coord_t y)
 {
+  TRACE_WINDOWS("%s touch long", Window::getWindowDebugString("Window").c_str());
+
   for (auto it = children.rbegin(); it != children.rend(); ++it) {
     auto child = *it;
     if (child->rect.contains(x, y)) {
@@ -419,7 +414,7 @@ bool Window::onTouchLong(coord_t x, coord_t y)
     }
   }
 
-  return false;
+  return windowFlags & OPAQUE;
 }
 
 bool Window::forwardTouchEnd(coord_t x, coord_t y)
@@ -438,6 +433,8 @@ bool Window::forwardTouchEnd(coord_t x, coord_t y)
 
 bool Window::onTouchEnd(coord_t x, coord_t y)
 {
+  TRACE_WINDOWS("%s touch end", Window::getWindowDebugString("Window").c_str());
+
   return forwardTouchEnd(x, y) ? true : (windowFlags & OPAQUE);
 }
 
@@ -464,14 +461,32 @@ bool Window::onTouchSlide(coord_t x, coord_t y, coord_t startX, coord_t startY, 
   }
 
   if (slideY && innerHeight > rect.h) {
-    setScrollPositionY(scrollPositionY - slideY);
-    slidingWindow = this;
+    if (touchState.isScrollingByInertia() && (scrollPositionY == 0 || scrollPositionY == innerHeight - height())) {
+      touchState.stopInertia();
+    }
+    else {
+      setScrollPositionY(scrollPositionY - slideY);
+      slidingWindow = this;
+      touchState.lastDeltaX = touchState.deltaX;
+      touchState.lastDeltaY = touchState.deltaY;
+      touchState.deltaX = 0;
+      touchState.deltaY = 0;
+    }
     return true;
   }
 
   if (slideX && innerWidth > rect.w) {
-    setScrollPositionX(scrollPositionX - slideX);
-    slidingWindow = this;
+    if (touchState.isScrollingByInertia() && (scrollPositionX == 0 || scrollPositionX == innerWidth - width())) {
+      touchState.stopInertia();
+    }
+    else {
+      setScrollPositionX(scrollPositionX - slideX);
+      slidingWindow = this;
+      touchState.lastDeltaX = touchState.deltaX;
+      touchState.lastDeltaY = touchState.deltaY;
+      touchState.deltaX = 0;
+      touchState.deltaY = 0;
+    }
     return true;
   }
 

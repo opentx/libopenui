@@ -31,8 +31,6 @@
 #include "libopenui_helpers.h"
 #include "libopenui_config.h"
 
-typedef uint32_t WindowFlags;
-
 #if !defined(_GNUC_)
   #undef OPAQUE
   #undef TRANSPARENT
@@ -109,7 +107,12 @@ class Window
 
     Window * getFullScreenWindow()
     {
-      return (width() == LCD_W && height() == LCD_H) ? this : parent->getFullScreenWindow();
+      if (width() == LCD_W && height() == LCD_H)
+        return this;
+      else if (parent)
+        return parent->getFullScreenWindow();
+      else
+        return nullptr;
     }
 
     WindowFlags getWindowFlags() const
@@ -160,7 +163,9 @@ class Window
 
     void scrollTo(const rect_t & rect);
 
-    void scrollTo(Window * child);
+    void scrollToPage(unsigned pageIndex);
+
+    void scrollTo(Window * child, bool bottom = false);
 
     static void clearFocus(bool notify = true)
     {
@@ -192,12 +197,20 @@ class Window
       rect.y = (parent->height() - height()) / 2;
     }
 
+    void setMinHeight(coord_t value)
+    {
+      minHeight = value;
+      if (height() < minHeight) {
+        setHeight(minHeight);
+      }
+    }
+
     void setHeight(coord_t value)
     {
-      rect.h = value;
+      rect.h = max(minHeight, value);
       if (windowFlags & FORWARD_SCROLL)
-        innerHeight = value;
-      else if (innerHeight <= value) {
+        innerHeight = height();
+      else if (innerHeight <= height()) {
         setScrollPositionY(0);
       }
       invalidate();
@@ -302,7 +315,7 @@ class Window
     {
       innerHeight = h;
       if (windowFlags & FORWARD_SCROLL) {
-        rect.h = innerHeight;
+        rect.h = max(innerHeight, minHeight);
         parent->adjustInnerHeight();
       }
       else if (height() >= h) {
@@ -355,7 +368,7 @@ class Window
       return parent && right() >= parent->getScrollPositionX() && left() <= parent->getScrollPositionX() + parent->width();
     }
 
-    void setInsideParentScrollingArea();
+    void setInsideParentScrollingArea(bool bottom = false);
 
     void drawVerticalScrollbar(BitmapBuffer * dc);
 
@@ -369,6 +382,8 @@ class Window
 
     void moveWindowsTop(coord_t y, coord_t delta);
 
+    virtual void invalidate(const rect_t & rect);
+
     void invalidate()
     {
       invalidate({0, 0, rect.w, rect.h});
@@ -381,9 +396,21 @@ class Window
 
     virtual void checkEvents();
 
-    void attach(Window * window);
+    void attach(Window * newParent, bool front = false)
+    {
+      if (parent)
+        detach();
+      parent = newParent;
+      newParent->addChild(this, front);
+    }
 
-    void detach();
+    void detach()
+    {
+      if (parent) {
+        parent->removeChild(this);
+        parent = nullptr;
+      }
+    }
 
     bool deleted() const
     {
@@ -395,6 +422,7 @@ class Window
     std::list<Window *> children;
     rect_t rect;
     coord_t innerWidth;
+    coord_t minHeight = 0;
     coord_t innerHeight;
     coord_t pageWidth = 0;
     coord_t pageHeight = 0;
@@ -418,6 +446,7 @@ class Window
         children.push_front(window);
       else
         children.push_back(window);
+      invalidate();
     }
 
     void removeChild(Window * window)
@@ -425,8 +454,6 @@ class Window
       children.remove(window);
       invalidate();
     }
-
-    virtual void invalidate(const rect_t & rect);
 
     void paintChildren(BitmapBuffer * dc, std::list<Window *>::iterator it);
 

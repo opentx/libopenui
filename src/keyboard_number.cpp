@@ -78,6 +78,5 @@ DefaultNumberKeyboard::DefaultNumberKeyboard() :
 
 void DefaultNumberKeyboard::paint(BitmapBuffer * dc)
 {
-  lcdSetColor(RGB(0xE0, 0xE0, 0xE0));
-  dc->clear(CUSTOM_COLOR);
+  dc->clear(RGB565(0xE0, 0xE0, 0xE0));
 }

@@ -97,10 +97,10 @@ void FormField::paint(BitmapBuffer * dc)
   }
   else if (!(windowFlags & FORM_NO_BORDER)) {
     if (hasFocus()) {
-      dc->drawSolidRect(0, 0, rect.w, rect.h, 2, FOCUS_BGCOLOR);
+      dc->drawSolidRect(0, 0, rect.w, rect.h, FOCUS_BGCOLOR, 2);
     }
     else if (!(windowFlags & FORM_BORDER_FOCUS_ONLY)) {
-      dc->drawSolidRect(0, 0, rect.w, rect.h, 1, DISABLE_COLOR);
+      dc->drawSolidRect(0, 0, rect.w, rect.h, DISABLE_COLOR, 1);
     }
   }
 }
@@ -150,6 +150,37 @@ void FormGroup::addField(FormField * field, bool front)
   }
 }
 
+void FormGroup::removeField(FormField * field)
+{
+  FormField * prev = field->getPreviousField();
+  FormField * next = field->getNextField();
+
+  if (prev) {
+    prev->setNextField(next);
+  }
+  if (next) {
+    next->setPreviousField(prev);
+  }
+
+  if (first == field) {
+    if (prev && (prev != field))
+      first = prev;
+    else if (next && (next != field))
+      first = next;
+    else
+      first = nullptr;
+  }
+
+  if (last == field) {
+    if (next && (next != field))
+      last = next;
+    else if (prev && (prev != field))
+      last = prev;
+    else
+      last = nullptr;
+  }
+}
+
 void FormGroup::setFocus(uint8_t flag, Window * from)
 {
   TRACE_WINDOWS("%s setFocus(%d)", getWindowDebugString("FormGroup").c_str(), flag);
@@ -187,6 +218,9 @@ void FormGroup::setFocus(uint8_t flag, Window * from)
           else if (next) {
             next->setFocus(SET_FOCUS_FORWARD, this);
           }
+          else {
+            setInsideParentScrollingArea(true);
+          }
         }
         else {
           if (first) {
@@ -194,6 +228,9 @@ void FormGroup::setFocus(uint8_t flag, Window * from)
           }
           else if (next) {
             next->setFocus(SET_FOCUS_FORWARD, this);
+          }
+          else {
+            setInsideParentScrollingArea();
           }
         }
         break;
@@ -264,10 +301,10 @@ void FormGroup::paint(BitmapBuffer * dc)
 {
   if (!(windowFlags & (FORM_NO_BORDER | FORM_FORWARD_FOCUS))) {
     if (!editMode && hasFocus()) {
-      dc->drawSolidRect(0, 0, rect.w, rect.h, 2, FOCUS_BGCOLOR);
+      dc->drawSolidRect(0, 0, rect.w, rect.h, FOCUS_BGCOLOR, 2);
     }
     else if (!(windowFlags & FORM_BORDER_FOCUS_ONLY)) {
-      dc->drawSolidRect(0, 0, rect.w, rect.h, 1, DISABLE_COLOR);
+      dc->drawSolidRect(0, 0, rect.w, rect.h, DISABLE_COLOR, 1);
     }
   }
 }

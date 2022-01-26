@@ -113,7 +113,7 @@ void TextEdit::onEvent(event_t event)
 #if defined(HARDWARE_KEYS)
   if (editMode) {
     char previousChar = (cursorPos > 0 ? value[cursorPos - 1] : 0);
-    int c = value[cursorPos];
+    int c = (cursorPos < length ? value[cursorPos] : 0);
     int v = c;
 
     switch (event) {
@@ -174,6 +174,9 @@ void TextEdit::onEvent(event_t event)
       case EVT_KEY_BREAK(KEY_EXIT):
         changeEnd();
         FormField::onEvent(event);
+#if defined(HARDWARE_TOUCH)
+        TextKeyboard::hide();
+#endif
         break;
 
       case EVT_KEY_LONG(KEY_ENTER):
@@ -212,17 +215,19 @@ void TextEdit::onEvent(event_t event)
         break;
 
       case EVT_KEY_BREAK(KEY_PGDN):
-        memmove(&value[cursorPos], &value[cursorPos + 1], length - cursorPos - 1);
-        value[length - 1] = '\0';
-        changed = true;
-        if (cursorPos > 0 && value[cursorPos] == '\0') {
-          cursorPos = cursorPos - 1;
+        if (cursorPos < length) {
+          memmove(&value[cursorPos], &value[cursorPos + 1], length - cursorPos - 1);
+          value[length - 1] = '\0';
+          changed = true;
+          if (cursorPos > 0 && value[cursorPos] == '\0') {
+            cursorPos = cursorPos - 1;
+          }
+          invalidate();
         }
-        invalidate();
         break;
     }
 
-    if (c != v) {
+    if (cursorPos < length && c != v) {
       // TRACE("value[%d] = %d", cursorPos, v);
       value[cursorPos] = v;
       invalidate();

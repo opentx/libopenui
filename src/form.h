@@ -57,16 +57,20 @@ class FormField: public Window
       return editMode;
     }
 
-    virtual void setEditMode(bool newEditMode)
+    virtual void setEditMode(bool value)
     {
-      editMode = newEditMode;
-      invalidate();
+      if (value != editMode) {
+        editMode = value;
+        invalidate();
+      }
     }
 
     void enable(bool value = true)
     {
-      enabled = value;
-      invalidate();
+      if (value != enabled) {
+        enabled = value;
+        invalidate();
+      }
     }
 
     bool isEnabled() const
@@ -134,6 +138,8 @@ class FormGroup: public FormField
     void setFocus(uint8_t flag = SET_FOCUS_DEFAULT, Window * from = nullptr) override;
 
     virtual void addField(FormField * field, bool front = false); // NOLINT(google-default-arguments)
+
+    virtual void removeField(FormField * field);
 
     void setFirstField(FormField * field)
     {

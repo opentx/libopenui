@@ -21,6 +21,7 @@
 
 #if defined(__MINGW32__) || !defined(__GNUC__)
   #include <windows.h>
+  #include <direct.h>
   #include <tchar.h>
   #define sleep(x) Sleep(x)
   #define strcasecmp  _stricmp

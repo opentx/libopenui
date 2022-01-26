@@ -45,6 +45,15 @@ class Roller: public Choice
       init(label);
     }
 
+    void enable(bool value = true)
+    {
+      if (value != enabled) {
+        enabled = value;
+        setInnerHeight(value ? INFINITE_HEIGHT : height());
+        invalidate();
+      }
+    }
+
     void init(const char * label)
     {
       if (label) {
@@ -88,10 +97,10 @@ class Roller: public Choice
 
         unsigned valueIndex = displayedValue - vmin;
         if (valueIndex < values.size()) {
-          dc->drawText(width() / 2, y, values[valueIndex].c_str(), fgColor | CENTERED);
+          dc->drawText(width() / 2, y, values[valueIndex].c_str(), fgColor, CENTERED);
         }
         else {
-          dc->drawNumber(width() / 2, y, displayedValue, fgColor | CENTERED);
+          dc->drawNumber(width() / 2, y, displayedValue, fgColor, CENTERED);
         }
 
         if (windowFlags & ROLLER_SEPARATION_LINES) {

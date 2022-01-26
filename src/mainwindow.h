@@ -48,7 +48,7 @@ class MainWindow: public Window
       return _instance;
     }
 
-#if defined(SIMU)
+#if defined(SIMULATION)
     static void create()
     {
       _instance = new MainWindow();

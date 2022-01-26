@@ -19,7 +19,6 @@ include_directories(
 set(LIBOPENUI_SRC
   thirdparty/miniz/miniz.c
   thirdparty/libspng/spng.c
-  libopenui_globals.cpp
   libopenui_file.cpp
   bitmapbuffer.cpp
   window.cpp
