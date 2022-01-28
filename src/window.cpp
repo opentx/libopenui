@@ -261,6 +261,14 @@ bool Window::isChildFullSize(const Window * child) const
 
 bool Window::isChildVisible(const Window * window) const
 {
+ if (window->left() >= scrollPositionX + width())
+    return false;
+  if (window->right() <= scrollPositionX)
+    return false;
+  if (window->top() >= scrollPositionY + height())
+    return false;
+  if (window->bottom() <= scrollPositionY)
+    return false;
   for (auto rit = children.rbegin(); rit != children.rend(); rit++) {
     auto child = *rit;
     if (child == window) {
@@ -529,7 +537,21 @@ void Window::moveWindowsTop(coord_t y, coord_t delta)
 void Window::invalidate(const rect_t & rect)
 {
   if (isVisible()) {
-    parent->invalidate({this->rect.x + rect.x - parent->scrollPositionX, this->rect.y + rect.y - parent->scrollPositionY, rect.w, rect.h});
+    coord_t x = this->rect.x + rect.x - parent->scrollPositionX;
+    coord_t y = this->rect.y + rect.y - parent->scrollPositionY;
+    coord_t w = rect.w;
+    coord_t h = rect.h;
+    if (x < 0) {
+      w += x;
+      x = 0;
+    }
+    if (y < 0) {
+      h += y;
+      y = 0;
+    }
+    if (w > 0 && h > 0) {
+      parent->invalidate({x, y, w, h});
+    }
   }
 }
 
