@@ -260,6 +260,28 @@ void FormGroup::setFocus(uint8_t flag, Window * from)
   }
 }
 
+void FormGroup::setFocusOnFirstVisibleField(uint8_t flag) const
+{
+  auto field = getFirstField();
+  while (field && !field->isInsideParentScrollingArea()) {
+    field = field->getNextField();
+  }
+  if (field) {
+    field->setFocus(flag);
+  }
+}
+
+void FormGroup::setFocusOnLastVisibleField(uint8_t flag) const
+{
+  auto field = getLastField();
+  while (field && !field->isInsideParentScrollingArea()) {
+    field = field->getPreviousField();
+  }
+  if (field) {
+    field->setFocus(flag);
+  }
+}
+
 #if defined(HARDWARE_KEYS)
 void FormGroup::onEvent(event_t event)
 {

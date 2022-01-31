@@ -161,27 +161,9 @@ class FormGroup: public FormField
       return last;
     }
 
-    void setFocusOnFirstVisibleField(uint8_t flag = SET_FOCUS_DEFAULT) const
-    {
-      auto field = getFirstField();
-      while (field && !field->isInsideParentScrollingArea()) {
-        field = field->getNextField();
-      }
-      if (field) {
-        field->setFocus(flag);
-      }
-    }
+    void setFocusOnFirstVisibleField(uint8_t flag = SET_FOCUS_DEFAULT) const;
 
-    void setFocusOnLastVisibleField(uint8_t flag = SET_FOCUS_DEFAULT) const
-    {
-      auto field = getLastField();
-      while (field && !field->isInsideParentScrollingArea()) {
-        field = field->getPreviousField();
-      }
-      if (field) {
-        field->setFocus(flag);
-      }
-    }
+    void setFocusOnLastVisibleField(uint8_t flag = SET_FOCUS_DEFAULT) const;
 
   protected:
     FormField * first = nullptr;

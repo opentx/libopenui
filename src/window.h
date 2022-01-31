@@ -365,7 +365,7 @@ class Window
 
     bool isInsideParentScrollingArea() const
     {
-      return parent && right() >= parent->getScrollPositionX() && left() <= parent->getScrollPositionX() + parent->width();
+      return parent && right() > parent->getScrollPositionX() && left() < parent->getScrollPositionX() + parent->width();
     }
 
     void setInsideParentScrollingArea(bool bottom = false);
