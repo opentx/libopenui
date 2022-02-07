@@ -71,13 +71,6 @@ class Window
       return "Window";
     }
 
-    std::string getRectString() const
-    {
-      char result[32];
-      sprintf(result, "[%d, %d, %d, %d]", left(), top(), width(), height());
-      return result;
-    }
-
     std::string getIndentString() const
     {
       std::string result;
@@ -91,7 +84,7 @@ class Window
 
     std::string getWindowDebugString(const char * name = nullptr) const
     {
-      return getName() + (name ? std::string(" [") + name + "] " : " ") + getRectString();
+      return getName() + (name ? std::string(" [") + name + "] " : " ") + rect.toString();
     }
 #endif
 

@@ -20,6 +20,7 @@
 #pragma once
 
 #include <cinttypes>
+#include <string>
 
 typedef int coord_t;
 
@@ -64,14 +65,21 @@ struct rect_t
     return y + h;
   }
 
-  bool contains(coord_t x, coord_t y) const
+  bool contains(const point_t & point) const
   {
-    return (x >= this->x && x < this->x + this->w && y >= this->y && y < this->y + this->h);
+    return point.x >= left() && point.x < right() && point.y >= top() && point.y < bottom();
   }
 
   bool contains(const rect_t & other) const
   {
     return left() <= other.left() && right() >= other.right() && top() <= other.top() && bottom() >= other.bottom();
+  }
+
+  std::string toString() const
+  {
+    char result[32];
+    sprintf(result, "[%d, %d, %d, %d]", x, y, w, h);
+    return result;
   }
 };
 
