@@ -399,7 +399,7 @@ bool Window::onTouchStart(coord_t x, coord_t y)
 
   for (auto it = children.rbegin(); it != children.rend(); ++it) {
     auto child = *it;
-    if (child->rect.contains(x, y)) {
+    if (child->rect.contains((point_t){x, y})) {
       if (child->onTouchStart(x - child->rect.x + child->scrollPositionX, y - child->rect.y + child->scrollPositionY)) {
         return true;
       }
@@ -415,7 +415,7 @@ bool Window::onTouchLong(coord_t x, coord_t y)
 
   for (auto it = children.rbegin(); it != children.rend(); ++it) {
     auto child = *it;
-    if (child->rect.contains(x, y)) {
+    if (child->rect.contains((point_t){x, y})) {
       if (child->onTouchLong(x - child->rect.x + child->scrollPositionX, y - child->rect.y + child->scrollPositionY)) {
         return true;
       }
@@ -429,7 +429,7 @@ bool Window::forwardTouchEnd(coord_t x, coord_t y)
 {
   for (auto it = children.rbegin(); it != children.rend(); ++it) {
     auto child = *it;
-    if (child->rect.contains(x, y)) {
+    if (child->rect.contains((point_t){x, y})) {
       if (child->onTouchEnd(x - child->rect.x + child->scrollPositionX, y - child->rect.y + child->scrollPositionY)) {
         return true;
       }
@@ -453,7 +453,7 @@ bool Window::onTouchSlide(coord_t x, coord_t y, coord_t startX, coord_t startY, 
 
   for (auto it = children.rbegin(); it != children.rend(); ++it) {
     auto child = *it;
-    if (child->rect.contains(startX, startY)) {
+    if (child->rect.contains((point_t){startX, startY})) {
       if (child->onTouchSlide(x - child->rect.x, y - child->rect.y, startX - child->rect.x, startY - child->rect.y, slideX, slideY)) {
         return true;
       }
@@ -519,7 +519,7 @@ coord_t Window::adjustHeight()
   return rect.h - old;
 }
 
-void Window::moveWindowsTop(coord_t y, coord_t delta)
+void Window::moveWindowsTop(coord_t y, coord_t delta) // NOLINT(misc-no-recursion)
 {
   if (getWindowFlags() & FORWARD_SCROLL) {
     parent->moveWindowsTop(bottom(), delta);
@@ -534,13 +534,13 @@ void Window::moveWindowsTop(coord_t y, coord_t delta)
   setInnerHeight(innerHeight + delta);
 }
 
-void Window::invalidate(const rect_t & rect)
+void Window::invalidate(const rect_t & dirtyRect) // NOLINT(misc-no-recursion)
 {
   if (isVisible()) {
-    coord_t x = this->rect.x + rect.x - parent->scrollPositionX;
-    coord_t y = this->rect.y + rect.y - parent->scrollPositionY;
-    coord_t w = rect.w;
-    coord_t h = rect.h;
+    coord_t x = rect.x + dirtyRect.x - parent->scrollPositionX;
+    coord_t y = rect.y + dirtyRect.y - parent->scrollPositionY;
+    coord_t w = dirtyRect.w;
+    coord_t h = dirtyRect.h;
     if (x < 0) {
       w += x;
       x = 0;
@@ -555,7 +555,7 @@ void Window::invalidate(const rect_t & rect)
   }
 }
 
-void Window::drawVerticalScrollbar(BitmapBuffer * dc)
+void Window::drawVerticalScrollbar(BitmapBuffer * dc) const
 {
   if (innerHeight > rect.h) {
     coord_t yofs = divRoundClosest(rect.h * scrollPositionY, innerHeight);
@@ -568,7 +568,7 @@ void Window::drawVerticalScrollbar(BitmapBuffer * dc)
   }
 }
 
-void Window::drawHorizontalScrollbar(BitmapBuffer * dc)
+void Window::drawHorizontalScrollbar(BitmapBuffer * dc) const
 {
   if (innerWidth > rect.w) {
     coord_t xofs = divRoundClosest(rect.w * scrollPositionX, innerWidth);

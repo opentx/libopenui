@@ -363,9 +363,9 @@ class Window
 
     void setInsideParentScrollingArea(bool bottom = false);
 
-    void drawVerticalScrollbar(BitmapBuffer * dc);
+    void drawVerticalScrollbar(BitmapBuffer * dc) const;
 
-    void drawHorizontalScrollbar(BitmapBuffer * dc);
+    void drawHorizontalScrollbar(BitmapBuffer * dc) const;
 
     virtual void onEvent(event_t event);
 
