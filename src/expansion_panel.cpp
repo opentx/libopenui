@@ -68,6 +68,7 @@ void ExpansionPanelHeader::onEvent(event_t event)
 bool ExpansionPanelHeader::onTouchEnd(coord_t, coord_t)
 {
   if (enabled) {
+    onKeyPress();
     setFocus(SET_FOCUS_DEFAULT);
     static_cast<ExpansionPanel *>(parent)->toggle();
   }
