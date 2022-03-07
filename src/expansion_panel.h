@@ -79,13 +79,15 @@ class ExpansionPanel: public FormGroup
 
     void enable(bool value = true)
     {
+      if (!value && isOpen) {
+        open(false);
+      }
       FormGroup::enable(value);
       header->enable(value);
     }
 
     void disable()
     {
-      open(false);
       enable(false);
     }
 
