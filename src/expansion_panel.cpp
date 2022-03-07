@@ -28,12 +28,27 @@ void ExpansionPanel::updateHeight(bool move)
   setHeight(newHeight);
 }
 
-void ExpansionPanel::setFocus(uint8_t flag, Window * from)
+void ExpansionPanel::setFocus(uint8_t flag, Window * from) // NOLINT(google-default-arguments)
 {
-  if (!enabled || isOpen)
+  if (!enabled) {
+    if (flag == SET_FOCUS_BACKWARD) {
+      auto previous = getPreviousField();
+      if (previous) {
+        previous->setFocus(SET_FOCUS_BACKWARD, this);
+      }
+    }
+    else {
+      auto next = getNextField();
+      if (next)
+        next->setFocus(SET_FOCUS_FORWARD, this);
+    }
+  }
+  else if (isOpen) {
     FormGroup::setFocus(flag, from);
-  else
+  }
+  else {
     header->setFocus(flag, from);
+  }
 }
 
 ExpansionPanelHeader::ExpansionPanelHeader(ExpansionPanel * parent):
@@ -64,13 +79,34 @@ void ExpansionPanelHeader::onEvent(event_t event)
   }
 }
 
+void ExpansionPanelHeader::setFocus(uint8_t flag, Window * from) // NOLINT(google-default-arguments)
+{
+  auto panel = static_cast<ExpansionPanel *>(parent);
+
+  if (!enabled) {
+    if (flag == SET_FOCUS_BACKWARD) {
+      auto previous = panel->getPreviousField();
+      if (previous) {
+        previous->setFocus(SET_FOCUS_BACKWARD, this);
+      }
+    }
+    else {
+      auto next = panel->getNextField();
+      if (next)
+        next->setFocus(SET_FOCUS_FORWARD, this);
+    }
+  }
+  else {
+    FormGroup::setFocus(flag, from);
+  }
+}
+
 #if defined(HARDWARE_TOUCH)
 bool ExpansionPanelHeader::onTouchEnd(coord_t, coord_t)
 {
   if (enabled) {
-    onKeyPress();
-    setFocus(SET_FOCUS_DEFAULT);
     static_cast<ExpansionPanel *>(parent)->toggle();
+    setFocus(SET_FOCUS_DEFAULT);
   }
   return true;
 }
