@@ -758,6 +758,7 @@ void BitmapBuffer::drawMask(coord_t x, coord_t y, const T * mask, Color565 color
 
 template void BitmapBuffer::drawMask(int, int, const BitmapData *, Color565, int, int);
 template void BitmapBuffer::drawMask(int, int, const BitmapMask *, Color565, int, int);
+template void BitmapBuffer::drawMask(int, int, const StaticMask *, Color565, int, int);
 
 void BitmapBuffer::drawMask(coord_t x, coord_t y, const BitmapMask * mask, const BitmapBuffer * srcBitmap, coord_t offsetX, coord_t offsetY, coord_t width, coord_t height)
 {

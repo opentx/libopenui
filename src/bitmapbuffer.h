@@ -75,8 +75,8 @@ class BitmapBufferBase
       _height(*(((uint16_t*)data) + 1)),
       xmax(_width),
       ymax(_height),
-      data(data + 2),
-      data_end(data + 2 + (_width * _height))
+      data((T *)(((uint16_t *)data) + 2)),
+      data_end((T *)(((uint16_t *)data) + 2) + (_width * _height))
     {
     }
 
@@ -217,6 +217,7 @@ class BitmapBufferBase
 };
 
 typedef BitmapBufferBase<const uint16_t> Bitmap;
+typedef BitmapBufferBase<const uint8_t> StaticMask;
 
 class RLEBitmap: public BitmapBufferBase<uint16_t>
 {
