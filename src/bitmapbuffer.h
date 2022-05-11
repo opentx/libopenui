@@ -333,6 +333,18 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
 
     ~BitmapBuffer();
 
+    inline bool isValid() const
+    {
+      return data != nullptr;
+    }
+
+    float getScale(coord_t w, coord_t h) const
+    {
+      float vscale = float(h) / height();
+      float hscale = float(w) / width();
+      return vscale < hscale ? vscale : hscale;
+    }
+
     inline void setFormat(uint8_t format)
     {
       this->format = format;

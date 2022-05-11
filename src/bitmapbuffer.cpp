@@ -173,10 +173,7 @@ template<class T>
 void BitmapBuffer::drawScaledBitmap(const T * bitmap, coord_t x, coord_t y, coord_t w, coord_t h)
 {
   if (bitmap) {
-    float vscale = float(h) / bitmap->height();
-    float hscale = float(w) / bitmap->width();
-    float scale = vscale < hscale ? vscale : hscale;
-
+    float scale = getScale(w, h);
     int xshift = (w - (bitmap->width() * scale)) / 2;
     int yshift = (h - (bitmap->height() * scale)) / 2;
     drawBitmap(x + xshift, y + yshift, bitmap, 0, 0, 0, 0, scale);
@@ -1337,7 +1334,7 @@ BitmapBuffer * BitmapBuffer::load_stb(const char * filename)
 
   // convert to RGB565 or ARGB4444 format
   auto bmp = new BitmapBuffer(n == 4 ? BMP_ARGB4444 : BMP_RGB565, w, h);
-  if (bmp == nullptr || bmp->data == nullptr) {
+  if (bmp == nullptr || !bmp->isValid()) {
     TRACE("load_stb(%s) malloc failed", filename);
     stbi_image_free(img);
     return nullptr;
