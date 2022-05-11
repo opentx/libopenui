@@ -1337,7 +1337,7 @@ BitmapBuffer * BitmapBuffer::load_stb(const char * filename)
 
   // convert to RGB565 or ARGB4444 format
   auto bmp = new BitmapBuffer(n == 4 ? BMP_ARGB4444 : BMP_RGB565, w, h);
-  if (bmp == nullptr) {
+  if (bmp == nullptr || bmp->data == nullptr) {
     TRACE("load_stb(%s) malloc failed", filename);
     stbi_image_free(img);
     return nullptr;
