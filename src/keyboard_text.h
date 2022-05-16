@@ -21,6 +21,15 @@
 
 #include "keyboard_base.h"
 
+enum SpecialKey
+{
+  SPECIAL_KEY_BACKSPACE = 128,
+  SPECIAL_KEY_SET_UPPERCASE,
+  SPECIAL_KEY_SET_LOWERCASE,
+  SPECIAL_KEY_SET_LETTERS,
+  SPECIAL_KEY_SET_NUMBERS,
+};
+
 #define KEYBOARD_SPACE         "\t"
 #define KEYBOARD_ENTER         "\n"
 #define KEYBOARD_BACKSPACE     "\200"
@@ -33,18 +42,20 @@ extern const uint8_t LBM_KEY_SPACEBAR[];
 extern const uint8_t * const LBM_SPECIAL_KEYS[];
 extern const char * const * KEYBOARDS[];
 
-enum LayoutIndex
-{
-  LAYOUT_INDEX_UPPERCASE,
-  LAYOUT_INDEX_LOWERCASE,
-  LAYOUT_INDEX_NUMBERS,
-};
+constexpr uint8_t LOWERCASE_OPTION = 1;
 
-static const uint8_t layoutIndexes[] = {
-  LAYOUT_INDEX_UPPERCASE,
-  LAYOUT_INDEX_LOWERCASE,
-  LAYOUT_INDEX_LOWERCASE,
-  LAYOUT_INDEX_NUMBERS,
+enum KeyboardLayout
+{
+  KEYBOARD_LAYOUT_QWERTY,
+  KEYBOARD_LAYOUT_QWERTY_UPPERCASE = KEYBOARD_LAYOUT_QWERTY,
+  KEYBOARD_LAYOUT_QWERTY_LOWERCASE = KEYBOARD_LAYOUT_QWERTY + LOWERCASE_OPTION,
+
+  KEYBOARD_LAYOUT_AZERTY,
+  KEYBOARD_LAYOUT_AZERTY_UPPERCASE = KEYBOARD_LAYOUT_AZERTY,
+  KEYBOARD_LAYOUT_AZERTY_LOWERCASE = KEYBOARD_LAYOUT_AZERTY + LOWERCASE_OPTION,
+
+  KEYBOARD_LAYOUT_NUMBERS,
+  KEYBOARD_LAYOUT_COUNT
 };
 
 class TextKeyboard: public Keyboard
@@ -73,8 +84,10 @@ class TextKeyboard: public Keyboard
 
     static void show(FormField * field)
     {
-      if (!_instance)
+      if (!_instance) {
         _instance = new TextKeyboard();
+      }
+      _instance->layoutIndex = KEYBOARD_LAYOUT_INDEX_START;
       _instance->setField(field);
     }
 
@@ -86,5 +99,5 @@ class TextKeyboard: public Keyboard
 
   protected:
     static TextKeyboard * _instance;
-    unsigned layoutIndex = LAYOUT_INDEX_LOWERCASE;
+    unsigned layoutIndex = KEYBOARD_LAYOUT_INDEX_START;
 };

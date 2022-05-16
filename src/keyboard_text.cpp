@@ -79,7 +79,7 @@ const char * const KEYBOARD_QWERTY_UPPERCASE[] = {
 const char * const KEYBOARD_AZERTY_UPPERCASE[] = {
   "AZERTYUIOP",
   " QSDFGHJKLM",
-  KEYBOARD_SET_UPPERCASE "WXCVBN," KEYBOARD_BACKSPACE,
+  KEYBOARD_SET_LOWERCASE "WXCVBN," KEYBOARD_BACKSPACE,
   KEYBOARD_SET_NUMBERS KEYBOARD_SPACE KEYBOARD_ENTER
 };
 
@@ -93,6 +93,8 @@ const char * const KEYBOARD_NUMBERS[] = {
 const char * const * KEYBOARDS[] = {
   KEYBOARD_QWERTY_UPPERCASE,
   KEYBOARD_QWERTY_LOWERCASE,
+  KEYBOARD_AZERTY_UPPERCASE,
+  KEYBOARD_AZERTY_LOWERCASE,
   KEYBOARD_NUMBERS,
 };
 
@@ -174,13 +176,27 @@ bool TextKeyboard::onTouchEnd(coord_t x, coord_t y)
     else if (int8_t(*key) < 0) {
       if (x <= 45) {
         uint8_t specialKey = *key;
-        if (specialKey == 128) {
-          // backspace
-          pushEvent(EVT_VIRTUAL_KEY(KEYBOARD_BACKSPACE[0]));
-        }
-        else {
-          layoutIndex = layoutIndexes[specialKey - 129];
-          invalidate();
+        switch (specialKey) {
+          case SPECIAL_KEY_BACKSPACE:
+            // backspace
+            events.push(EVT_VIRTUAL_KEY(KEYBOARD_BACKSPACE[0]));
+            break;
+          case SPECIAL_KEY_SET_LOWERCASE:
+            layoutIndex = getKeyboardLayout() + LOWERCASE_OPTION;
+            invalidate();
+            break;
+          case SPECIAL_KEY_SET_UPPERCASE:
+            layoutIndex = getKeyboardLayout();
+            invalidate();
+            break;
+          case SPECIAL_KEY_SET_NUMBERS:
+            layoutIndex = KEYBOARD_LAYOUT_NUMBERS;
+            invalidate();
+            break;
+          case SPECIAL_KEY_SET_LETTERS:
+            layoutIndex = getKeyboardLayout() + LOWERCASE_OPTION;
+            invalidate();
+            break;
         }
         break;
       }
