@@ -85,8 +85,8 @@ const char * const KEYBOARD_AZERTY_UPPERCASE[] = {
 
 const char * const KEYBOARD_NUMBERS[] = {
   "1234567890",
-  "_-",
-  "                 " KEYBOARD_BACKSPACE,
+  KEYBOARD_NUMBERS_FIRST_LINE_SPECIAL_CHARS,
+  KEYBOARD_NUMBERS_SECOND_LINE_SPECIAL_CHARS KEYBOARD_BACKSPACE,
   KEYBOARD_SET_LETTERS KEYBOARD_SPACE KEYBOARD_ENTER
 };
 
@@ -133,8 +133,8 @@ void TextKeyboard::paint(BitmapBuffer * dc)
         dc->drawText(x+40, y, "ENTER", DEFAULT_COLOR, CENTERED);
         x += 80;
       }
-      else if (int8_t(*c) < 0) {
-        dc->drawMask(x, y, (const BitmapData *)LBM_SPECIAL_KEYS[uint8_t(*c - 128)], DEFAULT_COLOR);
+      else if (uint8_t(*c) <= KEYBOARD_SET_NUMBERS[0]) {
+        dc->drawMask(x, y, (const BitmapData *)LBM_SPECIAL_KEYS[uint8_t(*c) - 1], DEFAULT_COLOR);
         x += 45;
       }
       else {
@@ -173,7 +173,7 @@ bool TextKeyboard::onTouchEnd(coord_t x, coord_t y)
       }
       x -= 80;
     }
-    else if (int8_t(*key) < 0) {
+    else if (uint8_t(*key) <= KEYBOARD_SET_NUMBERS[0]) {
       if (x <= 45) {
         uint8_t specialKey = *key;
         switch (specialKey) {
