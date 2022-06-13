@@ -32,6 +32,11 @@ void MenuBody::select(int index)
       setScrollPositionY(MENUS_LINE_HEIGHT * index);
     }
   }
+
+  if (lines[index].onSelect) {
+    lines[index].onSelect();
+  }
+
   invalidate();
 }
 
@@ -192,15 +197,15 @@ void Menu::setTitle(std::string text)
   updatePosition();
 }
 
-void Menu::addLine(const std::string & text, std::function<void()> onPress, std::function<bool()> isChecked)
+void Menu::addLine(const std::string & text, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
 {
-  content->body.addLine(text, std::move(onPress), std::move(isChecked));
+  content->body.addLine(text, std::move(onPress), std::move(onSelect), std::move(isChecked));
   updatePosition();
 }
 
-void Menu::addCustomLine(std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, LcdFlags flags)> drawLine, std::function<void()> onPress, std::function<bool()> isChecked)
+void Menu::addCustomLine(std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, LcdFlags flags)> drawLine, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
 {
-  content->body.addCustomLine(std::move(drawLine), std::move(onPress), std::move(isChecked));
+  content->body.addCustomLine(std::move(drawLine), std::move(onPress), std::move(onSelect), std::move(isChecked));
   updatePosition();
 }
 

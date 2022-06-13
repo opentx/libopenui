@@ -37,16 +37,18 @@ class MenuBody: public Window
     friend class MenuBody;
 
     public:
-      MenuLine(std::string text, std::function<void()> onPress, std::function<bool()> isChecked):
+      MenuLine(std::string text, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked):
         text(std::move(text)),
         onPress(std::move(onPress)),
+        onSelect(std::move(onSelect)),
         isChecked(std::move(isChecked))
       {
       }
 
-      MenuLine(std::function<void(BitmapBuffer * /*dc*/, coord_t /*x*/, coord_t /*y*/, LcdFlags /*flags*/)> drawLine, std::function<void()> onPress, std::function<bool()> isChecked):
+      MenuLine(std::function<void(BitmapBuffer * /*dc*/, coord_t /*x*/, coord_t /*y*/, LcdFlags /*flags*/)> drawLine, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked):
         drawLine(std::move(drawLine)),
         onPress(std::move(onPress)),
+        onSelect(std::move(onSelect)),
         isChecked(std::move(isChecked))
       {
       }
@@ -59,6 +61,7 @@ class MenuBody: public Window
       std::string text;
       std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, LcdFlags flags)> drawLine;
       std::function<void()> onPress;
+      std::function<void()> onSelect;
       std::function<bool()> isChecked;
   };
 
@@ -96,15 +99,15 @@ class MenuBody: public Window
     bool onTouchEnd(coord_t x, coord_t y) override;
 #endif
 
-    void addLine(const std::string & text, std::function<void()> onPress, std::function<bool()> isChecked)
+    void addLine(const std::string & text, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
     {
-      lines.emplace_back(text, std::move(onPress), std::move(isChecked));
+      lines.emplace_back(text, std::move(onPress), std::move(onSelect), std::move(isChecked));
       invalidate();
     }
 
-    void addCustomLine(std::function<void(BitmapBuffer * /*dc*/, coord_t /*x*/, coord_t /*y*/, LcdFlags /*flags*/)> drawLine, std::function<void()> onPress, std::function<bool()> isChecked)
+    void addCustomLine(std::function<void(BitmapBuffer * /*dc*/, coord_t /*x*/, coord_t /*y*/, LcdFlags /*flags*/)> drawLine, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
     {
-      lines.emplace_back(std::move(drawLine), std::move(onPress), std::move(isChecked));
+      lines.emplace_back(std::move(drawLine), std::move(onPress), std::move(onSelect), std::move(isChecked));
       invalidate();
     }
 
@@ -196,9 +199,9 @@ class Menu: public ModalWindow
 
     void setTitle(std::string text);
 
-    void addLine(const std::string & text, std::function<void()> onPress, std::function<bool()> isChecked = nullptr);
+    void addLine(const std::string & text, std::function<void()> onPress, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr);
 
-    void addCustomLine(std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, LcdFlags flags)> drawLine, std::function<void()> onPress, std::function<bool()> isChecked = nullptr);
+    void addCustomLine(std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, LcdFlags flags)> drawLine, std::function<void()> onPress, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr);
 
     void removeLines();
 
