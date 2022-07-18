@@ -19,7 +19,6 @@
 
 #include "textedit.h"
 #include "font.h"
-#include "libopenui_globals.h"
 #include "libopenui_config.h"
 
 #if !defined(STR_EDIT)
@@ -256,12 +255,14 @@ bool TextEdit::onTouchEnd(coord_t x, coord_t y)
   TextKeyboard::show(this);
 #endif
 
+  auto font = getFont(FONT(STD));
+
   coord_t rest = x;
   for (cursorPos = 0; cursorPos < length; cursorPos++) {
     char c = value[cursorPos];
     if (c == '\0')
       break;
-    uint8_t w = getCharWidth(c, fontspecsTable[0]) + 1;
+    uint8_t w = font->getChar(c).width + 1;
     if (rest < w)
       break;
     rest -= w;

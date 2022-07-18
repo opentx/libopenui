@@ -20,7 +20,6 @@
 #include <math.h>
 #include "bitmapbuffer.h"
 #include "libopenui_depends.h"
-#include "libopenui_globals.h"
 #include "libopenui_helpers.h"
 #include "libopenui_file.h"
 #include "font.h"
@@ -801,14 +800,12 @@ void BitmapBuffer::drawMask(coord_t x, coord_t y, const BitmapMask * mask, const
   }
 }
 
-uint8_t BitmapBuffer::drawChar(coord_t x, coord_t y, const uint8_t * font, const uint16_t * spec, unsigned int index, LcdColor color)
+uint8_t BitmapBuffer::drawChar(coord_t x, coord_t y, const Font::Glyph & glyph, LcdColor color)
 {
-  coord_t offset = spec[index + 1];
-  coord_t width = spec[index + 2] - offset;
-  if (width > 0) {
-    drawMask(x, y, (const BitmapData *)font, color, offset, width);
+  if (glyph.width) {
+    drawMask(x, y, glyph.font->getBitmapData(), color, glyph.offset, glyph.width);
   }
-  return width;
+  return glyph.width;
 }
 
 #define INCREMENT_POS(delta)    do { if (flags & VERTICAL) y -= delta; else x += delta; } while(0)
@@ -817,19 +814,16 @@ coord_t BitmapBuffer::drawSizedText(coord_t x, coord_t y, const char * s, uint8_
 {
   MOVE_OFFSET();
 
-  int height = getFontHeight(flags);
+  auto font = getFont(flags);
+  int height = font->getHeight();
 
   if (y + height <= ymin || y >= ymax) {
     RESTORE_OFFSET();
     return x;
   }
 
-  uint32_t fontindex = FONT_INDEX(flags);
-  const unsigned char * font = fontsTable[fontindex];
-  const uint16_t * fontspecs = fontspecsTable[fontindex];
-
   if (flags & (RIGHT | CENTERED)) {
-    int width = getTextWidth(s, len, flags);
+    int width = font->getTextWidth(s, len, flags);
     if (flags & RIGHT) {
       INCREMENT_POS(-width);
     }
@@ -850,15 +844,16 @@ coord_t BitmapBuffer::drawSizedText(coord_t x, coord_t y, const char * s, uint8_
     }
     else if (c >= CJK_BYTE1_MIN) {
       // CJK char
-      c = getCJKChar(c, *++s);
+      auto glyph = font->getCJKChar(c, *++s);
       // TRACE("CJK = %d", c);
-      uint8_t width = drawChar(x, y, font, fontspecs, c, color);
+      uint8_t width = drawChar(x, y, glyph, color);
       INCREMENT_POS(width + CHAR_SPACING);
     }
     else if (c >= 0x20) {
-      uint8_t width = drawChar(x, y, font, fontspecs, getMappedChar(c), color);
+      auto glyph = font->getChar(c);
+      uint8_t width = drawChar(x, y, glyph, color);
       if ((flags & SPACING_NUMBERS_CONST) && c >= '0' && c <= '9')
-        INCREMENT_POS(getCharWidth('9', fontspecs) + CHAR_SPACING);
+        INCREMENT_POS(font->getChar('9').width + CHAR_SPACING);
       else
         INCREMENT_POS(width + CHAR_SPACING);
     }

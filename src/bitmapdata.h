@@ -19,8 +19,26 @@
 
 #pragma once
 
-#include <inttypes.h>
-#include "libopenui_config.h"
+#include <cinttypes>
 
-extern const uint16_t * const fontspecsTable[FONTS_COUNT];
-extern const uint8_t * fontsTable[FONTS_COUNT];
+struct BitmapData
+{
+  uint16_t _width;
+  uint16_t _height;
+  uint8_t data[];
+
+  uint16_t width() const
+  {
+    return _width;
+  }
+
+  uint16_t height() const
+  {
+    return _height;
+  }
+
+  const uint8_t * getData() const
+  {
+    return data;
+  }
+};

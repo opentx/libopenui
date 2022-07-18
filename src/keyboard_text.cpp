@@ -18,7 +18,6 @@
  */
 
 #include "keyboard_text.h"
-#include "libopenui_globals.h"
 #include "font.h"
 
 TextKeyboard * TextKeyboard::_instance = nullptr;

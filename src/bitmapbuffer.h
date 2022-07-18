@@ -19,13 +19,14 @@
 
 #pragma once
 
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include "bitmapdata.h"
 #include "libopenui_types.h"
 #include "libopenui_defines.h"
 #include "libopenui_depends.h"
 #include "libopenui_helpers.h"
+#include "font.h"
 #include "debug.h"
 
 constexpr uint8_t SOLID = 0xFF;
@@ -272,28 +273,6 @@ class RLEBitmap: public BitmapBufferBase<uint16_t>
     }
 };
 
-struct BitmapData
-{
-  uint16_t _width;
-  uint16_t _height;
-  uint8_t data[];
-
-  uint16_t width() const
-  {
-    return _width;
-  }
-
-  uint16_t height() const
-  {
-    return _height;
-  }
-
-  const uint8_t * getData() const
-  {
-    return data;
-  }
-};
-
 class BitmapMask: public BitmapBufferBase<uint8_t>
 {
   public:
@@ -502,7 +481,7 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
       return applyClippingRect(x, y, w, h);
     }
 
-    uint8_t drawChar(coord_t x, coord_t y, const uint8_t * font, const uint16_t * spec, unsigned int index, LcdColor color);
+    uint8_t drawChar(coord_t x, coord_t y, const Font::Glyph & glyph, LcdColor color);
 
     inline void drawPixel(pixel_t * p, pixel_t value)
     {
