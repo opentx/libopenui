@@ -35,7 +35,8 @@ class Font
       uint8_t width;
     };
 
-    Font(uint16_t count, const BitmapData * data, const uint16_t * specs):
+    Font(const char * name, uint16_t count, const BitmapData * data, const uint16_t * specs):
+      name(name),
       count(count),
       data(data),
       specs(specs)
@@ -45,6 +46,11 @@ class Font
     coord_t getHeight() const
     {
       return specs[0];
+    }
+
+    const char * getName() const
+    {
+      return name;
     }
 
     Glyph getGlyph(unsigned index) const
@@ -109,12 +115,14 @@ class Font
     }
 
   protected:
+    const char * name;
     uint16_t count;
     const BitmapData * data;
     const uint16_t * specs;
 };
 
 const Font * getFont(LcdFlags flags);
+int getFontIndex(const char * name);
 
 inline coord_t getFontHeight(LcdFlags flags)
 {
