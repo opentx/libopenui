@@ -61,7 +61,12 @@ class Font
 
     Glyph getChar(uint8_t c) const
     {
-      return getGlyph(c - 0x20);
+      if (c >= 0x20) {
+        return getGlyph(c - 0x20);
+      }
+      else {
+        return {this, 0, 0};
+      }
     }
 
     Glyph getCJKChar(uint8_t byte1, uint8_t byte2) const
