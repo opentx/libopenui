@@ -203,6 +203,20 @@ class BitmapBufferBase
       return result;
     }
 
+    template <class C>
+    C * rotate90() const
+    {
+      auto * result = new C(format, height(), width());
+      auto * srcData = data;
+      auto * destData = result->data;
+      for (uint8_t y = 0; y < width(); y++) {
+        for (uint8_t x = 0; x < height(); x++) {
+          destData[y * height() + x] = srcData[x * width() + y];
+        }
+      }
+      return result;
+    }
+
   protected:
     uint8_t format;
     coord_t _width;
