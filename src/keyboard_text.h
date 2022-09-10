@@ -93,7 +93,9 @@ class TextKeyboard: public Keyboard
       if (!_instance) {
         _instance = new TextKeyboard();
       }
-      _instance->layoutIndex = KEYBOARD_LAYOUT_INDEX_START;
+      if (activeKeyboard != _instance) {
+        _instance->layoutIndex = KEYBOARD_LAYOUT_INDEX_START;
+      }
       _instance->setField(field);
     }
 
