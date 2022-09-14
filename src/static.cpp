@@ -54,5 +54,5 @@ void StaticText::paint(BitmapBuffer * dc)
     dc->drawSolidFilledRect(0, 0, rect.w, rect.h, bgColor);
   }
 
-  drawText(dc, {0, 0, rect.w, rect.h}, text, textColor, textFlags);
+  drawText(dc, {0 + padding, 0, rect.w - padding * 2, rect.h}, text, textColor, textFlags);
 }
