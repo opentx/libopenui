@@ -78,7 +78,7 @@ class StaticText: public Window
     std::string text;
     LcdColor bgColor = 0;
     LcdColor textColor = DEFAULT_COLOR;
-    coord_t padding = {};
+    coord_t padding = 0;
 };
 
 class Subtitle: public StaticText
