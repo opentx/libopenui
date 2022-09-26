@@ -74,6 +74,11 @@ class StaticText: public Window
       padding = newPadding;
     }
 
+    std::string getText() const
+    {
+      return text;
+    }
+
   protected:
     std::string text;
     LcdColor bgColor = 0;
@@ -196,6 +201,11 @@ class DynamicText: public StaticText
         text = newText;
         invalidate();
       }
+    }
+
+    void setTextHandler(std::function<std::string()> handler)
+    {
+      textHandler = std::move(handler);
     }
 
   protected:
