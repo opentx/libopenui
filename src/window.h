@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
 #include <list>
 #include <string>
 #include <utility>
@@ -84,21 +84,26 @@ class Window
 
     std::string getWindowDebugString(const char * name = nullptr) const
     {
-      return getName() + (name ? std::string(" [") + name + "] " : " ") + rect.toString();
+      auto result = getName();
+      if (name) {
+        result += std::string(" [") + name + "] ";
+      }
+      result += rect.toString();
+      return result;
     }
 #endif
 
-    Window * getParent() const
+    [[nodiscard]] Window * getParent() const
     {
       return parent;
     }
 
-    bool isChild(Window * window) const
+    [[nodiscard]] bool isChild(Window * window) const
     {
       return window == this || (parent && parent->isChild(window));
     }
 
-    Window * getFullScreenWindow()
+    [[nodiscard]] Window * getFullScreenWindow()
     {
       if (width() == LCD_W && height() == LCD_H)
         return this;
@@ -108,7 +113,7 @@ class Window
         return nullptr;
     }
 
-    WindowFlags getWindowFlags() const
+    [[nodiscard]] WindowFlags getWindowFlags() const
     {
       return windowFlags;
     }
@@ -118,7 +123,7 @@ class Window
       windowFlags = flags;
     }
 
-    LcdFlags getTextFlags() const
+    [[nodiscard]] LcdFlags getTextFlags() const
     {
       return textFlags;
     }
@@ -144,7 +149,7 @@ class Window
 
     void deleteChildren();
 
-    bool hasFocus() const
+    [[nodiscard]] bool hasFocus() const
     {
       return focusWindow == this;
     }
@@ -170,7 +175,7 @@ class Window
       }
     }
 
-    virtual void setFocus(uint8_t flag = SET_FOCUS_DEFAULT, Window * from = nullptr);
+    virtual bool setFocus(uint8_t flag = SET_FOCUS_DEFAULT, Window * from = nullptr);
 
     void setRect(rect_t value)
     {
@@ -221,42 +226,42 @@ class Window
       invalidate();
     }
 
-    coord_t left() const
+    [[nodiscard]] coord_t left() const
     {
       return rect.x;
     }
 
-    coord_t right() const
+    [[nodiscard]] coord_t right() const
     {
       return rect.x + rect.w;
     }
 
-    coord_t top() const
+    [[nodiscard]] coord_t top() const
     {
       return rect.y;
     }
 
-    coord_t bottom() const
+    [[nodiscard]] coord_t bottom() const
     {
       return rect.y + rect.h;
     }
 
-    coord_t width() const
+    [[nodiscard]] coord_t width() const
     {
       return rect.w;
     }
 
-    coord_t height() const
+    [[nodiscard]] coord_t height() const
     {
       return rect.h;
     }
 
-    rect_t getRect() const
+    [[nodiscard]] rect_t getRect() const
     {
       return rect;
     }
 
-    coord_t getInnerWidth() const
+    [[nodiscard]] coord_t getInnerWidth() const
     {
       return innerWidth;
     }
@@ -279,7 +284,7 @@ class Window
       pageHeight = h;
     }
 
-    uint8_t getPageCount() const
+    [[nodiscard]] uint8_t getPageCount() const
     {
       if (pageWidth)
         return innerWidth / pageWidth;
@@ -289,7 +294,7 @@ class Window
         return 1;
     }
 
-    uint8_t getPageIndex() const
+    [[nodiscard]] uint8_t getPageIndex() const
     {
       if (pageWidth)
         return (getScrollPositionX() + (pageWidth / 2)) / pageWidth;
@@ -299,7 +304,7 @@ class Window
         return 0;
     }
 
-    coord_t getInnerHeight() const
+    [[nodiscard]] coord_t getInnerHeight() const
     {
       return innerHeight;
     }
@@ -323,12 +328,12 @@ class Window
       invalidate();
     }
 
-    coord_t getScrollPositionX() const
+    [[nodiscard]] coord_t getScrollPositionX() const
     {
       return scrollPositionX;
     }
 
-    coord_t getScrollPositionY() const
+    [[nodiscard]] coord_t getScrollPositionY() const
     {
       return scrollPositionY;
     }
@@ -351,12 +356,12 @@ class Window
 
     bool isChildFullSize(const Window * window) const;
 
-    bool isVisible() const
+    [[nodiscard]] bool isVisible() const
     {
       return parent && parent->isChildVisible(this);
     }
 
-    bool isInsideParentScrollingArea() const
+    [[nodiscard]] bool isInsideParentScrollingArea() const
     {
       return parent && right() > parent->getScrollPositionX() && left() < parent->getScrollPositionX() + parent->width();
     }
@@ -405,7 +410,7 @@ class Window
       }
     }
 
-    bool deleted() const
+    [[nodiscard]] bool deleted() const
     {
       return _deleted;
     }
@@ -479,6 +484,5 @@ class Window
 
     bool forwardTouchEnd(coord_t x, coord_t y);
 
-    bool hasOpaqueRect(const rect_t & testRect) const;
+    [[nodiscard]] bool hasOpaqueRect(const rect_t & testRect) const;
 };
-

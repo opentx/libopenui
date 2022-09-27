@@ -99,10 +99,10 @@ void Window::deleteChildren()
   children.clear();
 }
 
-void Window::setFocus(uint8_t flag, Window * from)
+bool Window::setFocus(uint8_t flag, Window * from)
 {
   if (deleted())
-    return;
+    return false;
 
   TRACE_WINDOWS("%s setFocus()", getWindowDebugString().c_str());
 
@@ -123,6 +123,8 @@ void Window::setFocus(uint8_t flag, Window * from)
       focusHandler(true);
     }
   }
+
+  return true;
 }
 
 void Window::setScrollPositionX(coord_t value)

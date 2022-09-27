@@ -35,8 +35,13 @@ class MainWindow: public Window
     }
 
   public:
-    ~MainWindow() override
+    void deleteLater(bool detach = true, bool trash = true) override // NOLINT(google-default-arguments)
     {
+      if (_deleted)
+        return;
+
+      Window::deleteLater(detach, trash);
+
       Layer::pop(this);
     }
 
@@ -80,7 +85,7 @@ class MainWindow: public Window
 
     void invalidate(const rect_t & rect) override;
 
-    bool needsRefresh() const
+    [[nodiscard]] bool needsRefresh() const
     {
       return invalidatedRect.w > 0;
     }

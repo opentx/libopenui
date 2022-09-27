@@ -41,7 +41,7 @@ class ExpansionPanelHeader: virtual public FormGroup
     bool onTouchEnd(coord_t, coord_t) override;
 #endif
 
-    void setFocus(uint8_t flag = SET_FOCUS_DEFAULT, Window * from = nullptr) override; // NOLINT(google-default-arguments)
+    bool setFocus(uint8_t flag = SET_FOCUS_DEFAULT, Window * from = nullptr) override; // NOLINT(google-default-arguments)
 };
 
 class ExpansionPanel: public FormGroup
@@ -93,7 +93,7 @@ class ExpansionPanel: public FormGroup
 
     void updateHeight(bool move = true);
 
-    void setFocus(uint8_t flag = SET_FOCUS_DEFAULT, Window * from = nullptr) override; // NOLINT(google-default-arguments)
+    bool setFocus(uint8_t flag = SET_FOCUS_DEFAULT, Window * from = nullptr) override; // NOLINT(google-default-arguments)
 
     FormGroup * body = nullptr;
 

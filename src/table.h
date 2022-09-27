@@ -315,17 +315,23 @@ class Table: public FormField
       body->invalidate();
     }
 
-    void setFocus(uint8_t flag = SET_FOCUS_DEFAULT, Window * from = nullptr) override // NOLINT(google-default-arguments)
+    bool setFocus(uint8_t flag = SET_FOCUS_DEFAULT, Window * from = nullptr) override // NOLINT(google-default-arguments)
     {
       if (body->lines.empty()) {
         if (flag == SET_FOCUS_BACKWARD) {
           if (previous) {
-            previous->setFocus(flag, this);
+            return previous->setFocus(flag, this);
+          }
+          else {
+            return false;
           }
         }
         else {
           if (next) {
-            next->setFocus(flag, this);
+            return next->setFocus(flag, this);
+          }
+          else {
+            return false;
           }
         }
       }
@@ -334,6 +340,7 @@ class Table: public FormField
         if (body->selection < 0) {
           select(flag == SET_FOCUS_BACKWARD ? (int)body->lines.size() - 1 : 0);
         }
+        return true;
       }
     }
 

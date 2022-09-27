@@ -71,21 +71,17 @@ void FormField::onEvent(event_t event)
 }
 #endif
 
-void FormField::setFocus(uint8_t flag, Window * from)
+bool FormField::setFocus(uint8_t flag, Window * from)
 {
   if (enabled) {
-    Window::setFocus(flag, from);
+    return Window::setFocus(flag, from);
   }
   else {
     if (flag == SET_FOCUS_BACKWARD) {
-      if (previous) {
-        previous->setFocus(flag, this);
-      }
+      return previous ? previous->setFocus(flag, this) : false;
     }
     else {
-      if (next) {
-        next->setFocus(flag, this);
-      }
+      return next ? next->setFocus(flag, this) : false;
     }
   }
 }
@@ -181,7 +177,7 @@ void FormGroup::removeField(FormField * field)
   }
 }
 
-void FormGroup::setFocus(uint8_t flag, Window * from)
+bool FormGroup::setFocus(uint8_t flag, Window * from)
 {
   TRACE_WINDOWS("%s setFocus(%d)", getWindowDebugString("FormGroup").c_str(), flag);
 
@@ -190,18 +186,24 @@ void FormGroup::setFocus(uint8_t flag, Window * from)
       case SET_FOCUS_BACKWARD:
         if (from && from->isChild(first)) {
           if (previous == this) {
-            last->setFocus(SET_FOCUS_BACKWARD, this);
+            return last->setFocus(SET_FOCUS_BACKWARD, this);
           }
           else if (previous) {
-            previous->setFocus(SET_FOCUS_BACKWARD, this);
+            return previous->setFocus(SET_FOCUS_BACKWARD, this);
+          }
+          else {
+            return false;
           }
         }
         else {
           if (last) {
-            last->setFocus(SET_FOCUS_BACKWARD, this);
+            return last->setFocus(SET_FOCUS_BACKWARD, this);
           }
           else if (previous) {
-            previous->setFocus(SET_FOCUS_BACKWARD, this);
+            return previous->setFocus(SET_FOCUS_BACKWARD, this);
+          }
+          else {
+            return false;
           }
         }
         break;
@@ -213,24 +215,26 @@ void FormGroup::setFocus(uint8_t flag, Window * from)
       case SET_FOCUS_FORWARD:
         if (from && from->isChild(this)) {
           if (next == this) {
-            first->setFocus(SET_FOCUS_FORWARD, this);
+            return first->setFocus(SET_FOCUS_FORWARD, this);
           }
           else if (next) {
-            next->setFocus(SET_FOCUS_FORWARD, this);
+            return next->setFocus(SET_FOCUS_FORWARD, this);
           }
           else {
             setInsideParentScrollingArea(true);
+            return false;
           }
         }
         else {
           if (first) {
-            first->setFocus(SET_FOCUS_FORWARD, this);
+            return first->setFocus(SET_FOCUS_FORWARD, this);
           }
           else if (next) {
-            next->setFocus(SET_FOCUS_FORWARD, this);
+            return next->setFocus(SET_FOCUS_FORWARD, this);
           }
           else {
             setInsideParentScrollingArea();
+            return false;
           }
         }
         break;
@@ -238,48 +242,49 @@ void FormGroup::setFocus(uint8_t flag, Window * from)
       default:
         if (from == previous) {
           if (first) {
-            first->setFocus(SET_FOCUS_DEFAULT);
+            return first->setFocus(SET_FOCUS_DEFAULT);
           }
           else {
             clearFocus();
             focusWindow = this;
+            return true;
           }
         }
         else if (next) {
-          next->setFocus(SET_FOCUS_FORWARD);
+          return next->setFocus(SET_FOCUS_FORWARD);
         }
         else {
           clearFocus();
           focusWindow = this;
+          return true;
         }
         break;
     }
   }
   else if (!(windowFlags & NO_FOCUS)) {
-    FormField::setFocus(flag, from);
+    return FormField::setFocus(flag, from);
+  }
+  else {
+    return false;
   }
 }
 
-void FormGroup::setFocusOnFirstVisibleField(uint8_t flag) const
+bool FormGroup::setFocusOnFirstVisibleField(uint8_t flag) const
 {
   auto field = getFirstField();
   while (field && !field->isInsideParentScrollingArea()) {
     field = field->getNextField();
   }
-  if (field) {
-    field->setFocus(flag);
-  }
+  return field ? field->setFocus(flag) : false;
 }
 
-void FormGroup::setFocusOnLastVisibleField(uint8_t flag) const
+bool FormGroup::setFocusOnLastVisibleField(uint8_t flag) const
 {
   auto field = getLastField();
   while (field && !field->isInsideParentScrollingArea()) {
     field = field->getPreviousField();
   }
-  if (field) {
-    field->setFocus(flag);
-  }
+  return field ? field->setFocus(flag) : false;
 }
 
 #if defined(HARDWARE_KEYS)
@@ -298,7 +303,9 @@ void FormGroup::onEvent(event_t event)
   else if (event == EVT_ROTARY_RIGHT && !next) {
     onKeyPress();
     if (hasFocus()) {
-      setFocusOnFirstVisibleField(SET_FOCUS_FIRST);
+      if (!setFocusOnFirstVisibleField(SET_FOCUS_FIRST)) {
+        setFocus(SET_FOCUS_FIRST);
+      }
     }
     else {
       FormField::onEvent(event);
@@ -307,7 +314,9 @@ void FormGroup::onEvent(event_t event)
   else if (event == EVT_ROTARY_LEFT && !previous) {
     onKeyPress();
     if (hasFocus()) {
-      setFocusOnLastVisibleField(SET_FOCUS_BACKWARD);
+      if (!setFocusOnLastVisibleField(SET_FOCUS_BACKWARD)) {
+        setFocus(SET_FOCUS_FIRST);
+      }
     }
     else {
       FormField::onEvent(event);

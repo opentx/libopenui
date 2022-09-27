@@ -49,7 +49,7 @@ class Button: public FormField
       }
     }
 
-    bool checked() const
+    [[nodiscard]] bool checked() const
     {
       if (windowFlags & BUTTON_CHECKED_ON_FOCUS)
         return hasFocus();
@@ -108,7 +108,12 @@ class TextButton: public Button
       }
     }
 
-    LcdColor getTextColor() const
+    [[nodiscard]] std::string getText() const
+    {
+      return text;
+    }
+
+    [[nodiscard]] LcdColor getTextColor() const
     {
       return textColor;
     }

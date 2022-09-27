@@ -83,7 +83,7 @@ class FormField: public Window
       enable(false);
     }
 
-    void setFocus(uint8_t flag = SET_FOCUS_DEFAULT, Window * from = nullptr) override;
+    bool setFocus(uint8_t flag = SET_FOCUS_DEFAULT, Window * from = nullptr) override;
 
     void onFocusLost() override
     {
@@ -135,7 +135,7 @@ class FormGroup: public FormField
       }
     }
 
-    void setFocus(uint8_t flag = SET_FOCUS_DEFAULT, Window * from = nullptr) override;
+    bool setFocus(uint8_t flag = SET_FOCUS_DEFAULT, Window * from = nullptr) override;
 
     virtual void addField(FormField * field, bool front = false); // NOLINT(google-default-arguments)
 
@@ -156,14 +156,13 @@ class FormGroup: public FormField
       return first;
     }
 
-    FormField * getLastField() const
+    [[nodiscard]] FormField * getLastField() const
     {
       return last;
     }
 
-    void setFocusOnFirstVisibleField(uint8_t flag = SET_FOCUS_DEFAULT) const;
-
-    void setFocusOnLastVisibleField(uint8_t flag = SET_FOCUS_DEFAULT) const;
+    bool setFocusOnFirstVisibleField(uint8_t flag = SET_FOCUS_DEFAULT) const;
+    bool setFocusOnLastVisibleField(uint8_t flag = SET_FOCUS_DEFAULT) const;
 
   protected:
     FormField * first = nullptr;
