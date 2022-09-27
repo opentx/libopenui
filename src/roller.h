@@ -67,7 +67,7 @@ class Roller: public Choice
     }
 
 #if defined(DEBUG_WINDOWS)
-    std::string getName() const override
+    [[nodiscard]] std::string getName() const override
     {
       return "Roller";
     }

@@ -65,7 +65,7 @@ class MainWindow: public Window
 #endif
 
 #if defined(DEBUG_WINDOWS)
-    std::string getName() const override
+    [[nodiscard]] std::string getName() const override
     {
       return "MainWindow";
     }

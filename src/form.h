@@ -119,7 +119,7 @@ class FormGroup: public FormField
     }
 
 #if defined(DEBUG_WINDOWS)
-    std::string getName() const override
+    [[nodiscard]] std::string getName() const override
     {
       return "FormGroup";
     }
@@ -185,7 +185,7 @@ class FormWindow: public FormGroup
     }
 
 #if defined(DEBUG_WINDOWS)
-    std::string getName() const override
+    [[nodiscard]] std::string getName() const override
     {
       return "FormWindow";
     }

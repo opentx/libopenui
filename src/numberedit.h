@@ -28,7 +28,7 @@ class NumberEdit : public BaseNumberEdit
     NumberEdit(Window * parent, const rect_t & rect, int vmin, int vmax, std::function<int()> getValue, std::function<void(int)> setValue = nullptr, WindowFlags windowFlags = 0, LcdFlags textFlags = 0);
 
 #if defined(DEBUG_WINDOWS)
-    std::string getName() const override
+    [[nodiscard]] std::string getName() const override
     {
       return "NumberEdit(" + std::to_string(getValue()) + ")";
     }

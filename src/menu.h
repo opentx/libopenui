@@ -73,7 +73,7 @@ class MenuBody: public Window
     }
 
 #if defined(DEBUG_WINDOWS)
-    std::string getName() const override
+    [[nodiscard]] std::string getName() const override
     {
       return "MenuBody";
     }
@@ -153,7 +153,7 @@ class MenuWindowContent: public ModalWindowContent
     }
 
 #if defined(DEBUG_WINDOWS)
-    std::string getName() const override
+    [[nodiscard]] std::string getName() const override
     {
       return "MenuWindowContent";
     }
@@ -173,7 +173,7 @@ class Menu: public ModalWindow
     explicit Menu(Window * parent, bool multiple = false);
 
 #if defined(DEBUG_WINDOWS)
-    std::string getName() const override
+    [[nodiscard]] std::string getName() const override
     {
       return "Menu";
     }

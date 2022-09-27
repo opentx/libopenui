@@ -27,7 +27,7 @@ class ModalWindow: public Window
     explicit ModalWindow(Window * parent, bool closeWhenClickOutside = false);
 
 #if defined(DEBUG_WINDOWS)
-    std::string getName() const override
+    [[nodiscard]] std::string getName() const override
     {
       return "ModalWindow";
     }
@@ -77,7 +77,7 @@ class ModalWindowContent: public Window
     }
 
 #if defined(DEBUG_WINDOWS)
-    std::string getName() const override
+    [[nodiscard]] std::string getName() const override
     {
       return "ModalWindowContent";
     }

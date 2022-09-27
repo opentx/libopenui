@@ -40,7 +40,7 @@ class NumberKeyboard: public Keyboard
     }
 
 #if defined(DEBUG_WINDOWS)
-    std::string getName() const override
+    [[nodiscard]] std::string getName() const override
     {
       return "NumberKeyboard";
     }

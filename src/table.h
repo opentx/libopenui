@@ -150,7 +150,7 @@ class Table: public FormField
         }
 
 #if defined(DEBUG_WINDOWS)
-        std::string getName() const override
+        [[nodiscard]] std::string getName() const override
         {
           return "Table::Header";
         }
@@ -175,7 +175,7 @@ class Table: public FormField
         }
 
 #if defined(DEBUG_WINDOWS)
-        std::string getName() const override
+        [[nodiscard]] std::string getName() const override
         {
           return "Table::Body";
         }
@@ -274,7 +274,7 @@ class Table: public FormField
     }
 
 #if defined(DEBUG_WINDOWS)
-    std::string getName() const override
+    [[nodiscard]] std::string getName() const override
     {
       return "Table";
     }

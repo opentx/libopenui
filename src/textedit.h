@@ -38,7 +38,7 @@ class TextEdit: public FormField
     }
 
 #if defined(DEBUG_WINDOWS)
-    std::string getName() const override
+    [[nodiscard]] std::string getName() const override
     {
       return "TextEdit";
     }

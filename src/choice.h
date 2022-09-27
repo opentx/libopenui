@@ -62,7 +62,7 @@ class Choice: public ChoiceBase
     void setValues(const char * const values[]);
 
 #if defined(DEBUG_WINDOWS)
-    std::string getName() const override
+    [[nodiscard]] std::string getName() const override
     {
       return "Choice";
     }
