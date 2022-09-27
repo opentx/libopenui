@@ -45,7 +45,7 @@ class Layer
 #if defined(DEBUG_WINDOWS)
       TRACE_WINDOWS("New layer added for %s (%d layers)", window->getWindowDebugString().c_str(), stack.size());
       for (auto & layer: stack) {
-        TRACE_WINDOWS(" - %s (focus=%s)", layer.main->getWindowDebugString().c_str(), layer.focus ? layer.focus->getWindowDebugString().c_str() : "---");
+        TRACE_WINDOWS(" - %s (focus=%s)", layer.main ? layer.main->getWindowDebugString().c_str() : "---", layer.focus ? layer.focus->getWindowDebugString().c_str() : "---");
       }
 #endif
     }
