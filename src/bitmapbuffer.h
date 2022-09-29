@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 #include "bitmapdata.h"
 #include "libopenui_types.h"
 #include "libopenui_defines.h"
@@ -44,8 +44,6 @@ constexpr uint8_t STASHED = 0x33;
 #endif
 
 #define MOVE_TO_NEXT_RIGHT_PIXEL(p)    MOVE_PIXEL_RIGHT(p, 1)
-
-#define USE_STB
 
 typedef uint16_t pixel_t;
 
@@ -122,37 +120,37 @@ class BitmapBufferBase
       clearClippingRect();
     }
 
-    coord_t getOffsetX() const
+    [[nodiscard]] coord_t getOffsetX() const
     {
       return offsetX;
     }
 
-    coord_t getOffsetY() const
+    [[nodiscard]] coord_t getOffsetY() const
     {
       return offsetY;
     }
 
-    inline uint8_t getFormat() const
+    [[nodiscard]] inline uint8_t getFormat() const
     {
       return format;
     }
 
-    inline uint16_t width() const
+    [[nodiscard]] inline uint16_t width() const
     {
       return _width;
     }
 
-    inline uint16_t height() const
+    [[nodiscard]] inline uint16_t height() const
     {
       return _height;
     }
 
-    inline T * getData() const
+    [[nodiscard]] inline T * getData() const
     {
       return data;
     }
 
-    uint32_t getDataSize() const
+    [[nodiscard]] uint32_t getDataSize() const
     {
       return _width * _height * sizeof(T);
     }
@@ -166,7 +164,7 @@ class BitmapBufferBase
       return &data[y * _width + x];
     }
 
-    inline const T * getPixelPtrAbs(coord_t x, coord_t y) const
+    [[nodiscard]] inline const T * getPixelPtrAbs(coord_t x, coord_t y) const
     {
 #if defined(LCD_VERTICAL_INVERT)
       x = _width - x - 1;
@@ -300,7 +298,7 @@ class BitmapMask: public BitmapBufferBase<uint8_t>
       free(data);
     }
 
-    BitmapMask * invert() const
+    [[nodiscard]] BitmapMask * invert() const
     {
       auto result = new BitmapMask(format, width(), height());
       auto * srcData = data;
@@ -326,15 +324,15 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
 
     ~BitmapBuffer();
 
-    inline bool isValid() const
+    [[nodiscard]] inline bool isValid() const
     {
       return data != nullptr;
     }
 
-    float getScale(coord_t w, coord_t h) const
+    [[nodiscard]] double getScale(coord_t w, coord_t h) const
     {
-      float vscale = float(h) / height();
-      float hscale = float(w) / width();
+      double vscale = double(h) / height();
+      double hscale = double(w) / width();
       return vscale < hscale ? vscale : hscale;
     }
 
@@ -348,7 +346,7 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
       fillRect(0, 0, _width - offsetX, _height - offsetY, color);
     }
 
-    inline const pixel_t * getPixelPtr(coord_t x, coord_t y) const
+    [[nodiscard]] inline const pixel_t * getPixelPtr(coord_t x, coord_t y) const
     {
       APPLY_OFFSET();
 
