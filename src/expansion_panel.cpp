@@ -80,8 +80,11 @@ bool ExpansionPanelHeader::setFocus(uint8_t flag, Window * from) // NOLINT(googl
 {
   auto panel = static_cast<ExpansionPanel *>(parent);
 
-  if (!enabled) {
-    if (flag == SET_FOCUS_BACKWARD) {
+  if (enabled || panel->isOpen) {
+    return FormGroup::setFocus(flag, from);
+  }
+  else {
+    if (flag == SET_FOCUS_BACKWARD || flag == SET_FOCUS_LAST) {
       auto previous = panel->getPreviousField();
       return previous ? previous->setFocus(SET_FOCUS_BACKWARD, this) : false;
     }
@@ -89,9 +92,6 @@ bool ExpansionPanelHeader::setFocus(uint8_t flag, Window * from) // NOLINT(googl
       auto next = panel->getNextField();
       return next ? next->setFocus(SET_FOCUS_FORWARD, this) : false;
     }
-  }
-  else {
-    return FormGroup::setFocus(flag, from);
   }
 }
 

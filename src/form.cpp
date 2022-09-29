@@ -73,11 +73,13 @@ void FormField::onEvent(event_t event)
 
 bool FormField::setFocus(uint8_t flag, Window * from)
 {
+  TRACE_WINDOWS("%s setFocus(%d)", getWindowDebugString("FormField").c_str(), flag);
+
   if (enabled) {
     return Window::setFocus(flag, from);
   }
   else {
-    if (flag == SET_FOCUS_BACKWARD) {
+    if (flag == SET_FOCUS_BACKWARD || flag == SET_FOCUS_LAST) {
       return previous ? previous->setFocus(flag, this) : false;
     }
     else {
@@ -183,6 +185,10 @@ bool FormGroup::setFocus(uint8_t flag, Window * from)
 
   if (windowFlags & FORM_FORWARD_FOCUS) {
     switch (flag) {
+      case SET_FOCUS_LAST:
+        clearFocus();
+        // no break;
+
       case SET_FOCUS_BACKWARD:
         if (from && from->isChild(first)) {
           if (previous == this) {
@@ -314,8 +320,8 @@ void FormGroup::onEvent(event_t event)
   else if (event == EVT_ROTARY_LEFT && !previous) {
     onKeyPress();
     if (hasFocus()) {
-      if (!setFocusOnLastVisibleField(SET_FOCUS_BACKWARD)) {
-        setFocus(SET_FOCUS_FIRST);
+      if (!setFocusOnLastVisibleField(SET_FOCUS_LAST)) {
+        setFocus(SET_FOCUS_LAST);
       }
     }
     else {
