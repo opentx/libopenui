@@ -84,7 +84,7 @@ bool ExpansionPanelHeader::setFocus(uint8_t flag, Window * from) // NOLINT(googl
     return FormGroup::setFocus(flag, from);
   }
   else {
-    if (flag == SET_FOCUS_BACKWARD || flag == SET_FOCUS_LAST) {
+    if (flag == SET_FOCUS_BACKWARD) {
       auto previous = panel->getPreviousField();
       return previous ? previous->setFocus(SET_FOCUS_BACKWARD, this) : false;
     }

@@ -79,7 +79,7 @@ bool FormField::setFocus(uint8_t flag, Window * from)
     return Window::setFocus(flag, from);
   }
   else {
-    if (flag == SET_FOCUS_BACKWARD || flag == SET_FOCUS_LAST) {
+    if (flag == SET_FOCUS_BACKWARD) {
       return previous ? previous->setFocus(flag, this) : false;
     }
     else {
@@ -185,10 +185,6 @@ bool FormGroup::setFocus(uint8_t flag, Window * from)
 
   if (windowFlags & FORM_FORWARD_FOCUS) {
     switch (flag) {
-      case SET_FOCUS_LAST:
-        clearFocus();
-        // no break;
-
       case SET_FOCUS_BACKWARD:
         if (from && from->isChild(first)) {
           if (previous == this) {
@@ -213,10 +209,6 @@ bool FormGroup::setFocus(uint8_t flag, Window * from)
           }
         }
         break;
-
-      case SET_FOCUS_FIRST:
-        clearFocus();
-        // no break;
 
       case SET_FOCUS_FORWARD:
         if (from && from->isChild(this)) {
@@ -275,22 +267,22 @@ bool FormGroup::setFocus(uint8_t flag, Window * from)
   }
 }
 
-bool FormGroup::setFocusOnFirstVisibleField(uint8_t flag) const
+bool FormGroup::setFocusOnFirstVisibleField() const
 {
   auto field = getFirstField();
   while (field && !field->isInsideParentScrollingArea()) {
     field = field->getNextField();
   }
-  return field ? field->setFocus(flag) : false;
+  return field ? field->setFocus(SET_FOCUS_FORWARD) : false;
 }
 
-bool FormGroup::setFocusOnLastVisibleField(uint8_t flag) const
+bool FormGroup::setFocusOnLastVisibleField() const
 {
   auto field = getLastField();
   while (field && !field->isInsideParentScrollingArea()) {
     field = field->getPreviousField();
   }
-  return field ? field->setFocus(flag) : false;
+  return field ? field->setFocus(SET_FOCUS_BACKWARD) : false;
 }
 
 #if defined(HARDWARE_KEYS)
@@ -300,7 +292,7 @@ void FormGroup::onEvent(event_t event)
 
   if (event == EVT_KEY_BREAK(KEY_ENTER)) {
     onKeyPress();
-    setFocusOnFirstVisibleField(SET_FOCUS_FIRST);
+    setFocusOnFirstVisibleField();
   }
   else if (event == EVT_KEY_BREAK(KEY_EXIT) && !hasFocus() && !(windowFlags & FORM_FORWARD_FOCUS)) {
     onKeyPress();
@@ -309,8 +301,8 @@ void FormGroup::onEvent(event_t event)
   else if (event == EVT_ROTARY_RIGHT && !next) {
     onKeyPress();
     if (hasFocus()) {
-      if (!setFocusOnFirstVisibleField(SET_FOCUS_FIRST)) {
-        setFocus(SET_FOCUS_FIRST);
+      if (!setFocusOnFirstVisibleField()) {
+        setFocus(SET_FOCUS_FORWARD);
       }
     }
     else {
@@ -320,8 +312,8 @@ void FormGroup::onEvent(event_t event)
   else if (event == EVT_ROTARY_LEFT && !previous) {
     onKeyPress();
     if (hasFocus()) {
-      if (!setFocusOnLastVisibleField(SET_FOCUS_LAST)) {
-        setFocus(SET_FOCUS_LAST);
+      if (!setFocusOnLastVisibleField()) {
+        setFocus(SET_FOCUS_BACKWARD);
       }
     }
     else {
@@ -354,7 +346,7 @@ void FormWindow::onEvent(event_t event)
   if (event == EVT_KEY_BREAK(KEY_EXIT) && (windowFlags & FORM_FORWARD_FOCUS) && first) {
     onKeyPress();
     Window * currentFocus = getFocus();
-    first->setFocus(SET_FOCUS_FIRST);
+    first->setFocus(SET_FOCUS_FORWARD);
     if (getFocus() != currentFocus) {
       return;
     }

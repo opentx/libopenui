@@ -161,8 +161,8 @@ class FormGroup: public FormField
       return last;
     }
 
-    bool setFocusOnFirstVisibleField(uint8_t flag = SET_FOCUS_DEFAULT) const;
-    bool setFocusOnLastVisibleField(uint8_t flag = SET_FOCUS_DEFAULT) const;
+    bool setFocusOnFirstVisibleField() const;
+    bool setFocusOnLastVisibleField() const;
 
   protected:
     FormField * first = nullptr;
