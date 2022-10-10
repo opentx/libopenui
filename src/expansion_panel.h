@@ -68,8 +68,11 @@ class ExpansionPanel: public FormGroup
 
     virtual void open(bool state = true)
     {
-      isOpen = state;
-      updateHeight();
+      if (isOpen != state) {
+        isOpen = state;
+        updateHeight();
+        invalidate();
+      }
     }
 
     void setCloseAllowed(bool value = true)
