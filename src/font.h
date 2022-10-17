@@ -69,7 +69,7 @@ class Font
       }
     }
 
-    Glyph getCJKChar(uint8_t byte1, uint8_t byte2) const
+    [[nodiscard]] Glyph getCJKChar(uint8_t byte1, uint8_t byte2) const
     {
       unsigned result = byte2 + ((byte1 - CJK_BYTE1_MIN) << 8u) - 1;
       if (result >= 0x200)
@@ -109,12 +109,12 @@ class Font
       return currentLineWidth > result ? currentLineWidth : result;
     }
 
-    const BitmapData * getBitmapData() const
+    [[nodiscard]] const BitmapData * getBitmapData() const
     {
       return data;
     }
 
-    bool hasCJKChars() const
+    [[nodiscard]] bool hasCJKChars() const
     {
       return count > CJK_FIRST_LETTER_INDEX;
     }
