@@ -4043,7 +4043,7 @@ static const int stbi__zdist_extra[32] =
 { 0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13};
 
 // No optimization here or we have an alignment issue on STM32H7
-OPTIMIZE("-O3") static int stbi__parse_huffman_block(stbi__zbuf *a)
+OPTIMIZE("O0") static int stbi__parse_huffman_block(stbi__zbuf *a)
 {
    char *zout = a->zout;
    for(;;) {
@@ -4396,7 +4396,7 @@ static const stbi_uc stbi__depth_scale_table[9] = { 0, 0xff, 0x55, 0, 0x11, 0,0,
 
 // create the png data from post-deflated data
 // No optimization here or we have an alignment issue on STM32H7
-OPTIMIZE("-O3") static int stbi__create_png_image_raw(stbi__png *a, stbi_uc *raw, stbi__uint32 raw_len, int out_n, stbi__uint32 x, stbi__uint32 y, int depth, int color)
+OPTIMIZE("O0") static int stbi__create_png_image_raw(stbi__png *a, stbi_uc *raw, stbi__uint32 raw_len, int out_n, stbi__uint32 x, stbi__uint32 y, int depth, int color)
 {
    int bytes = (depth == 16? 2 : 1);
    stbi__context *s = a->s;
