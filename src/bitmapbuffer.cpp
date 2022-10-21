@@ -903,7 +903,7 @@ coord_t BitmapBuffer::drawNumber(coord_t x, coord_t y, int32_t val, LcdColor col
     int len = strlen(prefix);
     if (len <= 16) {
       s -= len;
-      strncpy(s, prefix, len);
+      memcpy(s, prefix, len);
     }
   }
   if (suffix) {
@@ -967,9 +967,9 @@ BitmapMask * BitmapMask::load(const char * filename)
 {
   BitmapBuffer * bitmap = BitmapBuffer::load(filename);
   if (bitmap) {
-    auto result = new BitmapMask(BMP_RGB565, bitmap->width(), bitmap->height());
+    BitmapMask * result = new BitmapMask(BMP_RGB565, bitmap->width(), bitmap->height());
     const auto * p = bitmap->getPixelPtrAbs(0, 0);
-    auto q = (uint8_t *)result->getPixelPtrAbs(0, 0);
+    uint8_t * q = (uint8_t *)result->getPixelPtrAbs(0, 0);
     for (int i = bitmap->width() * bitmap->height(); i > 0; i--) {
       *q = (ALPHA_MAX - ((*p) >> 12)) << 4;
       MOVE_TO_NEXT_RIGHT_PIXEL(p);
@@ -1299,7 +1299,7 @@ int stbc_eof(void *user)
 }
 
 // callbacks for stb-image
-static const stbi_io_callbacks stbCallbacks = {
+const stbi_io_callbacks stbCallbacks = {
   stbc_read,
   stbc_skip,
   stbc_eof
