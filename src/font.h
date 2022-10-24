@@ -25,6 +25,17 @@
 
 constexpr uint8_t CJK_BYTE1_MIN = 0xFD;
 
+inline bool hasChineseChars(const char * str)
+{
+  while (*str) {
+    uint8_t c = *str++;
+    if (c >= CJK_BYTE1_MIN) {
+      return true;
+    }
+  }
+  return false;
+}
+
 class Font
 {
   public:
