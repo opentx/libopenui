@@ -47,7 +47,7 @@ constexpr uint8_t STASHED = 0x33;
 
 typedef uint16_t pixel_t;
 
-enum BitmapFormats
+enum BitmapFormat
 {
   BMP_RGB565,
   BMP_ARGB4444
