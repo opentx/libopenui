@@ -60,10 +60,10 @@ void Table::Body::checkEvents()
 void Table::Body::paint(BitmapBuffer * dc)
 {
   coord_t y = 0;
-  int index = 0;
+  int lineIndex = 0;
   dc->clear(DEFAULT_BGCOLOR);
   for (auto line: lines) {
-    bool highlight = (index == selection);
+    bool highlight = (lineIndex == selection);
     dc->drawSolidFilledRect(0, y, width(), TABLE_LINE_HEIGHT - TABLE_LINE_BORDER, highlight ? MENU_HIGHLIGHT_BGCOLOR : TABLE_BGCOLOR);
     coord_t x = TABLE_HORIZONTAL_PADDING;
     for (unsigned i = 0; i < line->cells.size(); i++) {
@@ -74,18 +74,18 @@ void Table::Body::paint(BitmapBuffer * dc)
       x += static_cast<Table *>(parent)->columnsWidth[i];
     }
     y += TABLE_LINE_HEIGHT;
-    index += 1;
+    lineIndex += 1;
   }
 }
 
 #if defined(HARDWARE_TOUCH)
 bool Table::Body::onTouchEnd(coord_t x, coord_t y)
 {
-  unsigned index = y / TABLE_LINE_HEIGHT;
-  if (index < lines.size()) {
+  unsigned lineIndex = y / TABLE_LINE_HEIGHT;
+  if (lineIndex < lines.size()) {
     onKeyPress();
     setFocus(SET_FOCUS_DEFAULT);
-    auto onPress = lines[index]->onPress;
+    auto onPress = lines[lineIndex]->onPress;
     if (onPress)
       onPress();
   }
@@ -110,9 +110,9 @@ void Table::Body::onEvent(event_t event)
     onKeyPress();
     auto table = static_cast<Table *>(parent);
     if (table->getWindowFlags() & FORWARD_SCROLL) {
-      auto index = selection + 1;
-      if (index < int(lines.size())) {
-        select(index, true);
+      auto lineIndex = selection + 1;
+      if (lineIndex < int(lines.size())) {
+        select(lineIndex, true);
       }
       else {
         auto next = table->getNextField();
@@ -134,9 +134,9 @@ void Table::Body::onEvent(event_t event)
     onKeyPress();
     auto table = static_cast<Table *>(parent);
     if (table->getWindowFlags() & FORWARD_SCROLL) {
-      auto index = selection - 1;
-      if (index >= 0) {
-        select(index, true);
+      auto lineIndex = selection - 1;
+      if (lineIndex >= 0) {
+        select(lineIndex, true);
       }
       else {
         auto previous = table->getPreviousField();

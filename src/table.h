@@ -35,7 +35,7 @@ class Table: public FormField
 
         virtual void paint(BitmapBuffer * dc, coord_t x, coord_t y, LcdColor color, LcdFlags flags) = 0;
 
-        virtual bool needsInvalidate() = 0;
+        [[nodiscard]] virtual bool needsInvalidate() = 0;
     };
 
     class StringCell : public Cell
@@ -53,12 +53,12 @@ class Table: public FormField
           dc->drawText(x, y - 2 + (TABLE_LINE_HEIGHT - getFontHeight(TABLE_HEADER_FONT)) / 2 + 3, value.c_str(), color, flags);
         }
 
-        bool needsInvalidate() override
+        [[nodiscard]] bool needsInvalidate() override
         {
           return valueChanged;
         }
 
-        std::string getValue() const
+        [[nodiscard]] std::string getValue() const
         {
           return value;
         }
@@ -88,7 +88,7 @@ class Table: public FormField
           dc->drawText(x, y - 2 + (TABLE_LINE_HEIGHT - getFontHeight(TABLE_BODY_FONT)) / 2 + 3, text.c_str(), color, SPACING_NUMBERS_CONST | flags);
         }
 
-        bool needsInvalidate() override
+        [[nodiscard]] bool needsInvalidate() override
         {
           return true; // TODO optimize this
         }
@@ -110,7 +110,7 @@ class Table: public FormField
           paintFunction(dc, x, y, color, flags);
         }
 
-        bool needsInvalidate() override
+        [[nodiscard]] bool needsInvalidate() override
         {
           return true;
         }
@@ -184,25 +184,25 @@ class Table: public FormField
         void addLine(Line * line)
         {
           lines.push_back(line);
-          setInnerHeight((int)lines.size() * TABLE_LINE_HEIGHT - TABLE_LINE_BORDER);
+          setInnerHeight(coord_t(lines.size() * TABLE_LINE_HEIGHT - TABLE_LINE_BORDER));
           if (hasFocus() && selection < 0) {
             select(0, true);
           }
         }
 
-        void setLineFont(uint8_t index, LcdFlags font)
+        void setLineFont(unsigned lineIndex, LcdFlags font)
         {
-          if (lines[index]->font != font) {
-            lines[index]->font = font;
-            invalidate({0, index * TABLE_LINE_HEIGHT - scrollPositionY, width(), TABLE_LINE_HEIGHT});
+          if (lines[lineIndex]->font != font) {
+            lines[lineIndex]->font = font;
+            invalidate({0, coord_t(lineIndex * TABLE_LINE_HEIGHT - scrollPositionY), width(), TABLE_LINE_HEIGHT});
           }
         }
 
-        void setLineColor(uint8_t index, LcdColor color)
+        void setLineColor(unsigned lineIndex, LcdColor color)
         {
-          if (lines[index]->color != color) {
-            lines[index]->color = color;
-            invalidate({0, index * TABLE_LINE_HEIGHT - scrollPositionY, width(), TABLE_LINE_HEIGHT});
+          if (lines[lineIndex]->color != color) {
+            lines[lineIndex]->color = color;
+            invalidate({0, coord_t(lineIndex * TABLE_LINE_HEIGHT - scrollPositionY), width(), TABLE_LINE_HEIGHT});
           }
         }
 
@@ -214,24 +214,24 @@ class Table: public FormField
           lines.clear();
         }
 
-        void select(int index, bool scroll)
+        void select(int lineIndex, bool scroll)
         {
-          selection = index;
+          selection = lineIndex;
           if (scroll) {
-            scrollTo(index);
+            scrollTo(lineIndex);
           }
           invalidate();
-          if (index >= 0) {
-            auto onSelect = lines[index]->onSelect;
+          if (lineIndex >= 0) {
+            auto onSelect = lines[lineIndex]->onSelect;
             if (onSelect) {
               onSelect();
             }
           }
         }
 
-        void scrollTo(int index)
+        void scrollTo(int lineIndex)
         {
-          coord_t y = index * TABLE_LINE_HEIGHT;
+          coord_t y = lineIndex * TABLE_LINE_HEIGHT;
           Window * window = this;
           while (window->getWindowFlags() & FORWARD_SCROLL) {
             y += window->top();
@@ -284,7 +284,7 @@ class Table: public FormField
     {
       int restColumn = -1;
       coord_t restWidth = width() - 2 * TABLE_HORIZONTAL_PADDING;
-      for (uint8_t i = 0; i < columnsCount; i++) {
+      for (auto i = 0; i < columnsCount; i++) {
         auto columnWidth = values[i];
         columnsWidth[i] = columnWidth;
         if (columnWidth == 0) {
@@ -299,12 +299,12 @@ class Table: public FormField
       }
     }
 
-    coord_t getColumnWidth(uint8_t index) const
+    [[nodiscard]] coord_t getColumnWidth(uint8_t columnIndex) const
     {
-      return columnsWidth[index];
+      return columnsWidth[columnIndex];
     }
 
-    int getSelection() const
+    [[nodiscard]] int getSelection() const
     {
       return body->selection;
     }
@@ -344,19 +344,19 @@ class Table: public FormField
       }
     }
 
-    void select(int index, bool scroll = true)
+    void select(int lineIndex, bool scroll = true)
     {
-      body->select(index, scroll);
+      body->select(lineIndex, scroll);
     }
 
-    void setLineFont(uint8_t index, LcdFlags font)
+    void setLineFont(unsigned lineIndex, LcdFlags font)
     {
-      body->setLineFont(index, font);
+      body->setLineFont(lineIndex, font);
     }
 
-    void setLineColor(uint8_t index, LcdColor color)
+    void setLineColor(unsigned lineIndex, LcdColor color)
     {
-      body->setLineColor(index, color);
+      body->setLineColor(lineIndex, color);
     }
 
     void setHeader(const char * const values[])
@@ -364,7 +364,7 @@ class Table: public FormField
       header->setHeight(TABLE_HEADER_HEIGHT);
       body->setTop(TABLE_HEADER_HEIGHT);
       body->setHeight(height() - TABLE_HEADER_HEIGHT);
-      for (uint8_t i = 0; i < columnsCount; i++) {
+      for (auto i = 0; i < columnsCount; i++) {
         delete header->cells[i];
         header->cells[i] = new StringCell(values[i]);
       }
@@ -380,13 +380,13 @@ class Table: public FormField
     void addLine(const char * const values[], std::function<void()> onPress = nullptr, std::function<void()> onSelect = nullptr)
     {
       Line * line = new Line(columnsCount);
-      for (uint8_t i = 0; i < columnsCount; i++) {
+      for (auto i = 0; i < columnsCount; i++) {
         line->cells[i] = new StringCell(values[i]);
       }
       addLine(line, std::move(onPress), std::move(onSelect));
     }
 
-    Cell * getCell(unsigned row, unsigned column) const
+    [[nodiscard]] Cell * getCell(unsigned row, unsigned column) const
     {
       return body->lines[row]->cells[column];
     }
@@ -397,17 +397,17 @@ class Table: public FormField
       body->clear();
     }
 
-    uint8_t size() const
+    [[nodiscard]] unsigned size() const
     {
       return body->lines.size();
     }
 
-    Header * getHeader()
+    [[nodiscard]] Header * getHeader()
     {
       return header;
     }
 
-    Body * getBody()
+    [[nodiscard]] Body * getBody()
     {
       return body;
     }
