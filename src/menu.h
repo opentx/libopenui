@@ -24,6 +24,8 @@
 #include <utility>
 #include "modal_window.h"
 
+constexpr coord_t MENUS_HORIZONTAL_PADDING = 10;
+
 class Menu;
 class MenuWindowContent;
 
@@ -189,14 +191,6 @@ class Menu: public ModalWindow
       waitHandler = std::move(handler);
     }
 
-    void setToolbar(Window * window)
-    {
-      toolbar = window;
-      content->setLeft(toolbar->right());
-      content->setTop(toolbar->top());
-      content->setHeight(toolbar->height());
-    }
-
     void setTitle(std::string text);
 
     void addLine(const std::string & text, std::function<void()> onPress, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr);
@@ -230,7 +224,6 @@ class Menu: public ModalWindow
   protected:
     MenuWindowContent * content;
     bool multiple;
-    Window * toolbar = nullptr;
     std::function<void()> waitHandler;
     void updatePosition();
 };

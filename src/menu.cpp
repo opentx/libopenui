@@ -135,25 +135,25 @@ void MenuBody::paint(BitmapBuffer * dc)
     else {
       const char * text = line.text.data();
       if (IS_TRANSLATION_RIGHT_TO_LEFT())
-        dc->drawText(width() - 10, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - getFontHeight(MENU_FONT)) / 2, text[0] == '\0' ? "---" : text, color, MENU_FONT | RIGHT);
+        dc->drawText(width() - MENUS_HORIZONTAL_PADDING, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - getFontHeight(MENU_FONT)) / 2, text[0] == '\0' ? "---" : text, color, MENU_FONT | RIGHT);
       else
-        dc->drawText(10, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - getFontHeight(MENU_FONT)) / 2, text[0] == '\0' ? "---" : text, color, MENU_FONT);
+        dc->drawText(MENUS_HORIZONTAL_PADDING, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - getFontHeight(MENU_FONT)) / 2, text[0] == '\0' ? "---" : text, color, MENU_FONT);
     }
 
     Menu * menu = getParentMenu();
     if (menu->multiple && line.isChecked) {
-      theme->drawCheckBox(dc, line.isChecked(), IS_TRANSLATION_RIGHT_TO_LEFT() ? 10 : width() - 35, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - 20) / 2, 0);
+      theme->drawCheckBox(dc, line.isChecked(), IS_TRANSLATION_RIGHT_TO_LEFT() ? MENUS_HORIZONTAL_PADDING : width() - MENUS_HORIZONTAL_PADDING - 25, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - 20) / 2, 0);
     }
 
     if (i > 0) {
-      dc->drawSolidHorizontalLine(0, i * MENUS_LINE_HEIGHT - 1, MENUS_WIDTH, MENU_LINE_COLOR);
+      dc->drawSolidHorizontalLine(0, i * MENUS_LINE_HEIGHT - 1, width(), MENU_LINE_COLOR);
     }
   }
 }
 
 MenuWindowContent::MenuWindowContent(Menu * parent):
-  ModalWindowContent(parent, {(LCD_W - MENUS_WIDTH) / 2, (LCD_H - MENUS_WIDTH) / 2, MENUS_WIDTH, 0}),
-  body(this, {0, 0, width(), height()})
+  ModalWindowContent(parent, {(LCD_W - MIN_MENUS_WIDTH) / 2, (LCD_H - MIN_MENUS_WIDTH) / 2, MIN_MENUS_WIDTH, 0}),
+  body(this, {0, 0, MIN_MENUS_WIDTH, 0})
 {
   body.setFocus(SET_FOCUS_DEFAULT);
 }
@@ -165,8 +165,8 @@ void MenuWindowContent::paint(BitmapBuffer * dc)
 
   // the title
   if (!title.empty()) {
-    dc->drawText(MENUS_WIDTH / 2, (POPUP_HEADER_HEIGHT - getFontHeight(MENU_HEADER_FONT)) / 2, title.c_str(), DEFAULT_COLOR, CENTERED | MENU_HEADER_FONT);
-    dc->drawSolidHorizontalLine(0, POPUP_HEADER_HEIGHT - 1, MENUS_WIDTH, MENU_LINE_COLOR);
+    dc->drawText(MIN_MENUS_WIDTH / 2, (POPUP_HEADER_HEIGHT - getFontHeight(MENU_HEADER_FONT)) / 2, title.c_str(), DEFAULT_COLOR, CENTERED | MENU_HEADER_FONT);
+    dc->drawSolidHorizontalLine(0, POPUP_HEADER_HEIGHT - 1, MIN_MENUS_WIDTH, MENU_LINE_COLOR);
   }
 }
 
@@ -179,15 +179,12 @@ Menu::Menu(Window * parent, bool multiple):
 
 void Menu::updatePosition()
 {
-  if (!toolbar) {
-    // there is no navigation bar at the left, we may center the window on screen
-    auto headerHeight = content->title.empty() ? 0 : POPUP_HEADER_HEIGHT;
-    auto bodyHeight = limit<coord_t>(MENUS_MIN_HEIGHT, content->body.lines.size() * MENUS_LINE_HEIGHT - 1, MENUS_MAX_HEIGHT);
-    content->setTop((LCD_H - headerHeight - bodyHeight) / 2 + MENUS_OFFSET_TOP);
-    content->setHeight(headerHeight + bodyHeight);
-    content->body.setTop(headerHeight);
-    content->body.setHeight(bodyHeight);
-  }
+  auto headerHeight = content->title.empty() ? 0 : POPUP_HEADER_HEIGHT;
+  auto bodyHeight = limit<coord_t>(MENUS_MIN_HEIGHT, content->body.lines.size() * MENUS_LINE_HEIGHT - 1, MENUS_MAX_HEIGHT);
+  content->setTop((LCD_H - headerHeight - bodyHeight) / 2 + MENUS_OFFSET_TOP);
+  content->setHeight(headerHeight + bodyHeight);
+  content->body.setTop(headerHeight);
+  content->body.setHeight(bodyHeight);
   content->body.setInnerHeight(content->body.lines.size() * MENUS_LINE_HEIGHT - 1);
 }
 
@@ -200,6 +197,13 @@ void Menu::setTitle(std::string text)
 void Menu::addLine(const std::string & text, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
 {
   content->body.addLine(text, std::move(onPress), std::move(onSelect), std::move(isChecked));
+  if (content->width() < MAX_MENUS_WIDTH) {
+    auto lineWidth = min(MAX_MENUS_WIDTH, getTextWidth(text.c_str(), 0, MENU_FONT) + 2 * MENUS_HORIZONTAL_PADDING);
+    if (lineWidth > content->width()) {
+      content->setWidth(lineWidth);
+      content->body.setWidth(lineWidth);
+    }
+  }
   updatePosition();
 }
 
@@ -218,10 +222,7 @@ void Menu::removeLines()
 #if defined(HARDWARE_KEYS)
 void Menu::onEvent(event_t event)
 {
-  if (toolbar && (event == EVT_KEY_BREAK(KEY_PGDN) || event == EVT_KEY_LONG(KEY_PGDN))) {
-    toolbar->onEvent(event);
-  }
-  else if (event == EVT_KEY_BREAK(KEY_EXIT)) {
+  if (event == EVT_KEY_BREAK(KEY_EXIT)) {
     deleteLater();
   }
   else if (event == EVT_KEY_BREAK(KEY_ENTER) && !multiple) {
