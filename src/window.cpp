@@ -104,7 +104,7 @@ bool Window::setFocus(uint8_t flag, Window * from)
   if (deleted())
     return false;
 
-  TRACE_WINDOWS("%s setFocus()", getWindowDebugString().c_str());
+  TRACE_WINDOWS("%s setFocus()", getWindowDebugString("Window").c_str());
 
   if (focusWindow != this) {
     // scroll before calling focusHandler so that the window can adjust the scroll position if needed
@@ -122,9 +122,11 @@ bool Window::setFocus(uint8_t flag, Window * from)
     if (focusHandler) {
       focusHandler(true);
     }
+    return true;
   }
-
-  return true;
+  else {
+    return false;
+  }
 }
 
 void Window::setScrollPositionX(coord_t value)

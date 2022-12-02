@@ -38,18 +38,16 @@ void FormField::onEvent(event_t event)
   TRACE_WINDOWS("%s received event 0x%X", getWindowDebugString("FormField").c_str(), event);
 
   if (event == EVT_ROTARY_RIGHT/*EVT_KEY_BREAK(KEY_DOWN)*/) {
-    if (next) {
+    if (next && next->setFocus(SET_FOCUS_FORWARD, this)) {
       onKeyPress();
-      next->setFocus(SET_FOCUS_FORWARD, this);
     }
     else {
       Window::onEvent(event);
     }
   }
   else if (event == EVT_ROTARY_LEFT/*EVT_KEY_BREAK(KEY_UP)*/) {
-    if (previous) {
+    if (previous && previous->setFocus(SET_FOCUS_BACKWARD, this)) {
       onKeyPress();
-      previous->setFocus(SET_FOCUS_BACKWARD, this);
     }
     else {
       Window::onEvent(event);
@@ -219,7 +217,6 @@ bool FormGroup::setFocus(uint8_t flag, Window * from)
             return next->setFocus(SET_FOCUS_FORWARD, this);
           }
           else {
-            setInsideParentScrollingArea(true);
             return false;
           }
         }
@@ -231,7 +228,6 @@ bool FormGroup::setFocus(uint8_t flag, Window * from)
             return next->setFocus(SET_FOCUS_FORWARD, this);
           }
           else {
-            setInsideParentScrollingArea();
             return false;
           }
         }
@@ -302,8 +298,13 @@ void FormGroup::onEvent(event_t event)
     onKeyPress();
     if (hasFocus()) {
       if (!setFocusOnFirstVisibleField()) {
-        setFocus(SET_FOCUS_FORWARD);
+        if (!setFocus(SET_FOCUS_FORWARD)) {
+          setScrollPositionY(scrollPositionY + height() / 2);
+        }
       }
+    }
+    else if (innerHeight > height() && scrollPositionY < innerHeight - height() / 2) {
+      setScrollPositionY(scrollPositionY + height() / 2);
     }
     else {
       FormField::onEvent(event);
@@ -313,8 +314,13 @@ void FormGroup::onEvent(event_t event)
     onKeyPress();
     if (hasFocus()) {
       if (!setFocusOnLastVisibleField()) {
-        setFocus(SET_FOCUS_BACKWARD);
+        if (!setFocus(SET_FOCUS_BACKWARD)) {
+          setScrollPositionY(scrollPositionY - height() / 2);
+        }
       }
+    }
+    else if (scrollPositionY > 0) {
+      setScrollPositionY(scrollPositionY - height() / 2);
     }
     else {
       FormField::onEvent(event);
@@ -341,43 +347,13 @@ void FormGroup::paint(BitmapBuffer * dc)
 #if defined(HARDWARE_KEYS)
 void FormWindow::onEvent(event_t event)
 {
-  TRACE_WINDOWS("%s received event 0x%X", getWindowDebugString("FormWindow").c_str(), event);
+  TRACE_WINDOWS("%s received event 0x%X next=%p previous=%p", getWindowDebugString("FormWindow").c_str(), event, next, previous);
 
   if (event == EVT_KEY_BREAK(KEY_EXIT) && (windowFlags & FORM_FORWARD_FOCUS) && first) {
     onKeyPress();
     Window * currentFocus = getFocus();
     first->setFocus(SET_FOCUS_FORWARD);
     if (getFocus() != currentFocus) {
-      return;
-    }
-  }
-  else if (event == EVT_ROTARY_LEFT && !previous && !hasFocus()) {
-    if (scrollPositionY > 0) {
-      onKeyPress();
-      setScrollPositionY(scrollPositionY - height());
-      return;
-    }
-
-  }
-  else if (event == EVT_ROTARY_RIGHT && !next && !hasFocus()) {
-    if (scrollPositionY < innerHeight - height()) {
-      onKeyPress();
-      setScrollPositionY(scrollPositionY + height());
-      return;
-    }
-  }
-  else if (event == EVT_ROTARY_LEFT && !previous && !hasFocus()) {
-    if (scrollPositionY > 0) {
-      onKeyPress();
-      setScrollPositionY(scrollPositionY - height());
-      return;
-    }
-
-  }
-  else if (event == EVT_ROTARY_RIGHT && !next && !hasFocus()) {
-    if (scrollPositionY < innerHeight - height()) {
-      onKeyPress();
-      setScrollPositionY(scrollPositionY + height());
       return;
     }
   }
