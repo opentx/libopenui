@@ -209,7 +209,7 @@ class BitmapBufferBase
       auto * destData = result->data;
       for (uint8_t y = 0; y < width(); y++) {
         for (uint8_t x = 0; x < height(); x++) {
-          destData[y * height() + x] = srcData[x * width() + y];
+          destData[y * height() + (height() - 1 - x)] = srcData[x * width() + y];
         }
       }
       return result;
