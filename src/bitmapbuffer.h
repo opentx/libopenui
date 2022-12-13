@@ -313,7 +313,7 @@ class BitmapMask: public BitmapBufferBase<uint8_t>
       return result;
     }
 
-    static BitmapMask * load(const char * filename);
+    static BitmapMask * load(const char * filename, int maxSize = -1);
 };
 
 class BitmapBuffer: public BitmapBufferBase<pixel_t>
@@ -414,9 +414,9 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
 
     void drawBitmapPatternPie(coord_t x0, coord_t y0, const uint8_t * img, LcdColor color, int startAngle, int endAngle);
 
-    static BitmapBuffer * load(const char * filename);
+    static BitmapBuffer * load(const char * filename, int maxSize = -1);
 
-    static BitmapBuffer * loadMaskOnBackground(const char * filename, Color565 foreground, Color565 background);
+    static BitmapBuffer * loadMaskOnBackground(const char * filename, Color565 foreground, Color565 background, int maxSize = -1);
 
     template <class T>
     void drawMask(coord_t x, coord_t y, const T * mask, Color565 color, coord_t srcx = 0, coord_t srcw = 0);
@@ -450,8 +450,8 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
     void drawScaledBitmap(const T * bitmap, coord_t x, coord_t y, coord_t w, coord_t h);
 
   protected:
-    static BitmapBuffer * load_bmp(const char * filename);
-    static BitmapBuffer * load_stb(const char * filename);
+    static BitmapBuffer * load_bmp(const char * filename, int maxSize = -1);
+    static BitmapBuffer * load_stb(const char * filename, int maxSize = -1);
 
     inline bool applyClippingRect(coord_t & x, coord_t & y, coord_t & w, coord_t & h) const
     {
@@ -541,4 +541,3 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
 };
 
 extern BitmapBuffer * lcd;
-

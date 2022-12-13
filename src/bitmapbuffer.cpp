@@ -954,18 +954,18 @@ void drawSolidRect(BitmapBuffer * dc, coord_t x, coord_t y, coord_t w, coord_t h
 //}
 //
 
-BitmapBuffer * BitmapBuffer::load(const char * filename)
+BitmapBuffer * BitmapBuffer::load(const char * filename, int maxSize)
 {
   const char * ext = getFileExtension(filename);
   if (ext && !strcmp(ext, ".bmp"))
-    return load_bmp(filename);
+    return load_bmp(filename, maxSize);
   else
-    return load_stb(filename);
+    return load_stb(filename, maxSize);
 }
 
-BitmapMask * BitmapMask::load(const char * filename)
+BitmapMask * BitmapMask::load(const char * filename, int maxSize)
 {
-  BitmapBuffer * bitmap = BitmapBuffer::load(filename);
+  BitmapBuffer * bitmap = BitmapBuffer::load(filename, maxSize);
   if (bitmap) {
     BitmapMask * result = new BitmapMask(BMP_RGB565, bitmap->width(), bitmap->height());
     const auto * p = bitmap->getPixelPtrAbs(0, 0);
@@ -981,10 +981,10 @@ BitmapMask * BitmapMask::load(const char * filename)
   return nullptr;
 }
 
-BitmapBuffer * BitmapBuffer::loadMaskOnBackground(const char * filename, Color565 foreground, Color565 background)
+BitmapBuffer * BitmapBuffer::loadMaskOnBackground(const char * filename, Color565 foreground, Color565 background, int maxSize)
 {
   BitmapBuffer * result = nullptr;
-  const auto * mask = BitmapMask::load(filename);
+  const auto * mask = BitmapMask::load(filename, maxSize);
   if (mask) {
     result = new BitmapBuffer(BMP_RGB565, mask->width(), mask->height());
     if (result) {
@@ -996,7 +996,7 @@ BitmapBuffer * BitmapBuffer::loadMaskOnBackground(const char * filename, Color56
   return result;
 }
 
-BitmapBuffer * BitmapBuffer::load_bmp(const char * filename)
+BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
 {
   UINT read;
   uint8_t palette[16];
@@ -1113,8 +1113,16 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename)
     }
   }
 
+  if (maxSize >= 0 && int(w * h * 2) > maxSize) {
+    TRACE("load_stb(%s) malloc not allowed", filename);
+    f_close(imgFile);
+    free(imgFile);
+    return nullptr;
+  }
+
   auto bmp = new BitmapBuffer(BMP_RGB565, w, h);
   if (bmp == nullptr || bmp->getData() == nullptr) {
+    TRACE("load_bmp(%s) malloc failed", filename);
     f_close(imgFile);
     free(imgFile);
     return nullptr;
@@ -1305,7 +1313,7 @@ const stbi_io_callbacks stbCallbacks = {
   stbc_eof
 };
 
-BitmapBuffer * BitmapBuffer::load_stb(const char * filename)
+BitmapBuffer * BitmapBuffer::load_stb(const char * filename, int maxSize)
 {
   auto imgFile = (FIL *)malloc(sizeof(FIL));
   if (!imgFile)
@@ -1324,6 +1332,12 @@ BitmapBuffer * BitmapBuffer::load_stb(const char * filename)
 
   if (!img) {
     TRACE("load_stb(%s) failed: %s", filename, stbi_failure_reason());
+    return nullptr;
+  }
+
+  if (maxSize >= 0 && w * h * 2 > maxSize) {
+    TRACE("load_stb(%s) malloc not allowed", filename);
+    stbi_image_free(img);
     return nullptr;
   }
 
