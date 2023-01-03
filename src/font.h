@@ -103,7 +103,7 @@ class Font
           currentLineWidth += getCJKChar(c, *++s).width + CHAR_SPACING;
         }
         else if (c >= 0x20) {
-          if ((flags & SPACING_NUMBERS_CONST) && c >= '0' && c <= '9')
+          if (c >= '0' && c <= '9')
             currentLineWidth += getChar('9').width + CHAR_SPACING;
           else
             currentLineWidth += getChar(c).width + CHAR_SPACING;

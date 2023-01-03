@@ -85,7 +85,7 @@ class Table: public FormField
         void paint(BitmapBuffer * dc, coord_t x, coord_t y, LcdColor color, LcdFlags flags) override
         {
           auto text = getText();
-          dc->drawText(x, y - 2 + (TABLE_LINE_HEIGHT - getFontHeight(TABLE_BODY_FONT)) / 2 + 3, text.c_str(), color, SPACING_NUMBERS_CONST | flags);
+          dc->drawText(x, y - 2 + (TABLE_LINE_HEIGHT - getFontHeight(TABLE_BODY_FONT)) / 2 + 3, text.c_str(), color, flags);
         }
 
         [[nodiscard]] bool needsInvalidate() override

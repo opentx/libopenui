@@ -35,7 +35,7 @@ constexpr uint32_t RIGHT = 0x08u; // align right
 constexpr uint32_t SHADOWED = 0x80u; // black copy at +1 +1
 
 // unused 0x1000u
-constexpr uint32_t SPACING_NUMBERS_CONST = 0x2000u;
+// unused 0x2000u
 constexpr uint32_t VERTICAL = 0x4000u;
 // unused 0x8000u
 

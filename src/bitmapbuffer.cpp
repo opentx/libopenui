@@ -852,7 +852,7 @@ coord_t BitmapBuffer::drawSizedText(coord_t x, coord_t y, const char * s, uint8_
     else if (c >= 0x20) {
       auto glyph = font->getChar(c);
       uint8_t width = drawChar(x, y, glyph, color);
-      if ((flags & SPACING_NUMBERS_CONST) && c >= '0' && c <= '9')
+      if (c >= '0' && c <= '9')
         INCREMENT_POS(font->getChar('9').width + CHAR_SPACING);
       else
         INCREMENT_POS(width + CHAR_SPACING);
