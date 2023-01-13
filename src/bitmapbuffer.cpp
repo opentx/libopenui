@@ -1145,6 +1145,9 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
           }
           MOVE_TO_NEXT_RIGHT_PIXEL(dst);
         }
+        if (w & 1) {
+          f_lseek(imgFile, f_tell(imgFile) + 2);
+        }
       }
       break;
 
