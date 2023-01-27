@@ -53,6 +53,17 @@ Choice::Choice(FormGroup * parent, const rect_t & rect, std::vector<std::string>
 {
 }
 
+Choice::Choice(FormGroup * parent, const rect_t & rect, std::vector<std::string> values,
+               std::function<int()> getValue, std::function<void(int)> setValue, WindowFlags windowFlags) :
+  ChoiceBase(parent, rect, CHOICE_TYPE_DROPOWN, windowFlags),
+  values(std::move(values)),
+  vmin(0),
+  vmax(this->values.size() - 1),
+  getValue(std::move(getValue)),
+  setValue(std::move(setValue))
+{
+}
+
 Choice::Choice(FormGroup * parent, const rect_t & rect, const char * values, int vmin, int vmax,
                std::function<int()> getValue, std::function<void(int)> setValue, WindowFlags windowFlags) :
   ChoiceBase(parent, rect, CHOICE_TYPE_DROPOWN, windowFlags),

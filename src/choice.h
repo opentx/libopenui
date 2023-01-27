@@ -50,6 +50,7 @@ class Choice: public ChoiceBase
   public:
     Choice(FormGroup * parent, const rect_t & rect, int vmin, int vmax, std::function<int()> getValue, std::function<void(int)> setValue = nullptr, WindowFlags windowFlags = 0);
     Choice(FormGroup * parent, const rect_t & rect, std::vector<std::string> values, int vmin, int vmax, std::function<int()> getValue, std::function<void(int)> setValue = nullptr, WindowFlags windowFlags = 0);
+    Choice(FormGroup * parent, const rect_t & rect, std::vector<std::string> values, std::function<int()> getValue, std::function<void(int)> setValue = nullptr, WindowFlags windowFlags = 0);
     Choice(FormGroup * parent, const rect_t & rect, const char * const values[], int vmin, int vmax, std::function<int()> getValue, std::function<void(int)> setValue = nullptr, WindowFlags windowFlags = 0);
     Choice(FormGroup * parent, const rect_t & rect, const char * values, int vmin, int vmax, std::function<int()> getValue, std::function<void(int)> setValue = nullptr, WindowFlags windowFlags = 0);
 
