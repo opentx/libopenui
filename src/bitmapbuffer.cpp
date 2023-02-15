@@ -425,7 +425,7 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdC
     /* the line is more vertical than horizontal */
     for (int i = 0; i <= dyabs; i++) {
       if ((1 << (py % 8)) & pat) {
-        drawPixelAbs(px, py, rgb565);
+        drawAlphaPixelAbs(px, py, alpha, rgb565);
       }
       x += dxabs;
       if (x >= dyabs) {

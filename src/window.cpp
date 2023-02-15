@@ -251,6 +251,7 @@ void Window::fullPaint(BitmapBuffer * dc)
 
   if (!(windowFlags & NO_SCROLLBAR)) {
     drawVerticalScrollbar(dc);
+    drawHorizontalScrollbar(dc);
   }
 
   if (!(windowFlags & PAINT_CHILDREN_FIRST)) {
