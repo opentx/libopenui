@@ -90,7 +90,7 @@ class Font
       return getGlyph(CJK_FIRST_LETTER_INDEX + result);
     }
 
-    coord_t getTextWidth(const char * s, int len, LcdFlags flags) const
+    coord_t getTextWidth(const char * s, int len = 0) const
     {
       int currentLineWidth = 0;
       int result = 0;
@@ -147,5 +147,5 @@ inline coord_t getFontHeight(LcdFlags flags)
 
 inline coord_t getTextWidth(const char * s, int len = 0, LcdFlags flags = 0)
 {
-  return getFont(flags)->getTextWidth(s, len, flags);
+  return getFont(flags)->getTextWidth(s, len);
 }

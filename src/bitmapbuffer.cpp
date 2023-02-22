@@ -823,7 +823,7 @@ coord_t BitmapBuffer::drawSizedText(coord_t x, coord_t y, const char * s, uint8_
   }
 
   if (flags & (RIGHT | CENTERED)) {
-    int width = font->getTextWidth(s, len, flags);
+    int width = font->getTextWidth(s, len);
     if (flags & RIGHT) {
       INCREMENT_POS(-width);
     }
