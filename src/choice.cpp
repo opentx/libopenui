@@ -98,6 +98,8 @@ void Choice::addValues(const char * const values[], uint8_t count)
 
 void Choice::setValues(std::vector<std::string> values)
 {
+  vmin = 0;
+  vmax = values.size() - 1;
   this->values = std::move(values);
 }
 
