@@ -42,7 +42,7 @@ class StaticText: public Window
     }
 #endif
 
-    static void drawText(BitmapBuffer * dc, const rect_t & rect, const std::string & text, LcdColor textColor, LcdFlags textFlags = 0);
+    static coord_t drawText(BitmapBuffer * dc, const rect_t & rect, const std::string & text, LcdColor textColor, LcdFlags textFlags = 0);
 
     void paint(BitmapBuffer * dc) override;
 

@@ -20,7 +20,7 @@
 #include "static.h"
 #include "font.h"
 
-void StaticText::drawText(BitmapBuffer * dc, const rect_t & rect, const std::string & text, LcdColor textColor, LcdFlags textFlags)
+coord_t StaticText::drawText(BitmapBuffer * dc, const rect_t & rect, const std::string & text, LcdColor textColor, LcdFlags textFlags)
 {
   coord_t x = rect.x;
   if (textFlags & CENTERED)
@@ -46,6 +46,8 @@ void StaticText::drawText(BitmapBuffer * dc, const rect_t & rect, const std::str
     } while (nextline);
   }
   dc->drawText(x, y, current, textColor, textFlags);
+  y += getFontHeight(textFlags) + 2;
+  return y;
 }
 
 void StaticText::paint(BitmapBuffer * dc)
