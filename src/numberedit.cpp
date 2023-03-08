@@ -190,3 +190,13 @@ void NumberEdit::setEditMode(bool newEditMode)
   }
 }
 #endif
+
+#if defined(SOFTWARE_KEYBOARD)
+void NumberEdit::deleteLater(bool detach, bool trash)
+{
+  if (hasFocus()) {
+    Keyboard::hide();
+  }
+  BaseNumberEdit::deleteLater(detach, trash);
+}
+#endif

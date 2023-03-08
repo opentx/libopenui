@@ -22,10 +22,14 @@
 #include "basenumberedit.h"
 #include <string>
 
-class NumberEdit : public BaseNumberEdit
+class NumberEdit: public BaseNumberEdit
 {
   public:
     NumberEdit(Window * parent, const rect_t & rect, int vmin, int vmax, std::function<int()> getValue, std::function<void(int)> setValue = nullptr, WindowFlags windowFlags = 0, LcdFlags textFlags = 0);
+
+#if defined(HARDWARE_TOUCH)
+    void deleteLater(bool detach = true, bool trash = true) override;
+#endif
 
 #if defined(DEBUG_WINDOWS)
     [[nodiscard]] std::string getName() const override
