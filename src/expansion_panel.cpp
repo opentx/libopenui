@@ -21,7 +21,7 @@
 
 void ExpansionPanel::updateHeight(bool move)
 {
-  coord_t newHeight = (isOpen ? header->height() + body->height() : header->height());
+  coord_t newHeight = (isOpen() ? header->height() + body->height() : header->height());
   if (move) {
     parent->moveWindowsTop(bottom(), newHeight - height());
   }
@@ -40,7 +40,7 @@ bool ExpansionPanel::setFocus(uint8_t flag, Window * from) // NOLINT(google-defa
       return next ? next->setFocus(SET_FOCUS_FORWARD, this) : false;
     }
   }
-  else if (isOpen) {
+  else if (isOpen()) {
     return FormGroup::setFocus(flag, from);
   }
   else {
@@ -60,7 +60,7 @@ void ExpansionPanelHeader::onEvent(event_t event)
   if (event == EVT_KEY_BREAK(KEY_ENTER)) {
     panel->toggle();
   }
-  else if (event == EVT_ROTARY_RIGHT && !panel->isOpen) {
+  else if (event == EVT_ROTARY_RIGHT && !panel->isOpen()) {
     auto next = panel->getNextField();
     if (next)
       next->setFocus(SET_FOCUS_FORWARD, this);
@@ -80,7 +80,7 @@ bool ExpansionPanelHeader::setFocus(uint8_t flag, Window * from) // NOLINT(googl
 {
   auto panel = static_cast<ExpansionPanel *>(parent);
 
-  if (enabled || panel->isOpen) {
+  if (enabled || panel->isOpen()) {
     return FormGroup::setFocus(flag, from);
   }
   else {

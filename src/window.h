@@ -313,7 +313,9 @@ class Window
       innerHeight = h;
       if (windowFlags & FORWARD_SCROLL) {
         rect.h = max(innerHeight, minHeight);
-        parent->adjustInnerHeight();
+        if (parent) {
+          parent->adjustInnerHeight();
+        }
       }
       else if (height() >= h) {
         setScrollPositionY(0);
@@ -398,7 +400,8 @@ class Window
       if (parent)
         detach();
       parent = newParent;
-      newParent->addChild(this, front);
+      if (newParent)
+        newParent->addChild(this, front);
     }
 
     void detach()

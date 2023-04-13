@@ -63,13 +63,19 @@ class ExpansionPanel: public FormGroup
 
     void toggle()
     {
-      open(!isOpen);
+      open(!_isOpen);
+    }
+
+    bool isOpen() const
+    {
+      return _isOpen;
     }
 
     virtual void open(bool state = true)
     {
-      if (isOpen != state) {
-        isOpen = state;
+      if (_isOpen != state) {
+        _isOpen = state;
+        body->attach(state ? this : nullptr);
         updateHeight();
         invalidate();
       }
@@ -82,7 +88,7 @@ class ExpansionPanel: public FormGroup
 
     void enable(bool value = true)
     {
-      if (!value && isOpen) {
+      if (!value && isOpen()) {
         open(false);
       }
       FormGroup::enable(value);
@@ -98,9 +104,18 @@ class ExpansionPanel: public FormGroup
 
     bool setFocus(uint8_t flag = SET_FOCUS_DEFAULT, Window * from = nullptr) override; // NOLINT(google-default-arguments)
 
-    FormGroup * body = nullptr;
+    ExpansionPanelHeader * getHeader()
+    {
+      return header;
+    }
+
+    FormGroup * getBody()
+    {
+      return body;
+    }
 
   protected:
+    bool _isOpen = false;
     ExpansionPanelHeader * header = nullptr;
-    bool isOpen = false;
+    FormGroup * body = nullptr;
 };
