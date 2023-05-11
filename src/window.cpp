@@ -453,14 +453,13 @@ bool Window::onTouchEnd(coord_t x, coord_t y)
 
 bool Window::onTouchSlide(coord_t x, coord_t y, coord_t startX, coord_t startY, coord_t slideX, coord_t slideY)
 {
-  startX += getScrollPositionX();
-  startY += getScrollPositionY();
-
-  for (auto it = children.rbegin(); it != children.rend(); ++it) {
-    auto child = *it;
-    if (child->rect.contains((point_t){startX, startY})) {
-      if (child->onTouchSlide(x - child->rect.x, y - child->rect.y, startX - child->rect.x, startY - child->rect.y, slideX, slideY)) {
-        return true;
+  if (slidingWindow != this) {
+    for (auto it = children.rbegin(); it != children.rend(); ++it) {
+      auto child = *it;
+      if (child->rect.contains((point_t){x, y})) {
+        if (child->onTouchSlide(x - child->rect.x + child->scrollPositionX, y - child->rect.y + child->scrollPositionY, startX - child->rect.x, startY - child->rect.y, slideX, slideY)) {
+          return true;
+        }
       }
     }
   }
