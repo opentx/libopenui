@@ -363,7 +363,7 @@ class Table: public FormField
     {
       header->setHeight(TABLE_HEADER_HEIGHT);
       body->setTop(TABLE_HEADER_HEIGHT);
-      body->setHeight(height() - TABLE_HEADER_HEIGHT);
+      setHeight(header->height() + body->height());
       for (auto i = 0; i < columnsCount; i++) {
         delete header->cells[i];
         header->cells[i] = new StringCell(values[i]);
