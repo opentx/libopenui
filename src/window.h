@@ -104,7 +104,7 @@ class Window
 
     [[nodiscard]] Window * getFullScreenWindow()
     {
-      if (width() == LCD_W && height() == LCD_H)
+      if (width() == LCD_W && height() == LCD_H && innerWidth == LCD_W && innerHeight == LCD_H)
         return this;
       else if (parent)
         return parent->getFullScreenWindow();
