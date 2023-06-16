@@ -90,18 +90,27 @@ class Table: public FormField
 
         [[nodiscard]] bool needsInvalidate() override
         {
-          return true; // TODO optimize this
+          auto newText = getText();
+          if (newText != currentText) {
+            currentText = newText;
+            return true;
+          }
+          else {
+            return false;
+          }
         }
 
       protected:
         std::function<std::string()> getText;
+        std::string currentText;
     };
 
     class CustomCell : public Cell
     {
       public:
-        explicit CustomCell(std::function<void(BitmapBuffer * /*dc*/, coord_t /*x*/, coord_t /*y*/, LcdColor /*color*/, LcdFlags /*flags*/)> paintFunction):
-          paintFunction(std::move(paintFunction))
+        explicit CustomCell(std::function<void(BitmapBuffer * /*dc*/, coord_t /*x*/, coord_t /*y*/, LcdColor /*color*/, LcdFlags /*flags*/)> paintFunction, bool alwaysInvalidate = false):
+          paintFunction(std::move(paintFunction)),
+          alwaysInvalidate(alwaysInvalidate)
         {
         }
 
@@ -112,11 +121,12 @@ class Table: public FormField
 
         [[nodiscard]] bool needsInvalidate() override
         {
-          return true;
+          return alwaysInvalidate;
         }
 
       protected:
         std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, LcdColor color, LcdFlags flags)> paintFunction;
+        bool alwaysInvalidate;
     };
 
     class Line
