@@ -70,8 +70,8 @@ void MenuBody::onEvent(event_t event)
           menu->invalidate();
         }
         else {
-          menu->deleteLater();
           lines[selectedIndex].onPress();
+          menu->deleteLater();
         }
       }
     }
