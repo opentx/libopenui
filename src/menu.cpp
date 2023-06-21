@@ -71,7 +71,7 @@ void MenuBody::onEvent(event_t event)
         }
         else {
           lines[selectedIndex].onPress();
-          menu->deleteLater();
+          menu->deleteLater(); // called at the end in case onPress changes the closeHandler
         }
       }
     }
@@ -104,8 +104,8 @@ bool MenuBody::onTouchEnd(coord_t /*x*/, coord_t y)
       menu->invalidate();
     }
     else {
-      menu->deleteLater();
       lines[index].onPress();
+      menu->deleteLater(); // called at the end in case onPress changes the closeHandler
     }
   }
   return true;
