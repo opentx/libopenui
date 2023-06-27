@@ -20,6 +20,7 @@
 #include "menu.h"
 #include "font.h"
 #include "theme.h"
+#include "layer.h"
 
 void MenuBody::select(int index)
 {
@@ -70,6 +71,7 @@ void MenuBody::onEvent(event_t event)
           menu->invalidate();
         }
         else {
+          Layer::pop(menu);
           lines[selectedIndex].onPress();
           menu->deleteLater(); // called at the end in case onPress changes the closeHandler
         }
@@ -104,6 +106,7 @@ bool MenuBody::onTouchEnd(coord_t /*x*/, coord_t y)
       menu->invalidate();
     }
     else {
+      Layer::pop(menu);
       lines[index].onPress();
       menu->deleteLater(); // called at the end in case onPress changes the closeHandler
     }

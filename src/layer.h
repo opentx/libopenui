@@ -52,6 +52,10 @@ class Layer
 
     static void pop(Window * window)
     {
+#if defined(DEBUG_WINDOWS)
+      bool modification = false;
+#endif
+
       if (stack.back().main == window) {
         stack.pop_back();
         if (!stack.empty()) {
@@ -60,21 +64,29 @@ class Layer
             back.focus->setFocus(SET_FOCUS_DEFAULT);
           }
         }
+#if defined(DEBUG_WINDOWS)
+        modification = true;
+#endif
       }
       else {
         // TODO it would be better to do it in reverse order
         for (auto it = stack.begin(); it != stack.end(); it++) {
           if (it->main == window) {
             stack.erase(it);
+#if defined(DEBUG_WINDOWS)
+            modification = true;
+#endif
             break;
           }
         }
       }
 
 #if defined(DEBUG_WINDOWS)
-      TRACE_WINDOWS("Layer removed for %s (%d layers)", window->getWindowDebugString().c_str(), stack.size());
-      for (auto & layer: stack) {
-        TRACE_WINDOWS(" - %s (focus=%s)", layer.main ? layer.main->getWindowDebugString().c_str() : "---", layer.focus ? layer.focus->getWindowDebugString().c_str() : "---");
+      if (modification) {
+        TRACE_WINDOWS("Layer removed for %s (%d layers)", window->getWindowDebugString().c_str(), stack.size());
+        for (auto & layer: stack) {
+          TRACE_WINDOWS(" - %s (focus=%s)", layer.main ? layer.main->getWindowDebugString().c_str() : "---", layer.focus ? layer.focus->getWindowDebugString().c_str() : "---");
+        }
       }
 #endif
     }
