@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <cinttypes>
 #include <string>
 #include <cstring>
 

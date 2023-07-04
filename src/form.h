@@ -113,8 +113,8 @@ class FormField: public Window
 class FormGroup: public FormField
 {
   public:
-    FormGroup(Window * parent, const rect_t & rect, WindowFlags windowflags = 0) :
-      FormField(parent, rect, windowflags)
+    FormGroup(Window * parent, const rect_t & rect, WindowFlags windowflags = 0, LcdFlags textFlags = 0) :
+      FormField(parent, rect, windowflags, textFlags)
     {
     }
 
