@@ -117,8 +117,8 @@ void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx,
       return;
     }
 
-    auto scaledw = int(ceil(scale * srcw));
-    auto scaledh = int(ceil(scale * srch));
+    auto scaledw = min<int>(xmax - xmin, ceil(scale * srcw));
+    auto scaledh = min<int>(ymax - ymin, ceil(scale * srch));
 
     if (x + scaledw > _width)
       scaledw = _width - x;
