@@ -169,8 +169,8 @@ void Window::scrollTo(Window * child, bool bottom)
   const rect_t scrollRect = {
     offsetX + child->left(),
     offsetY + (bottom ? child->bottom() : child->top()),
-    min(child->width(), width()),
-    min(child->height(), bottom ? 0 : height())
+    child->width(),
+    child->height()
   };
 
   scrollTo(scrollRect);
@@ -179,10 +179,14 @@ void Window::scrollTo(Window * child, bool bottom)
 void Window::scrollTo(const rect_t & rect)
 {
   if (rect.top() < scrollPositionY) {
-    setScrollPositionY(pageHeight ? rect.top() - (rect.top() % pageHeight) : rect.top() - 5);
+    if (rect.bottom() < scrollPositionY + height() - 5) {
+      setScrollPositionY(pageHeight ? rect.top() - (rect.top() % pageHeight) : rect.top() - 5);
+    }
   }
   else if (rect.bottom() > scrollPositionY + height() - 5) {
-    setScrollPositionY(pageHeight ? rect.top() - (rect.top() % pageHeight) : rect.bottom() - height() + 5);
+    if (rect.top() > scrollPositionY) {
+      setScrollPositionY(pageHeight ? rect.top() - (rect.top() % pageHeight) : rect.bottom() - height() + 5);
+    }
   }
 
   if (rect.left() < scrollPositionX) {
