@@ -305,6 +305,7 @@ void FormGroup::onEvent(event_t event)
     }
     else if (innerHeight > height() && scrollPositionY < innerHeight - height() / 2) {
       setScrollPositionY(scrollPositionY + height() / 2);
+      FormField::onEvent(event);
     }
     else {
       FormField::onEvent(event);
