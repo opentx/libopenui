@@ -44,14 +44,19 @@ void Table::Body::checkEvents()
 
   coord_t y = 0;
   for (auto line: lines) {
-    coord_t x = TABLE_HORIZONTAL_PADDING;
-    for (unsigned i = 0; i < line->cells.size(); i++) {
-      auto cell = line->cells[i];
-      auto width = static_cast<Table *>(parent)->columnsWidth[i];
-      if (cell && cell->needsInvalidate()) {
-        invalidate({x, y, width, TABLE_LINE_HEIGHT - TABLE_LINE_BORDER});
+    if (y > scrollPositionY - TABLE_LINE_HEIGHT) {
+      if (y >= scrollPositionY + height()) {
+        break;
       }
-      x += width;
+      coord_t x = TABLE_HORIZONTAL_PADDING;
+      for (unsigned i = 0; i < line->cells.size(); i++) {
+        auto cell = line->cells[i];
+        auto width = static_cast<Table *>(parent)->columnsWidth[i];
+        if (cell && cell->needsInvalidate()) {
+          invalidate({x, y - scrollPositionY, width, TABLE_LINE_HEIGHT - TABLE_LINE_BORDER});
+        }
+        x += width;
+      }
     }
     y += TABLE_LINE_HEIGHT;
   }
