@@ -57,6 +57,12 @@ class ModalWindow: public Window
       Window::onTouchSlide(x, y, startX, startY, slideX, slideY);
       return true;
     }
+
+    bool onTouchLong(coord_t x, coord_t y) override
+    {
+      Window::onTouchLong(x, y);
+      return true;
+    }
 #endif
 
     void setCloseWhenClickOutside(bool value = true)
