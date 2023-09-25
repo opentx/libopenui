@@ -103,7 +103,7 @@ bool MainWindow::refresh()
       TRACE_WINDOWS("Refresh rect: left=%d top=%d width=%d height=%d", invalidatedRect.left(), invalidatedRect.top(), invalidatedRect.w, invalidatedRect.h);
       const BitmapBuffer * previous = lcd;
       lcdNextLayer();
-      lcdCopy(lcd->getData(), previous->getData());
+      lcd->copyFrom(previous);
     }
     else {
       TRACE_WINDOWS("Refresh full screen");

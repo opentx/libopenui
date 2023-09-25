@@ -37,14 +37,6 @@ constexpr uint8_t STASHED = 0x33;
 #define APPLY_OFFSET() x += this->offsetX; y += this->offsetY
 #define RESTORE_OFFSET()  this->offsetX = offsetX, this->offsetY = offsetY
 
-#if defined(LCD_VERTICAL_INVERT)
-  #define MOVE_PIXEL_RIGHT(p, count)   p -= count
-#else
-  #define MOVE_PIXEL_RIGHT(p, count)   p += count
-#endif
-
-#define MOVE_TO_NEXT_RIGHT_PIXEL(p)    MOVE_PIXEL_RIGHT(p, 1)
-
 typedef uint16_t pixel_t;
 
 enum BitmapFormat
@@ -64,7 +56,7 @@ class BitmapBufferBase
       xmax(width),
       ymax(height),
       data(data),
-      data_end(data + (width * height))
+      dataEnd(data + (width * height))
     {
     }
 
@@ -75,7 +67,7 @@ class BitmapBufferBase
       xmax(_width),
       ymax(_height),
       data((T *)(((uint16_t *)data) + 2)),
-      data_end((T *)(((uint16_t *)data) + 2) + (_width * _height))
+      dataEnd((T *)(((uint16_t *)data) + 2) + (_width * _height))
     {
     }
 
@@ -150,25 +142,84 @@ class BitmapBufferBase
       return data;
     }
 
+    [[nodiscard]] inline T * getDataEnd() const
+    {
+      return dataEnd;
+    }
+
     [[nodiscard]] uint32_t getDataSize() const
     {
       return _width * _height * sizeof(T);
     }
 
+    inline T * getNextPixel(T * pixel, coord_t count = 1)
+    {
+#if LCD_ORIENTATION == 180
+      return pixel - count;
+#elif LCD_ORIENTATION == 270
+      if (isLcdFrameBuffer(data)) {
+        auto result = pixel + (count * (_height + LTDC_OFFSET_X));
+        while (result > dataEnd)
+          result -= _height + LTDC_OFFSET_X - 1;
+        return result;
+      }
+      else {
+        auto result = pixel + (count * _height);
+        while (result > dataEnd)
+          result -= _height - 1;
+        return result;
+      }
+#else
+      return pixel + count;
+#endif
+    }
+
+    inline const T * getNextPixel(const T * pixel, coord_t count = 1) const
+    {
+#if LCD_ORIENTATION == 180
+      return pixel - count;
+#elif LCD_ORIENTATION == 270
+      if (isLcdFrameBuffer(data)) {
+        auto result = pixel + (count * (_height + LTDC_OFFSET_X));
+        while (result >= dataEnd)
+          result -= _height + LTDC_OFFSET_X - 1;
+        return result;
+      }
+      else {
+        auto result = pixel + (count * _height);
+        while (result >= dataEnd)
+          result -= _height - 1;
+        return result;
+      }
+#else
+      return pixel + count;
+#endif
+    }
+
     inline T * getPixelPtrAbs(coord_t x, coord_t y)
     {
-#if defined(LCD_VERTICAL_INVERT)
+#if LCD_ORIENTATION == 180
       x = _width - x - 1;
       y = _height - y - 1;
+#elif LCD_ORIENTATION == 270
+      if (isLcdFrameBuffer(data))
+        return &data[x * (_height + LTDC_OFFSET_X) + y + LTDC_OFFSET_X];
+      else
+        return &data[x * (_height) + y];
 #endif
       return &data[y * _width + x];
     }
 
     [[nodiscard]] inline const T * getPixelPtrAbs(coord_t x, coord_t y) const
     {
-#if defined(LCD_VERTICAL_INVERT)
+#if LCD_ORIENTATION == 180
       x = _width - x - 1;
       y = _height - y - 1;
+#elif LCD_ORIENTATION == 270
+      if (isLcdFrameBuffer(data))
+        return &data[x * (_height + LTDC_OFFSET_X) + y + LTDC_OFFSET_X];
+      else
+        return &data[x * (_height) + y];
 #endif
       return &data[y * _width + x];
     }
@@ -177,15 +228,24 @@ class BitmapBufferBase
     C * horizontalFlip() const
     {
       auto * result = new C(format, width(), height());
-      auto * srcData = data;
+#if LCD_ORIENTATION == 270
+      for (uint8_t y = 0; y < height(); y++) {
+        for (uint8_t x = 0; x < width(); x++) {
+          auto * destData = &result->data[x * height() + y];
+          auto * srcData = &data[(width() - 1 - x) * height() + y];
+          *destData = *srcData;
+        }
+      }
+#else
+      auto * srcData = data + width();
       auto * destData = result->data;
       for (uint8_t y = 0; y < height(); y++) {
         for (uint8_t x = 0; x < width(); x++) {
-          destData[x] = srcData[width() - 1 - x];
+          *(destData++) = *(--srcData);
         }
-        srcData += width();
-        destData += width();
+        srcData += 2 * width();
       }
+#endif
       return result;
     }
 
@@ -193,11 +253,24 @@ class BitmapBufferBase
     C * verticalFlip() const
     {
       auto * result = new C(format, width(), height());
+#if LCD_ORIENTATION == 270
       for (uint8_t y = 0; y < height(); y++) {
         for (uint8_t x = 0; x < width(); x++) {
-          result->data[y * width() + x] = data[(height() - 1 - y) * width() + x];
+          auto * destData = &result->data[x * height() + y];
+          auto * srcData = &data[x * height() + height() - 1 - y];
+          *destData = *srcData;
         }
       }
+#else
+      auto * srcData = getDataEnd() - width();
+      auto * destData = result->data;
+      for (uint8_t y = 0; y < height(); y++) {
+        for (uint8_t x = 0; x < width(); x++) {
+          *(destData++) = *(srcData++);
+        }
+        srcData -= 2 * width();
+      }
+#endif
       return result;
     }
 
@@ -205,13 +278,26 @@ class BitmapBufferBase
     C * rotate90() const
     {
       auto * result = new C(format, height(), width());
+  #if LCD_ORIENTATION == 270
       auto * srcData = data;
       auto * destData = result->data;
       for (uint8_t y = 0; y < width(); y++) {
         for (uint8_t x = 0; x < height(); x++) {
-          destData[y * height() + (height() - 1 - x)] = srcData[x * width() + y];
+          destData[x * width() + y] = srcData[y * height() + x];
         }
       }
+  #else
+      auto * destData = result->data + height();
+      for (uint8_t y = 0; y < width(); y++) {
+        auto * srcData = data + y;
+        for (uint8_t x = 0; x < height(); x++) {
+          destData--;
+          *destData = *srcData;
+          srcData += width();
+        }
+        destData += 2 * height();
+      }
+  #endif
       return result;
     }
 
@@ -226,7 +312,7 @@ class BitmapBufferBase
     coord_t offsetX = 0;
     coord_t offsetY = 0;
     T * data;
-    T * data_end;
+    T * dataEnd;
 };
 
 typedef BitmapBufferBase<const uint16_t> Bitmap;
@@ -243,7 +329,7 @@ class RLEBitmap: public BitmapBufferBase<uint16_t>
       uint32_t pixels = _width * _height;
       data = (uint16_t*)malloc(align32(pixels * sizeof(uint16_t)));
       decode((uint8_t *)data, pixels * sizeof(uint16_t), rle_data+4);
-      data_end = data + pixels;
+      dataEnd = data + pixels;
     }
 
     ~RLEBitmap()
@@ -446,6 +532,11 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
     template<class T>
     void drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx = 0, coord_t srcy = 0, coord_t srcw = 0, coord_t srch = 0, float scale = 0);
 
+    void copyFrom(const BitmapBuffer * other)
+    {
+      DMACopyBitmap(getData(), _width, _height, 0, 0, other->getData(), _width, _height, 0, 0, _width, _height);
+    }
+
     template<class T>
     void drawScaledBitmap(const T * bitmap, coord_t x, coord_t y, coord_t w, coord_t h);
 
@@ -497,7 +588,7 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
 
     inline void drawPixel(pixel_t * p, pixel_t value)
     {
-      if (data && data <= p && p < data_end) {
+      if (data && data <= p && p < dataEnd) {
         *p = value;
       }
 #if defined(DEBUG)

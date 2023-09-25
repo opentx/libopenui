@@ -53,10 +53,10 @@ class RleMixin:
 
 
 class ImageEncoder:
-    def __init__(self, filename, size_format, reverse=False):
+    def __init__(self, filename, size_format, orientation=0):
         self.f = open(filename, "w")
         self.size_format = size_format
-        self.reverse = reverse
+        self.orientation = orientation
 
     def write(self, value):
         self.f.write("0x%02x," % value)
@@ -111,11 +111,18 @@ class ImageEncoder:
         image = image.convert(mode='L')
         width, height = image.size
         self.write_size(width, height)
-        for y in range(height):
+        if self.orientation == 270:
             for x in range(width):
-                value = 0xFF - self.get_pixel(image, x, y)
-                self.encode_byte(value)
-            self.f.write("\n")
+                for y in range(height):
+                    value = 0xFF - self.get_pixel(image, x, y)
+                    self.encode_byte(value)
+                self.f.write("\n")
+        else:
+            for y in range(height):
+                for x in range(width):
+                    value = 0xFF - self.get_pixel(image, x, y)
+                    self.encode_byte(value)
+                self.f.write("\n")
         self.encode_end()
 
     def encode_5_6_5(self, image):
@@ -141,18 +148,18 @@ class ImageEncoder:
         self.encode_end()
 
     def get_pixel(self, image, x, y):
-        if self.reverse:
+        if self.orientation == 180:
             return image.getpixel((image.width - x - 1, image.height - y - 1))
         else:
             return image.getpixel((x, y))
 
     @staticmethod
-    def create(filename, size_format=1, reverse=False, encode_mixin=RawMixin):
+    def create(filename, size_format=1, orientation=0, encode_mixin=RawMixin):
         class ResultClass(ImageEncoder, encode_mixin):
             def __init__(self, *args, **kwargs):
                 ImageEncoder.__init__(self, *args, **kwargs)
                 encode_mixin.__init__(self)
-        return ResultClass(filename, size_format, reverse)
+        return ResultClass(filename, size_format, orientation)
 
 
 def main():
@@ -160,7 +167,7 @@ def main():
     parser.add_argument('input', action="store", help="Input file name")
     parser.add_argument('output', action="store", help="Output file name")
     parser.add_argument('--format', action="store", help="Output format")
-    parser.add_argument("--reverse", help="Invert pixels order", action="store_true")
+    parser.add_argument("--orientation", action="store", type=int, help="LCD orientation")
     parser.add_argument("--rle", help="Enable RLE compression", action="store_true")
     parser.add_argument("--rows", help="Image rows count (for 1bit format)", type=int, default=1)
     parser.add_argument("--size-format", help="Header image size format (1 or 2 bytes)", type=int, default=1)
@@ -169,7 +176,7 @@ def main():
 
     image = Image.open(args.input)
     output = args.output
-    encoder = ImageEncoder.create(output, args.size_format, args.reverse, RleMixin if args.rle else RawMixin)
+    encoder = ImageEncoder.create(output, args.size_format, args.orientation, RleMixin if args.rle else RawMixin)
 
     if args.format == "1bit":
         encoder.encode_1bit(image, args.rows)
