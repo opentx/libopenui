@@ -157,18 +157,16 @@ class BitmapBufferBase
 #if LCD_ORIENTATION == 180
       return pixel - count;
 #elif LCD_ORIENTATION == 270
+      coord_t lineHeight = _height;
+  #if defined(LTDC_OFFSET_X)
       if (isLcdFrameBuffer(data)) {
-        auto result = pixel + (count * (_height + LTDC_OFFSET_X));
-        while (result > dataEnd)
-          result -= _height + LTDC_OFFSET_X - 1;
-        return result;
+        lineHeight += LTDC_OFFSET_X;
       }
-      else {
-        auto result = pixel + (count * _height);
-        while (result > dataEnd)
-          result -= _height - 1;
-        return result;
-      }
+  #endif
+      auto result = pixel + (count * lineHeight);
+      while (result > dataEnd)
+        result -= lineHeight - 1;
+      return result;
 #else
       return pixel + count;
 #endif
@@ -179,18 +177,16 @@ class BitmapBufferBase
 #if LCD_ORIENTATION == 180
       return pixel - count;
 #elif LCD_ORIENTATION == 270
+      coord_t lineHeight = _height;
+  #if defined(LTDC_OFFSET_X)
       if (isLcdFrameBuffer(data)) {
-        auto result = pixel + (count * (_height + LTDC_OFFSET_X));
-        while (result >= dataEnd)
-          result -= _height + LTDC_OFFSET_X - 1;
-        return result;
+        lineHeight += LTDC_OFFSET_X;
       }
-      else {
-        auto result = pixel + (count * _height);
-        while (result >= dataEnd)
-          result -= _height - 1;
-        return result;
-      }
+  #endif
+      auto result = pixel + (count * lineHeight);
+      while (result > dataEnd)
+        result -= lineHeight - 1;
+      return result;
 #else
       return pixel + count;
 #endif
@@ -202,10 +198,14 @@ class BitmapBufferBase
       x = _width - x - 1;
       y = _height - y - 1;
 #elif LCD_ORIENTATION == 270
+  #if defined(LTDC_OFFSET_X)
       if (isLcdFrameBuffer(data))
         return &data[x * (_height + LTDC_OFFSET_X) + y + LTDC_OFFSET_X];
       else
         return &data[x * (_height) + y];
+  #else
+      return &data[x * (_height) + y];
+  #endif
 #endif
       return &data[y * _width + x];
     }
@@ -216,10 +216,14 @@ class BitmapBufferBase
       x = _width - x - 1;
       y = _height - y - 1;
 #elif LCD_ORIENTATION == 270
+  #if defined(LTDC_OFFSET_X)
       if (isLcdFrameBuffer(data))
         return &data[x * (_height + LTDC_OFFSET_X) + y + LTDC_OFFSET_X];
       else
         return &data[x * (_height) + y];
+  #else
+      return &data[x * (_height) + y];
+  #endif
 #endif
       return &data[y * _width + x];
     }
