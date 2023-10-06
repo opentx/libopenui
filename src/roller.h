@@ -129,7 +129,12 @@ class Roller: public Choice
 #if defined(HARDWARE_TOUCH)
       if (touchState.state != TE_SLIDE) {
         if (scrollPositionY != lastScrollPositionY) {
-          updateValueFromScrollPosition();
+          if (isEnabled()) {
+            updateValueFromScrollPosition();
+          }
+          else {
+            updateScrollPositionFromValue();
+          }
         }
       }
 #endif
@@ -174,10 +179,8 @@ class Roller: public Choice
     void updateValueFromScrollPosition()
     {
       lastScrollPositionY = scrollPositionY;
-
       auto valuesCount = getValuesCount();
       auto newValue = getValueFromIndex(mod((scrollPositionY / ROLLER_LINE_HEIGHT) + 1, valuesCount));
-
       setValue(newValue);
       invalidate();
     }
