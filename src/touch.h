@@ -42,13 +42,30 @@ struct TouchState
   int lastDeltaX;
   int lastDeltaY;
   unsigned startTime;
+  bool locked;
+
+  void lock(bool newValue = true)
+  {
+    locked = newValue;
+  }
+
+  bool isLocked() const
+  {
+    return locked;
+  }
 
   void setState(unsigned char value)
   {
-    if (value >= TE_SLIDE || value != state) {
-      event = value;
+    if (isLocked()) {
+      event = TE_NONE;
+      state = TE_NONE;
     }
-    state = value;
+    else {
+      if (value >= TE_SLIDE || value != state) {
+        event = value;
+      }
+      state = value;
+    }
   }
 
   void killEvents()
