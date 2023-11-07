@@ -4396,7 +4396,10 @@ static const stbi_uc stbi__depth_scale_table[9] = { 0, 0xff, 0x55, 0, 0x11, 0,0,
 
 // create the png data from post-deflated data
 // No optimization here or we have an alignment issue on STM32H7
-OPTIMIZE("O0") static int stbi__create_png_image_raw(stbi__png *a, stbi_uc *raw, stbi__uint32 raw_len, int out_n, stbi__uint32 x, stbi__uint32 y, int depth, int color)
+#if defined(STM32H7)
+OPTIMIZE("O0")
+#endif
+static int stbi__create_png_image_raw(stbi__png *a, stbi_uc *raw, stbi__uint32 raw_len, int out_n, stbi__uint32 x, stbi__uint32 y, int depth, int color)
 {
    int bytes = (depth == 16? 2 : 1);
    stbi__context *s = a->s;
