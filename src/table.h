@@ -241,7 +241,7 @@ class Table: public FormField
             scrollTo(lineIndex);
           }
           invalidate();
-          if (lineIndex >= 0 && lineIndex < lines.size()) {
+          if (lineIndex >= 0 && lineIndex < (int)lines.size()) {
             auto onSelect = lines[lineIndex]->onSelect;
             if (onSelect) {
               onSelect();
@@ -251,7 +251,7 @@ class Table: public FormField
 
         void scrollTo(int lineIndex)
         {
-          if (lineIndex >= 0 && lineIndex < lines.size()) {
+          if (lineIndex >= 0 && lineIndex < (int)lines.size()) {
             auto line = lines[lineIndex];
             coord_t y = line->top();
             Window * window = this;
