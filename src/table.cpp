@@ -27,10 +27,11 @@ void Table::Header::paint(BitmapBuffer * dc)
     dc->clear(TABLE_HEADER_BGCOLOR);
     for (unsigned i = 0; i < cells.size(); i++) {
       auto cell = cells[i];
+      auto columnWidth = static_cast<Table *>(parent)->columnsWidth[i];
       if (cell) {
-        cell->paint(dc, x, 0, DEFAULT_COLOR, TABLE_HEADER_FONT);
+        cell->paint(dc, rect_t{x, 0, columnWidth, lineHeight}, DEFAULT_COLOR, TABLE_HEADER_FONT);
       }
-      x += static_cast<Table *>(parent)->columnsWidth[i];
+      x += columnWidth;
     }
   }
 }
@@ -44,7 +45,7 @@ void Table::Body::checkEvents()
 
   coord_t y = 0;
   for (auto line: lines) {
-    if (y > scrollPositionY - TABLE_LINE_HEIGHT) {
+    if (y > scrollPositionY - line->height()) {
       if (y >= scrollPositionY + height()) {
         break;
       }
@@ -53,32 +54,31 @@ void Table::Body::checkEvents()
         auto cell = line->cells[i];
         auto width = static_cast<Table *>(parent)->columnsWidth[i];
         if (cell && cell->needsInvalidate()) {
-          invalidate({x, y - scrollPositionY, width, TABLE_LINE_HEIGHT - TABLE_LINE_BORDER});
+          invalidate({x, y - scrollPositionY, width ? width : line->width() - x, line->height() - TABLE_LINE_BORDER});
         }
         x += width;
       }
     }
-    y += TABLE_LINE_HEIGHT;
+    y += line->lineHeight;
   }
 }
 
 void Table::Body::paint(BitmapBuffer * dc)
 {
-  coord_t y = 0;
   int lineIndex = 0;
   dc->clear(DEFAULT_BGCOLOR);
   for (auto line: lines) {
     bool highlight = (lineIndex == selection);
-    dc->drawSolidFilledRect(0, y, width(), TABLE_LINE_HEIGHT - TABLE_LINE_BORDER, highlight ? MENU_HIGHLIGHT_BGCOLOR : TABLE_BGCOLOR);
+    dc->drawSolidFilledRect(0, line->top(), line->width(), line->height() - TABLE_LINE_BORDER, highlight ? MENU_HIGHLIGHT_BGCOLOR : TABLE_BGCOLOR);
     coord_t x = TABLE_HORIZONTAL_PADDING;
     for (unsigned i = 0; i < line->cells.size(); i++) {
       auto cell = line->cells[i];
+      auto columnWidth = static_cast<Table *>(parent)->columnsWidth[i];
       if (cell) {
-        cell->paint(dc, x, y, highlight ? MENU_HIGHLIGHT_COLOR : line->color, line->font);
+        cell->paint(dc, rect_t{x, line->top(), columnWidth, line->height()}, highlight ? MENU_HIGHLIGHT_COLOR : line->color, line->font);
       }
-      x += static_cast<Table *>(parent)->columnsWidth[i];
+      x += columnWidth;
     }
-    y += TABLE_LINE_HEIGHT;
     lineIndex += 1;
   }
 }
@@ -86,13 +86,15 @@ void Table::Body::paint(BitmapBuffer * dc)
 #if defined(HARDWARE_TOUCH)
 bool Table::Body::onTouchEnd(coord_t x, coord_t y)
 {
-  unsigned lineIndex = y / TABLE_LINE_HEIGHT;
-  if (lineIndex < lines.size()) {
-    onKeyPress();
-    setFocus(SET_FOCUS_DEFAULT);
-    auto onPress = lines[lineIndex]->onPress;
-    if (onPress)
-      onPress();
+  for (auto line: lines) {
+    if (y < line->height()) {
+      onKeyPress();
+      setFocus(SET_FOCUS_DEFAULT);
+      if (line->onPress)
+        line->onPress();
+      return true;
+    }
+    y -= line->height();
   }
   return true;
 }

@@ -33,12 +33,12 @@ class Table: public FormField
       public:
         virtual ~Cell() = default;
 
-        virtual void paint(BitmapBuffer * dc, coord_t x, coord_t y, LcdColor color, LcdFlags flags) = 0;
+        virtual void paint(BitmapBuffer * dc, const rect_t & rect, LcdColor color, LcdFlags flags) = 0;
 
         [[nodiscard]] virtual bool needsInvalidate() = 0;
     };
 
-    class StringCell : public Cell
+    class StringCell: public Cell
     {
       public:
         StringCell() = default;
@@ -48,9 +48,9 @@ class Table: public FormField
         {
         }
 
-        void paint(BitmapBuffer * dc, coord_t x, coord_t y, LcdColor color, LcdFlags flags) override
+        void paint(BitmapBuffer * dc, const rect_t & rect, LcdColor color, LcdFlags flags) override
         {
-          dc->drawText(x, y - 2 + (TABLE_LINE_HEIGHT - getFontHeight(TABLE_HEADER_FONT)) / 2 + 3, value.c_str(), color, flags);
+          dc->drawText(rect.x, rect.y + (rect.h - getFontHeight(TABLE_BODY_FONT)) / 2, value.c_str(), color, flags);
         }
 
         [[nodiscard]] bool needsInvalidate() override
@@ -74,7 +74,7 @@ class Table: public FormField
         bool valueChanged = false;
     };
 
-    class DynamicStringCell : public Cell
+    class DynamicStringCell: public Cell
     {
       public:
         explicit DynamicStringCell(std::function<std::string()> getText):
@@ -82,10 +82,10 @@ class Table: public FormField
         {
         }
 
-        void paint(BitmapBuffer * dc, coord_t x, coord_t y, LcdColor color, LcdFlags flags) override
+        void paint(BitmapBuffer * dc, const rect_t & rect, LcdColor color, LcdFlags flags) override
         {
           auto text = getText();
-          dc->drawText(x, y - 2 + (TABLE_LINE_HEIGHT - getFontHeight(TABLE_BODY_FONT)) / 2 + 3, text.c_str(), color, flags);
+          dc->drawText(rect.x, rect.y  + (rect.h - getFontHeight(TABLE_BODY_FONT)) / 2, text.c_str(), color, flags);
         }
 
         [[nodiscard]] bool needsInvalidate() override
@@ -105,34 +105,41 @@ class Table: public FormField
         std::string currentText;
     };
 
-    class CustomCell : public Cell
+    class CustomCell: public Cell
     {
       public:
-        explicit CustomCell(std::function<void(BitmapBuffer * /*dc*/, coord_t /*x*/, coord_t /*y*/, LcdColor /*color*/, LcdFlags /*flags*/)> paintFunction, bool alwaysInvalidate = false):
+        explicit CustomCell(std::function<void(BitmapBuffer * /*dc*/, const rect_t & rect, LcdColor /*color*/, LcdFlags /*flags*/)> paintFunction, std::function<bool()> isInvalidateNeededFunction = nullptr):
           paintFunction(std::move(paintFunction)),
-          alwaysInvalidate(alwaysInvalidate)
+          isInvalidateNeededFunction(std::move(isInvalidateNeededFunction))
         {
         }
 
-        void paint(BitmapBuffer * dc, coord_t x, coord_t y, LcdColor color, LcdFlags flags) override
+        void paint(BitmapBuffer * dc, const rect_t & rect, LcdColor color, LcdFlags flags) override
         {
-          paintFunction(dc, x, y, color, flags);
+          paintFunction(dc, rect, color, flags);
         }
 
         [[nodiscard]] bool needsInvalidate() override
         {
-          return alwaysInvalidate;
+          return isInvalidateNeededFunction ? isInvalidateNeededFunction() : false;
         }
 
       protected:
-        std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, LcdColor color, LcdFlags flags)> paintFunction;
-        bool alwaysInvalidate;
+        std::function<void(BitmapBuffer * dc, const rect_t & rect, LcdColor color, LcdFlags flags)> paintFunction;
+        std::function<bool()> isInvalidateNeededFunction;
     };
 
-    class Line
+    class Line: public Window
     {
       public:
         explicit Line(uint8_t columnsCount):
+          Window(nullptr, {0, 0, 0, 0}, OPAQUE),
+          cells(columnsCount, nullptr)
+        {
+        }
+
+        Line(Table * parent, const rect_t & rect, uint8_t columnsCount):
+          Window(parent, rect, OPAQUE),
           cells(columnsCount, nullptr)
         {
         }
@@ -143,6 +150,8 @@ class Table: public FormField
             delete cell;
           }
         }
+
+        coord_t lineHeight = TABLE_DEFAULT_LINE_HEIGHT;
         std::vector<Cell *> cells;
         std::function<void()> onPress;
         std::function<void()> onSelect;
@@ -150,12 +159,11 @@ class Table: public FormField
         LcdColor color = DEFAULT_COLOR;
     };
 
-    class Header: public Window, public Line
+    class Header: public Line
     {
       public:
         Header(Table * parent, const rect_t & rect, uint8_t columnsCount):
-          Window(parent, rect, OPAQUE),
-          Line(columnsCount)
+          Line(parent, rect, columnsCount)
         {
         }
 
@@ -193,8 +201,10 @@ class Table: public FormField
 
         void addLine(Line * line)
         {
+          line->attach(this);
+          line->setRect({0, lines.size() > 0 ? lines[lines.size() - 1]->bottom() : 0, width(), line->lineHeight});
           lines.push_back(line);
-          setInnerHeight(coord_t(lines.size() * TABLE_LINE_HEIGHT - TABLE_LINE_BORDER));
+          setInnerHeight(line->bottom() - TABLE_LINE_BORDER);
           if (hasFocus() && selection < 0) {
             select(0, true);
           }
@@ -202,25 +212,25 @@ class Table: public FormField
 
         void setLineFont(unsigned lineIndex, LcdFlags font)
         {
-          if (lines[lineIndex]->font != font) {
-            lines[lineIndex]->font = font;
-            invalidate({0, coord_t(lineIndex * TABLE_LINE_HEIGHT - scrollPositionY), width(), TABLE_LINE_HEIGHT});
+          auto line = lines[lineIndex];
+          if (line->font != font) {
+            line->font = font;
+            line->invalidate();
           }
         }
 
         void setLineColor(unsigned lineIndex, LcdColor color)
         {
-          if (lines[lineIndex]->color != color) {
-            lines[lineIndex]->color = color;
-            invalidate({0, coord_t(lineIndex * TABLE_LINE_HEIGHT - scrollPositionY), width(), TABLE_LINE_HEIGHT});
+          auto line = lines[lineIndex];
+          if (line->color != color) {
+            line->color = color;
+            line->invalidate();
           }
         }
 
         void clear()
         {
-          for (auto line: lines) {
-            delete line;
-          }
+          Window::clear();
           lines.clear();
         }
 
@@ -231,7 +241,7 @@ class Table: public FormField
             scrollTo(lineIndex);
           }
           invalidate();
-          if (lineIndex >= 0) {
+          if (lineIndex >= 0 && lineIndex < lines.size()) {
             auto onSelect = lines[lineIndex]->onSelect;
             if (onSelect) {
               onSelect();
@@ -241,19 +251,22 @@ class Table: public FormField
 
         void scrollTo(int lineIndex)
         {
-          coord_t y = lineIndex * TABLE_LINE_HEIGHT;
-          Window * window = this;
-          while (window->getWindowFlags() & FORWARD_SCROLL) {
-            y += window->top();
-            window = window->getParent();
+          if (lineIndex >= 0 && lineIndex < lines.size()) {
+            auto line = lines[lineIndex];
+            coord_t y = line->top();
+            Window * window = this;
+            while (window->getWindowFlags() & FORWARD_SCROLL) {
+              y += window->top();
+              window = window->getParent();
+            }
+            const rect_t rect = {
+              0,
+              y,
+              width(),
+              line->height()
+            };
+            window->scrollTo(rect);
           }
-          const rect_t rect = {
-            0,
-            y,
-            width(),
-            TABLE_LINE_HEIGHT
-          };
-          window->scrollTo(rect);
         }
 
         void paint(BitmapBuffer * dc) override;
