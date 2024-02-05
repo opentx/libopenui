@@ -32,6 +32,7 @@
 constexpr uint8_t SOLID = 0xFF;
 constexpr uint8_t DOTTED  = 0x55;
 constexpr uint8_t STASHED = 0x33;
+#define PI 3.1415926
 
 #define MOVE_OFFSET() coord_t offsetX = this->offsetX; x += offsetX; this->offsetX = 0; coord_t offsetY = this->offsetY; y += offsetY; this->offsetY = 0
 #define APPLY_OFFSET() x += this->offsetX; y += this->offsetY
@@ -535,6 +536,8 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
 
     template<class T>
     void drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx = 0, coord_t srcy = 0, coord_t srcw = 0, coord_t srch = 0, float scale = 0);
+
+    void drawRotaryBitmap(coord_t ox, coord_t oy, const BitmapBuffer * bmp, double angle = 0);
 
     void copyFrom(const BitmapBuffer * other)
     {

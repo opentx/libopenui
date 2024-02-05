@@ -168,6 +168,29 @@ template void BitmapBuffer::drawBitmap(coord_t, coord_t, BitmapBufferBase<const 
 template void BitmapBuffer::drawBitmap(coord_t, coord_t, const BitmapBuffer *, coord_t, coord_t, coord_t, coord_t, float);
 template void BitmapBuffer::drawBitmap(coord_t, coord_t, const RLEBitmap *, coord_t, coord_t, coord_t, coord_t, float);
 
+void BitmapBuffer::drawRotaryBitmap(coord_t ox, coord_t oy, const BitmapBuffer * bmp, double angle) {
+  coord_t w = bmp->width();
+  coord_t h = bmp->height();
+  double sinA = sin(angle);
+  double sinA90 = sin(fmod(angle, PI / 2));
+  double cosA = cos(angle);
+  double cosA90 = cos(fmod(angle, PI / 2));
+  coord_t rW = abs(w * cosA90 - h * sinA90) + 1;
+  coord_t rH = abs(h * cosA90 - w * sinA90) + 1;
+  unsigned rSize = rW * rH;
+  uint16_t rData[rSize];
+  for (unsigned x = 0; x < w; x++) {
+    for (unsigned y = 0; y < h; y++) {
+      coord_t oX = x - w / 2;
+      coord_t oY = y - h / 2;
+      coord_t rX = coord_t(oX * cosA + oY * sinA) + rW / 2;
+      coord_t rY = coord_t(oY * cosA - oX * sinA) + rH / 2;
+      rData[rY * rW + rX] = bmp->getData()[y * w + x];
+    }
+  }
+  drawBitmap(ox - rW / 2, oy - rH / 2, new BitmapBuffer(bmp->getFormat(), rW, rH, rData));
+}
+
 template<class T>
 void BitmapBuffer::drawScaledBitmap(const T * bitmap, coord_t x, coord_t y, coord_t w, coord_t h)
 {
