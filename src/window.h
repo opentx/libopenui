@@ -102,9 +102,24 @@ class Window
       return window == this || (parent && parent->isChild(window));
     }
 
+    [[nodiscard]] bool isFullScreenWindow() const
+    {
+      return width() == LCD_W && height() == LCD_H && innerWidth == LCD_W && innerHeight == LCD_H;
+    }
+
+    [[nodiscard]] Window * getChildFullScreenWindow()
+    {
+      for (auto child: children) {
+        if (child->isFullScreenWindow()) {
+          return child;
+        }
+      }
+      return nullptr;
+    }
+
     [[nodiscard]] Window * getFullScreenWindow()
     {
-      if (width() == LCD_W && height() == LCD_H && innerWidth == LCD_W && innerHeight == LCD_H)
+      if (isFullScreenWindow())
         return this;
       else if (parent)
         return parent->getFullScreenWindow();
