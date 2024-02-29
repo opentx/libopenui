@@ -54,6 +54,13 @@ class ExpansionPanel: public FormGroup
     {
     }
 
+    ~ExpansionPanel() override
+    {
+      if (body && !isOpen()) {
+        body->deleteLater();
+      }
+    }
+
 #if defined(DEBUG_WINDOWS)
     [[nodiscard]] std::string getName() const override
     {
