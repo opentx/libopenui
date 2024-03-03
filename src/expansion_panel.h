@@ -54,10 +54,11 @@ class ExpansionPanel: public FormGroup
     {
     }
 
-    ~ExpansionPanel() override
+    void deleteLater(bool detach = true, bool trash = true) override
     {
+      FormGroup::deleteLater(detach, trash);
       if (body && !isOpen()) {
-        body->deleteLater();
+        body->deleteLater(detach, trash);
       }
     }
 
