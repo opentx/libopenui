@@ -78,15 +78,3 @@ inline T sgn(T a)
 {
   return a > 0 ? 1 : (a < 0 ? -1 : 0);
 }
-
-inline const char * findNextLine(const char * stack)
-{
-  while (true) {
-    const char * pos = strchr(stack, '\n');
-    if (!pos)
-      return nullptr;
-    if (pos == stack || *((uint8_t *)(pos - 1)) < 0xFE)
-      return pos;
-    stack = pos + 1;
-  }
-}

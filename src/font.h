@@ -36,6 +36,18 @@ inline bool hasChineseChars(const char * str)
   return false;
 }
 
+inline const char * findNextLine(const char * stack)
+{
+  while (true) {
+    const char * pos = strchr(stack, '\n');
+    if (!pos)
+      return nullptr;
+    if (pos == stack || *((uint8_t *)(pos - 1)) < CJK_BYTE1_MIN)
+      return pos;
+    stack = pos + 1;
+  }
+}
+
 class Font
 {
   public:
