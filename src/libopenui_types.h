@@ -19,8 +19,7 @@
 
 #pragma once
 
-#include <cinttypes>
-#include <string>
+#include "libopenui_helpers.h"
 
 typedef int coord_t;
 
@@ -73,6 +72,21 @@ struct rect_t
   bool contains(const rect_t & other) const
   {
     return left() <= other.left() && right() >= other.right() && top() <= other.top() && bottom() >= other.bottom();
+  }
+
+  rect_t operator & (const rect_t & other) const
+  {
+    auto leftMax = max<coord_t>(left(), other.left());
+    auto rightMin = min<coord_t>(right(), other.right());
+    auto width = rightMin - leftMax;
+    if (width <= 0)
+      return {0, 0, 0, 0};
+    auto topMax = max<coord_t>(top(), other.top());
+    auto bottomMin = min<coord_t>(bottom(), other.bottom());
+    auto height = bottomMin - topMax;
+    if (height <= 0)
+      return {0, 0, 0, 0};
+    return { leftMax, topMax, width, height };
   }
 
   std::string toString() const

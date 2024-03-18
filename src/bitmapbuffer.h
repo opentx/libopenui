@@ -87,7 +87,15 @@ class BitmapBufferBase
       this->ymax = ymax;
     }
 
-    inline void getClippingRect(coord_t & xmin, coord_t & xmax, coord_t & ymin, coord_t & ymax)
+    inline void setClippingRect(const rect_t & rect)
+    {
+      xmin = rect.x;
+      xmax = rect.right();
+      ymin = rect.y;
+      ymax = rect.bottom();
+    }
+
+    inline void getClippingRect(coord_t & xmin, coord_t & xmax, coord_t & ymin, coord_t & ymax) const
     {
       xmin = this->xmin;
       xmax = this->xmax;
@@ -95,10 +103,25 @@ class BitmapBufferBase
       ymax = this->ymax;
     }
 
-    inline void setOffset(coord_t offsetX, coord_t offsetY)
+    inline rect_t getClippingRect() const
+    {
+      return {xmin, ymin, xmax - xmin, ymax - ymin };
+    }
+
+    inline void setOffsetX(coord_t offsetX)
     {
       this->offsetX = offsetX;
+    }
+
+    inline void setOffsetY(coord_t offsetY)
+    {
       this->offsetY = offsetY;
+    }
+
+    inline void setOffset(coord_t offsetX, coord_t offsetY)
+    {
+      setOffsetX(offsetX);
+      setOffsetY(offsetY);
     }
 
     inline void clearOffset()
