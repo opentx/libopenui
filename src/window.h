@@ -372,10 +372,7 @@ class Window
 
     bool isChildFullSize(const Window * window) const;
 
-    [[nodiscard]] bool isVisible() const
-    {
-      return parent && parent->isChildVisible(this);
-    }
+    [[nodiscard]] bool isVisible() const;
 
     [[nodiscard]] bool isInsideParentScrollingArea() const
     {

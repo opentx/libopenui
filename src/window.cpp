@@ -20,6 +20,7 @@
 #include <algorithm>
 #include "window.h"
 #include "touch.h"
+#include "mainwindow.h"
 
 Window * Window::focusWindow = nullptr;
 Window * Window::slidingWindow = nullptr;
@@ -261,6 +262,14 @@ void Window::fullPaint(BitmapBuffer * dc)
   if (!(windowFlags & PAINT_CHILDREN_FIRST)) {
     paintChildren(dc, firstChild);
   }
+}
+
+bool Window::isVisible() const
+{
+  if (this == MainWindow::instance())
+    return true;
+  else  
+    return parent && parent->isVisible() && parent->isChildVisible(this);
 }
 
 bool Window::isChildFullSize(const Window * child) const
