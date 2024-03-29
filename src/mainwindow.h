@@ -28,7 +28,7 @@ class MainWindow: public Window
   protected:
     // singleton
     MainWindow():
-      Window(nullptr, {0, 0, LCD_W, LCD_H}),
+      Window(nullptr, {0, 0, LCD_W, LCD_H}, MAIN_WINDOW),
       invalidatedRect(rect)
     {
       Layer::push(this);

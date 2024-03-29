@@ -266,7 +266,7 @@ void Window::fullPaint(BitmapBuffer * dc)
 
 bool Window::isVisible() const
 {
-  if (this == MainWindow::instance())
+  if (windowFlags & MAIN_WINDOW)
     return true;
   else  
     return parent && parent->isVisible() && parent->isChildVisible(this);

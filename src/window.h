@@ -45,8 +45,9 @@ constexpr WindowFlags NO_FOCUS =              1u << 3u;
 constexpr WindowFlags FORWARD_SCROLL =        1u << 4u;
 constexpr WindowFlags REFRESH_ALWAYS =        1u << 5u;
 constexpr WindowFlags PAINT_CHILDREN_FIRST =  1u << 6u;
-constexpr WindowFlags PUSH_FRONT =  1u << 7u;
-constexpr WindowFlags WINDOW_FLAGS_LAST =  PUSH_FRONT;
+constexpr WindowFlags PUSH_FRONT =            1u << 7u;
+constexpr WindowFlags MAIN_WINDOW =           1u << 8u;
+constexpr WindowFlags WINDOW_FLAGS_LAST =     MAIN_WINDOW;
 
 enum SetFocusFlag
 {
