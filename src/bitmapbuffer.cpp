@@ -835,7 +835,7 @@ coord_t BitmapBuffer::drawSizedText(coord_t x, coord_t y, const char * s, uint8_
   coord_t & pos = (flags & VERTICAL) ? y : x;
   const coord_t orig_pos = pos;
 
-  while (len--) {
+  for (int i = 0; len == 0 || i < len; ++i) {
     unsigned int c = uint8_t(*s);
     // TRACE("c = %d %o 0x%X '%c'", c, c, c, c);
 

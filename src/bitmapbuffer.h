@@ -81,18 +81,15 @@ class BitmapBufferBase
 
     inline void setClippingRect(coord_t xmin, coord_t xmax, coord_t ymin, coord_t ymax)
     {
-      this->xmin = xmin;
-      this->xmax = xmax;
-      this->ymin = ymin;
-      this->ymax = ymax;
+      this->xmin = max<coord_t>(0, xmin);
+      this->xmax = min<coord_t>(_width, xmax);
+      this->ymin = max<coord_t>(0, ymin);
+      this->ymax = min<coord_t>(_height, ymax);
     }
 
     inline void setClippingRect(const rect_t & rect)
     {
-      xmin = rect.x;
-      xmax = rect.right();
-      ymin = rect.y;
-      ymax = rect.bottom();
+      setClippingRect(rect.left(), rect.right(), rect.top(), rect.bottom());
     }
 
     inline void getClippingRect(coord_t & xmin, coord_t & xmax, coord_t & ymin, coord_t & ymax) const
@@ -545,7 +542,7 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
 
     coord_t drawText(coord_t x, coord_t y, const char * s, LcdColor color, LcdFlags flags = 0)
     {
-      return drawSizedText(x, y, s, 255, color, flags);
+      return drawSizedText(x, y, s, 0, color, flags);
     }
 
     coord_t drawTextAtIndex(coord_t x, coord_t y, const char * s, uint8_t idx, LcdColor color, LcdFlags flags = 0)
