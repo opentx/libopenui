@@ -103,7 +103,7 @@ class Roller: public Choice
         }
 
         if (windowFlags & ROLLER_SEPARATION_LINES) {
-          dc->drawSolidHorizontalLine(0, y - 10, width(), DISABLE_COLOR);
+          dc->drawPlainHorizontalLine(0, y - 10, width(), DISABLE_COLOR);
         }
 
         if (++index == valuesCount)

@@ -453,7 +453,7 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
 
     inline void clear(Color565 color = 0 /*black*/)
     {
-      fillRect(0, 0, _width - offsetX, _height - offsetY, color);
+      fillRectangle(0, 0, _width - offsetX, _height - offsetY, color);
     }
 
     [[nodiscard]] inline const pixel_t * getPixelPtr(coord_t x, coord_t y) const
@@ -485,38 +485,47 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
     }
 
     void drawHorizontalLine(coord_t x, coord_t y, coord_t w, LcdColor color, uint8_t pat);
-    inline void drawSolidHorizontalLine(coord_t x, coord_t y, coord_t w, Color565 color)
+    inline void drawPlainHorizontalLine(coord_t x, coord_t y, coord_t w, Color565 color)
     {
-      drawSolidFilledRect(x, y, w, 1, color);
+      drawPlainFilledRectangle(x, y, w, 1, color);
     }
 
     void drawVerticalLine(coord_t x, coord_t y, coord_t h, LcdColor color, uint8_t pat);
-    inline void drawSolidVerticalLine(coord_t x, coord_t y, coord_t h, Color565 color)
+    inline void drawPlainVerticalLine(coord_t x, coord_t y, coord_t h, Color565 color)
     {
-      drawSolidFilledRect(x, y, 1, h, color);
+      drawPlainFilledRectangle(x, y, 1, h, color);
     }
 
     void drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdColor color, uint8_t pat = SOLID);
 
-    void drawRect(coord_t x, coord_t y, coord_t w, coord_t h, LcdColor color, uint8_t thickness = 1, uint8_t pat = SOLID);
-
-    inline void drawSolidRect(coord_t x, coord_t y, coord_t w, coord_t h, Color565 color, uint8_t thickness = 1)
+    void drawTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdColor color, uint8_t pat = SOLID)
     {
-      drawSolidFilledRect(x, y, thickness, h, color);
-      drawSolidFilledRect(x+w-thickness, y, thickness, h, color);
-      drawSolidFilledRect(x, y, w, thickness, color);
-      drawSolidFilledRect(x, y+h-thickness, w, thickness, color);
+      drawLine(x0, y0, x1, y1, color, pat);
+      drawLine(x1, y1, x2, y2, color, pat);
+      drawLine(x2, y2, x0, y0, color, pat);
     }
 
-    void drawFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, LcdColor color, uint8_t pat = SOLID);
+    void drawFilledTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdColor color);
 
-    void drawSolidFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, Color565 color);
+    void drawRectangle(coord_t x, coord_t y, coord_t w, coord_t h, LcdColor color, uint8_t thickness = 1, uint8_t pat = SOLID);
+
+    inline void drawPlainRectangle(coord_t x, coord_t y, coord_t w, coord_t h, Color565 color, uint8_t thickness = 1)
+    {
+      drawPlainFilledRectangle(x, y, thickness, h, color);
+      drawPlainFilledRectangle(x+w-thickness, y, thickness, h, color);
+      drawPlainFilledRectangle(x, y, w, thickness, color);
+      drawPlainFilledRectangle(x, y+h-thickness, w, thickness, color);
+    }
+
+    void drawFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, LcdColor color, uint8_t pat = SOLID);
+
+    void drawPlainFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, Color565 color);
 
     void drawCircle(coord_t x, coord_t y, coord_t radius, LcdColor color);
 
     void drawFilledCircle(coord_t x, coord_t y, coord_t radius, LcdColor color, uint8_t pat = SOLID);
 
-    void drawSolidFilledCircle(coord_t x, coord_t y, coord_t radius, Color565 color);
+    void drawPlainFilledCircle(coord_t x, coord_t y, coord_t radius, Color565 color);
 
     void drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadius, coord_t externalRadius, LcdColor color, int startAngle, int endAngle);
 
@@ -646,7 +655,10 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
 
     bool clipLine(coord_t& x1, coord_t& y1, coord_t& x2, coord_t& y2);
 
-    void fillRect(coord_t x, coord_t y, coord_t w, coord_t h, pixel_t color);
+    void fillRectangle(coord_t x, coord_t y, coord_t w, coord_t h, pixel_t color);
+
+    void fillBottomFlatTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t x2, LcdColor color);
+    void fillTopFlatTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t x2, coord_t y2, LcdColor color);
 
   private:
     bool dataAllocated;

@@ -53,7 +53,7 @@ coord_t StaticText::drawText(BitmapBuffer * dc, const rect_t & rect, const std::
 void StaticText::paint(BitmapBuffer * dc)
 {
   if (bgColor) {
-    dc->drawSolidFilledRect(0, 0, rect.w, rect.h, bgColor);
+    dc->drawPlainFilledRectangle(0, 0, rect.w, rect.h, bgColor);
   }
 
   drawText(dc, {0 + padding, 0, rect.w - padding * 2, rect.h}, text, textColor, textFlags);

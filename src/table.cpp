@@ -69,7 +69,7 @@ void Table::Body::paint(BitmapBuffer * dc)
   dc->clear(DEFAULT_BGCOLOR);
   for (auto line: lines) {
     bool highlight = (lineIndex == selection);
-    dc->drawSolidFilledRect(0, line->top(), line->width(), line->height() - TABLE_LINE_BORDER, highlight ? MENU_HIGHLIGHT_BGCOLOR : TABLE_BGCOLOR);
+    dc->drawPlainFilledRectangle(0, line->top(), line->width(), line->height() - TABLE_LINE_BORDER, highlight ? MENU_HIGHLIGHT_BGCOLOR : TABLE_BGCOLOR);
     coord_t x = TABLE_HORIZONTAL_PADDING;
     for (unsigned i = 0; i < line->cells.size(); i++) {
       auto cell = line->cells[i];

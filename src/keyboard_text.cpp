@@ -144,7 +144,7 @@ void TextKeyboard::paint(BitmapBuffer * dc)
       }
       else if (*c == KEYBOARD_ENTER[0]) {
         // enter
-        dc->drawSolidFilledRect(x, y - 2, 80, 25, DISABLE_COLOR);
+        dc->drawPlainFilledRectangle(x, y - 2, 80, 25, DISABLE_COLOR);
         dc->drawText(x+40, y, "ENTER", DEFAULT_COLOR, CENTERED);
         x += 80;
       }

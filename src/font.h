@@ -78,6 +78,7 @@ class Font
 
     Glyph getGlyph(unsigned index) const
     {
+      // TODO check index not over table
       auto offset = specs[index + 1];
       return {this, offset, uint8_t(specs[index + 2] - offset)};
     }

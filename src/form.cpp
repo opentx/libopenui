@@ -89,14 +89,14 @@ bool FormField::setFocus(uint8_t flag, Window * from)
 void FormField::paint(BitmapBuffer * dc)
 {
   if (editMode) {
-    dc->drawSolidFilledRect(0, 0, rect.w, rect.h, FOCUS_BGCOLOR);
+    dc->drawPlainFilledRectangle(0, 0, rect.w, rect.h, FOCUS_BGCOLOR);
   }
   else if (!(windowFlags & FORM_NO_BORDER)) {
     if (hasFocus()) {
-      dc->drawSolidRect(0, 0, rect.w, rect.h, FOCUS_BGCOLOR, 2);
+      dc->drawPlainRectangle(0, 0, rect.w, rect.h, FOCUS_BGCOLOR, 2);
     }
     else if (!(windowFlags & FORM_BORDER_FOCUS_ONLY)) {
-      dc->drawSolidRect(0, 0, rect.w, rect.h, DISABLE_COLOR, 1);
+      dc->drawPlainRectangle(0, 0, rect.w, rect.h, DISABLE_COLOR, 1);
     }
   }
 }
@@ -336,10 +336,10 @@ void FormGroup::paint(BitmapBuffer * dc)
 {
   if (!(windowFlags & (FORM_NO_BORDER | FORM_FORWARD_FOCUS))) {
     if (!editMode && hasFocus()) {
-      dc->drawSolidRect(0, 0, rect.w, rect.h, FOCUS_BGCOLOR, 2);
+      dc->drawPlainRectangle(0, 0, rect.w, rect.h, FOCUS_BGCOLOR, 2);
     }
     else if (!(windowFlags & FORM_BORDER_FOCUS_ONLY)) {
-      dc->drawSolidRect(0, 0, rect.w, rect.h, DISABLE_COLOR, 1);
+      dc->drawPlainRectangle(0, 0, rect.w, rect.h, DISABLE_COLOR, 1);
     }
   }
 }

@@ -75,31 +75,31 @@ void TextButton::paint(BitmapBuffer * dc)
 
   if (checked()) {
     if (hasFocus()) {
-      dc->drawSolidRect(0, 0, rect.w, rect.h, FOCUS_BGCOLOR, 2);
-      dc->drawSolidFilledRect(3, 3, rect.w - 6, rect.h - 6, FOCUS_BGCOLOR);
+      dc->drawPlainRectangle(0, 0, rect.w, rect.h, FOCUS_BGCOLOR, 2);
+      dc->drawPlainFilledRectangle(3, 3, rect.w - 6, rect.h - 6, FOCUS_BGCOLOR);
     }
     else {
-      dc->drawSolidRect(0, 0, rect.w, rect.h, DISABLE_COLOR, 1);
-      dc->drawSolidFilledRect(2, 2, rect.w - 4, rect.h - 4, FOCUS_BGCOLOR);
+      dc->drawPlainRectangle(0, 0, rect.w, rect.h, DISABLE_COLOR, 1);
+      dc->drawPlainFilledRectangle(2, 2, rect.w - 4, rect.h - 4, FOCUS_BGCOLOR);
     }
     textColor = FOCUS_COLOR;
   }
   else {
     if (windowFlags & BUTTON_BACKGROUND) {
       if (hasFocus()) {
-        dc->drawSolidRect(0, 0, rect.w, rect.h, FOCUS_BGCOLOR, 2);
-        dc->drawSolidFilledRect(2, 2, rect.w - 4, rect.h - 4, DISABLE_COLOR);
+        dc->drawPlainRectangle(0, 0, rect.w, rect.h, FOCUS_BGCOLOR, 2);
+        dc->drawPlainFilledRectangle(2, 2, rect.w - 4, rect.h - 4, DISABLE_COLOR);
       }
       else {
-        dc->drawSolidFilledRect(0, 0, rect.w, rect.h, DISABLE_COLOR);
+        dc->drawPlainFilledRectangle(0, 0, rect.w, rect.h, DISABLE_COLOR);
       }
     }
     else {
       if (hasFocus()) {
-        dc->drawSolidRect(0, 0, rect.w, rect.h, FOCUS_BGCOLOR, 2);
+        dc->drawPlainRectangle(0, 0, rect.w, rect.h, FOCUS_BGCOLOR, 2);
       }
       else {
-        dc->drawSolidRect(0, 0, rect.w, rect.h, DISABLE_COLOR, 1);
+        dc->drawPlainRectangle(0, 0, rect.w, rect.h, DISABLE_COLOR, 1);
       }
     }
   }
