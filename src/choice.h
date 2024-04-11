@@ -120,6 +120,11 @@ class Choice: public ChoiceBase
       isValueAvailable = std::move(handler);
     }
 
+    void setTextAtIndex(unsigned index, std::string text)
+    {
+      values[index] = std::move(text);
+    }
+
     unsigned getIndexFromValue(int value) const
     {
       if (!isValueAvailable) {
