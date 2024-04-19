@@ -22,6 +22,8 @@
 #include "basenumberedit.h"
 #include <string>
 
+namespace ui {
+
 class NumberEdit: public BaseNumberEdit
 {
   public:
@@ -108,3 +110,5 @@ class NumberEdit: public BaseNumberEdit
     bool keyboardEnabled = true;
 #endif
 };
+
+}

@@ -22,6 +22,8 @@
 #include <vector>
 #include "form.h"
 
+namespace ui {
+
 enum ChoiceType {
   CHOICE_TYPE_DROPOWN,
   CHOICE_TYPE_FOLDER,
@@ -196,3 +198,5 @@ class Choice: public ChoiceBase
 
     virtual void openMenu();
 };
+
+}

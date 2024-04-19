@@ -21,6 +21,8 @@
 #include "mainwindow.h"
 #include "theme.h"
 
+using namespace ui;
+
 DialogWindowContent::DialogWindowContent(Dialog * parent, const rect_t & rect):
   ModalWindowContent(parent, rect),
   form(this, {0, POPUP_HEADER_HEIGHT, rect.w, coord_t(rect.h - POPUP_HEADER_HEIGHT)}, FORM_NO_BORDER)

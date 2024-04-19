@@ -19,6 +19,8 @@
 
 #include "carousel.h"
 
+using namespace ui;
+
 void CarouselWindow::update()
 {
   auto first = min<int>(selection - 2, items.size() - count);

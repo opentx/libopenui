@@ -22,6 +22,8 @@
 #include "window.h"
 #include "button.h" // TODO just for BUTTON_BACKGROUND
 
+namespace ui {
+
 class StaticText: public Window
 {
   public:
@@ -244,3 +246,5 @@ class DynamicNumber: public Window
     const char * prefix;
     const char * suffix;
 };
+
+}

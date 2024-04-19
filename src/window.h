@@ -56,6 +56,8 @@ enum SetFocusFlag
   SET_FOCUS_BACKWARD
 };
 
+namespace ui {
+
 class Window
 {
   friend class GridLayout;
@@ -501,3 +503,5 @@ class Window
 
     [[nodiscard]] bool hasOpaqueRect(const rect_t & testRect) const;
 };
+
+}

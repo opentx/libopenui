@@ -20,6 +20,8 @@
 #include "slider.h"
 #include "theme.h"
 
+using namespace ui;
+
 void Slider::paint(BitmapBuffer * dc)
 {
   theme->drawSlider(dc, vmin, vmax, getValue(), rect, editMode, hasFocus());

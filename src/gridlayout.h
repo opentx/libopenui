@@ -21,6 +21,8 @@
 
 #include "window.h"
 
+namespace ui {
+
 class GridLayout {
   public:
     explicit GridLayout(coord_t width):
@@ -119,3 +121,4 @@ class FormGridLayout: public GridLayout {
     coord_t lineMarginRight = PAGE_PADDING;
 };
 
+}

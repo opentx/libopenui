@@ -20,6 +20,8 @@
 #include "static.h"
 #include "font.h"
 
+using namespace ui;
+
 coord_t StaticText::drawText(BitmapBuffer * dc, const rect_t & rect, const std::string & text, LcdColor textColor, LcdFlags textFlags)
 {
   coord_t x = rect.x;

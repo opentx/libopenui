@@ -20,6 +20,8 @@
 #include "keyboard_text.h"
 #include "font.h"
 
+using namespace ui;
+
 TextKeyboard * TextKeyboard::_instance = nullptr;
 
 const uint8_t LBM_KEY_UPPERCASE[] = {

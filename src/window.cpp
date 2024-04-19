@@ -22,6 +22,8 @@
 #include "touch.h"
 #include "mainwindow.h"
 
+using namespace ui;
+
 Window * Window::focusWindow = nullptr;
 Window * Window::slidingWindow = nullptr;
 std::list<Window *> Window::trash;

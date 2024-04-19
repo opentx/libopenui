@@ -21,6 +21,8 @@
 
 #include "form.h"
 
+namespace ui {
+
 class ColorEdit : public FormGroup {
   public:
     ColorEdit(FormGroup * parent, const rect_t & rect, std::function<uint16_t()> getValue, std::function<void(uint16_t)> setValue = nullptr);
@@ -33,3 +35,4 @@ class ColorEdit : public FormGroup {
 #endif
 };
 
+}

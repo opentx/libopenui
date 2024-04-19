@@ -21,6 +21,8 @@
 
 #include "form.h"
 
+namespace ui {
+
 class ExpansionPanel;
 
 class ExpansionPanelHeader: virtual public FormGroup
@@ -127,3 +129,5 @@ class ExpansionPanel: public FormGroup
     ExpansionPanelHeader * header = nullptr;
     FormGroup * body = nullptr;
 };
+
+}

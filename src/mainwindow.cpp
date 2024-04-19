@@ -24,6 +24,8 @@
 #include "touch.h"
 #endif
 
+using namespace ui;
+
 MainWindow * MainWindow::_instance = nullptr;
 
 #if defined(HARDWARE_TOUCH)

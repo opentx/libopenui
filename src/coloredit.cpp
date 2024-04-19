@@ -21,6 +21,8 @@
 #include "numberedit.h"
 #include "bitfield.h"
 
+using namespace ui;
+
 constexpr uint8_t PART_BITS[3][2] = { {0, 5}, {5, 6}, {11, 5} };
 
 class ColorBox: public Window

@@ -20,6 +20,8 @@
 #include "table.h"
 #include "font.h"
 
+using namespace ui;
+
 void Table::Header::paint(BitmapBuffer * dc)
 {
   coord_t x = TABLE_HORIZONTAL_PADDING;

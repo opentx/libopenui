@@ -21,6 +21,8 @@
 #include "bitmapbuffer.h"
 #include "libopenui_config.h"
 
+using namespace ui;
+
 FormField::FormField(Window * parent, const rect_t & rect, WindowFlags windowFlags, LcdFlags textFlags) :
   Window(parent, rect, windowFlags, textFlags)
 {

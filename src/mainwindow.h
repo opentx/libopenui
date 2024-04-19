@@ -23,6 +23,8 @@
 #include "layer.h"
 #include "bitmapbuffer.h"
 
+namespace ui {
+
 class MainWindow: public Window
 {
   protected:
@@ -100,3 +102,5 @@ class MainWindow: public Window
     rect_t invalidatedRect;
     const char * shutdown = nullptr;
 };
+
+}

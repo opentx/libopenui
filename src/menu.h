@@ -26,6 +26,8 @@
 
 constexpr coord_t MENUS_HORIZONTAL_PADDING = 10;
 
+namespace ui {
+
 class Menu;
 class MenuWindowContent;
 
@@ -231,4 +233,6 @@ class Menu: public ModalWindow
 Menu * MenuBody::getParentMenu()
 {
   return static_cast<Menu *>(getParent()->getParent());
+}
+
 }

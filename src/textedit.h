@@ -25,6 +25,8 @@
 #include "keyboard_text.h"
 #endif
 
+namespace ui {
+
 class TextEdit: public FormField
 {
   friend class TextKeyboard;
@@ -137,3 +139,4 @@ class TextEdit: public FormField
     }
 };
 
+}

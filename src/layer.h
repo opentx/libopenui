@@ -21,6 +21,8 @@
 
 #include "window.h"
 
+namespace ui {
+
 class Layer
 {
   public:
@@ -91,3 +93,5 @@ class Layer
 #endif
     }
 };
+
+}

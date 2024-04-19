@@ -22,6 +22,8 @@
 #include "font.h"
 #include "layer.h"
 
+using namespace ui;
+
 ModalWindow::ModalWindow(Window * parent, bool closeWhenClickOutside):
   Window(parent->getFullScreenWindow(), {0, 0, LCD_W, LCD_H}),
   closeWhenClickOutside(closeWhenClickOutside)

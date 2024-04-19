@@ -20,6 +20,8 @@
 #include "menutoolbar.h"
 #include "font.h"
 
+using namespace ui;
+
 void MenuToolbarButton::paint(BitmapBuffer * dc)
 {
   if (checked()) {

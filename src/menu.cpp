@@ -22,6 +22,8 @@
 #include "theme.h"
 #include "layer.h"
 
+using namespace ui;
+
 void MenuBody::select(int index)
 {
   selectedIndex = index;

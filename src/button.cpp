@@ -22,6 +22,8 @@
 #include "font.h"
 #include "theme.h"
 
+using namespace ui;
+
 void Button::onPress()
 {
   bool check = (pressHandler && pressHandler());

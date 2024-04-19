@@ -29,6 +29,8 @@
 constexpr WindowFlags ROLLER_SEPARATION_LINES = (FORM_FLAGS_LAST << 1u);
 constexpr coord_t SCROLL_POSITION_INVALIDATED = INT_MIN;
 
+namespace ui {
+
 class Roller: public Choice
 {
   public:
@@ -185,3 +187,5 @@ class Roller: public Choice
       invalidate();
     }
 };
+
+}

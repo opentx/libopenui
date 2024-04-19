@@ -19,8 +19,10 @@
 
 #pragma once
 
-#include "choice.h"
 #include <string>
+#include "choice.h"
+
+namespace ui {
 
 class FileChoice: public ChoiceBase
 {
@@ -54,3 +56,4 @@ class FileChoice: public ChoiceBase
     bool openMenu();
 };
 
+}

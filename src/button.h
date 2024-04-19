@@ -25,6 +25,8 @@ constexpr WindowFlags BUTTON_BACKGROUND = FORM_FLAGS_LAST << 1u;
 constexpr WindowFlags BUTTON_CHECKED = FORM_FLAGS_LAST << 2u;
 constexpr WindowFlags BUTTON_CHECKED_ON_FOCUS = FORM_FLAGS_LAST << 3u;
 
+namespace ui {
+
 class Button: public FormField
 {
   public:
@@ -151,3 +153,5 @@ class IconButton: public Button
   protected:
     uint8_t icon;
 };
+
+}
