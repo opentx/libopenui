@@ -21,6 +21,8 @@
 
 #include "form.h"
 
+namespace ui {
+
 class ExpansionPanel;
 
 class ExpansionPanelHeader: virtual public FormGroup
@@ -54,10 +56,11 @@ class ExpansionPanel: public FormGroup
     {
     }
 
-    ~ExpansionPanel() override
+    void deleteLater(bool detach = true, bool trash = true) override
     {
+      FormGroup::deleteLater(detach, trash);
       if (body && !isOpen()) {
-        body->deleteLater();
+        body->deleteLater(detach, trash);
       }
     }
 
@@ -126,3 +129,5 @@ class ExpansionPanel: public FormGroup
     ExpansionPanelHeader * header = nullptr;
     FormGroup * body = nullptr;
 };
+
+}

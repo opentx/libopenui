@@ -20,6 +20,8 @@
 #include "progress.h"
 #include "theme.h"
 
+using namespace ui;
+
 void Progress::paint(BitmapBuffer * dc)
 {
   theme->drawProgressBar(dc, 0, 0, width(), height(), value);

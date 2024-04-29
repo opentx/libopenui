@@ -21,6 +21,8 @@
 #include "menu.h"
 #include "theme.h"
 
+using namespace ui;
+
 Choice::Choice(FormGroup * parent, const rect_t & rect, int vmin, int vmax,
   std::function<int()> getValue, std::function<void(int)> setValue, WindowFlags windowFlags) :
   ChoiceBase(parent, rect, CHOICE_TYPE_DROPOWN, windowFlags),

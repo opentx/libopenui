@@ -20,6 +20,8 @@
 #include "keyboard_number.h"
 #include "button.h"
 
+using namespace ui;
+
 NumberKeyboard * NumberKeyboard::_instance = nullptr;
 
 void NumberKeyboard::show(FormField * field)

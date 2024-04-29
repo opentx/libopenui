@@ -21,6 +21,8 @@
 
 #include "form.h"
 
+namespace ui {
+
 class Slider: public FormField
 {
   public:
@@ -81,3 +83,4 @@ class Slider: public FormField
     std::function<void(int)> _setValue;
 };
 
+}

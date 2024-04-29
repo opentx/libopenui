@@ -36,6 +36,18 @@ inline bool hasChineseChars(const char * str)
   return false;
 }
 
+inline const char * findNextLine(const char * stack)
+{
+  while (true) {
+    const char * pos = strchr(stack, '\n');
+    if (!pos)
+      return nullptr;
+    if (pos == stack || *((uint8_t *)(pos - 1)) < CJK_BYTE1_MIN)
+      return pos;
+    stack = pos + 1;
+  }
+}
+
 class Font
 {
   public:
@@ -66,6 +78,7 @@ class Font
 
     Glyph getGlyph(unsigned index) const
     {
+      // TODO check index not over table
       auto offset = specs[index + 1];
       return {this, offset, uint8_t(specs[index + 2] - offset)};
     }

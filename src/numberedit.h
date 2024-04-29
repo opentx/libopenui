@@ -22,6 +22,8 @@
 #include "basenumberedit.h"
 #include <string>
 
+namespace ui {
+
 class NumberEdit: public BaseNumberEdit
 {
   public:
@@ -34,7 +36,10 @@ class NumberEdit: public BaseNumberEdit
 #if defined(DEBUG_WINDOWS)
     [[nodiscard]] std::string getName() const override
     {
-      return "NumberEdit(" + std::to_string(getValue()) + ")";
+      if (_deleted)
+        return "NumberEdit()";
+      else
+        return "NumberEdit(" + std::to_string(getValue()) + ")";
     }
 #endif
 
@@ -105,3 +110,5 @@ class NumberEdit: public BaseNumberEdit
     bool keyboardEnabled = true;
 #endif
 };
+
+}

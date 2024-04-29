@@ -22,6 +22,8 @@
 #include <vector>
 #include "button.h"
 
+namespace ui {
+
 class CarouselItem
 {
   public:
@@ -149,3 +151,4 @@ class Carousel: public Window
     CarouselWindow * body = nullptr;
 };
 
+}

@@ -64,6 +64,8 @@ enum KeyboardLayout
   KEYBOARD_LAYOUT_COUNT
 };
 
+namespace ui {
+
 class TextKeyboard: public Keyboard
 {
   public:
@@ -109,3 +111,5 @@ class TextKeyboard: public Keyboard
     static TextKeyboard * _instance;
     unsigned layoutIndex = KEYBOARD_LAYOUT_INDEX_START;
 };
+
+}

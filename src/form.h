@@ -27,6 +27,8 @@ constexpr WindowFlags FORM_BORDER_FOCUS_ONLY = WINDOW_FLAGS_LAST << 3;
 constexpr WindowFlags FORM_NO_BORDER = WINDOW_FLAGS_LAST << 4;
 constexpr WindowFlags FORM_FLAGS_LAST = FORM_NO_BORDER;
 
+namespace ui {
+
 class FormField: public Window
 {
   public:
@@ -199,3 +201,5 @@ class FormWindow: public FormGroup
     void onEvent(event_t event) override;
 #endif
 };
+
+}

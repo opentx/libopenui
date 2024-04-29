@@ -21,6 +21,8 @@
 
 #include "form.h"
 
+namespace ui {
+  
 class BaseNumberEdit: public FormField
 {
   public:
@@ -130,3 +132,5 @@ class BaseNumberEdit: public FormField
     std::function<int()> _getValue;
     std::function<void(int)> _setValue;
 };
+
+}

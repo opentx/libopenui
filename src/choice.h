@@ -22,6 +22,8 @@
 #include <vector>
 #include "form.h"
 
+namespace ui {
+
 enum ChoiceType {
   CHOICE_TYPE_DROPOWN,
   CHOICE_TYPE_FOLDER,
@@ -120,6 +122,11 @@ class Choice: public ChoiceBase
       isValueAvailable = std::move(handler);
     }
 
+    void setTextAtIndex(unsigned index, std::string text)
+    {
+      values[index] = std::move(text);
+    }
+
     unsigned getIndexFromValue(int value) const
     {
       if (!isValueAvailable) {
@@ -191,3 +198,5 @@ class Choice: public ChoiceBase
 
     virtual void openMenu();
 };
+
+}

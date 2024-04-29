@@ -460,7 +460,71 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdC
   }
 }
 
-void BitmapBuffer::drawRect(coord_t x, coord_t y, coord_t w, coord_t h, LcdColor color, uint8_t thickness, uint8_t pat)
+void BitmapBuffer::fillBottomFlatTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t y12, coord_t x2, LcdColor color)
+{
+  auto dy = y12 - y0;
+  auto slopex = float(x1 - x0) / dy;
+  auto slopew = float(x2 - x1) / dy;
+
+  float x = x0;
+  float w = 1;
+
+  for (int y = y0; y <= y12; y++) {
+    drawHorizontalLine(x, y, w, color, SOLID);
+    x += slopex;
+    w += slopew;
+  }
+}
+
+void BitmapBuffer::fillTopFlatTriangle(coord_t x0, coord_t y01, coord_t x1, coord_t x2, coord_t y2, LcdColor color)
+{
+  auto dy = y2 - y01;
+  auto slopex = float(x0 - x2) / dy;
+  auto slopew = float(x1 - x0) / dy;
+
+  float x = x2;
+  float w = 1;
+
+  for (int y = y2; y >= y01; y--) {
+    drawHorizontalLine(x, y, w, color, SOLID);
+    x += slopex;
+    w += slopew;
+  }
+}
+
+void BitmapBuffer::drawFilledTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdColor color)
+{
+  // Sort the points so that y0 <= y1 <= y2
+  if (y1 < y0) {
+    std::swap(x1, x0);
+    std::swap(y1, y0);
+  }
+  if (y2 < y0) {
+    std::swap(x2, x0);
+    std::swap(y2, y0);
+  }
+  if (y2 < y1) {
+    std::swap(x2, x1);
+    std::swap(y2, y1);
+  }
+
+  if (y1 == y2) {
+    // bottom-flat triangle
+    fillBottomFlatTriangle(x0, y0, x1, y1, x2, color);
+  }
+  else if (y0 == y1) {
+    // top-flat triangle
+    fillTopFlatTriangle(x0, y0, x1, x2, y2, color);
+  }
+  else {
+    // general case: split the triangle in a top-flat and bottom-flat triangles
+    coord_t x4 = x0 + multDivRoundClosest(x2 - x0, y1 - y0, y2 - y0);
+    fillBottomFlatTriangle(x0, y0, x1, y1, x4, color);
+    fillTopFlatTriangle(x1, y1 + 1, x4, x2, y2, color);
+  }
+}
+
+void BitmapBuffer::drawRectangle(coord_t x, coord_t y, coord_t w, coord_t h, LcdColor color, uint8_t thickness, uint8_t pat)
 {
   for (unsigned i = 0; i < thickness; i++) {
     drawVerticalLine(x + i, y, h, color, pat);
@@ -470,7 +534,7 @@ void BitmapBuffer::drawRect(coord_t x, coord_t y, coord_t w, coord_t h, LcdColor
   }
 }
 
-void BitmapBuffer::fillRect(coord_t x, coord_t y, coord_t w, coord_t h, pixel_t pixel)
+void BitmapBuffer::fillRectangle(coord_t x, coord_t y, coord_t w, coord_t h, pixel_t pixel)
 {
   APPLY_OFFSET();
 
@@ -480,15 +544,15 @@ void BitmapBuffer::fillRect(coord_t x, coord_t y, coord_t w, coord_t h, pixel_t 
   DMAFillRect(data, _width, _height, x, y, w, h, pixel);
 }
 
-void BitmapBuffer::drawSolidFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, Color565 color)
+void BitmapBuffer::drawPlainFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, Color565 color)
 {
   if (format == BMP_RGB565)
-    fillRect(x, y, w, h, color);
+    fillRectangle(x, y, w, h, color);
   else
-    fillRect(x, y, w, h, RGB565_TO_ARGB4444(color, 0xFF));
+    fillRectangle(x, y, w, h, RGB565_TO_ARGB4444(color, 0xFF));
 }
 
-void BitmapBuffer::drawFilledRect(coord_t x, coord_t y, coord_t w, coord_t h, LcdColor color, uint8_t pat)
+void BitmapBuffer::drawFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, LcdColor color, uint8_t pat)
 {
   APPLY_OFFSET();
 
@@ -528,24 +592,24 @@ void BitmapBuffer::drawCircle(coord_t x, coord_t y, coord_t radius, LcdColor col
   }
 }
 
-void BitmapBuffer::drawSolidFilledCircle(coord_t x, coord_t y, coord_t radius, Color565 color)
+void BitmapBuffer::drawPlainFilledCircle(coord_t x, coord_t y, coord_t radius, Color565 color)
 {
   coord_t imax = ((coord_t)((coord_t)radius * 707)) / 1000 + 1;
   coord_t sqmax = (coord_t)radius * (coord_t)radius + (coord_t)radius / 2;
   coord_t x1 = radius;
-  drawSolidHorizontalLine(x - radius, y, radius * 2, color);
+  drawPlainHorizontalLine(x - radius, y, radius * 2, color);
   for (coord_t i = 1; i <= imax; i++) {
     if ((i * i + x1 * x1) > sqmax) {
       // Draw lines from outside
       if (x1 > imax) {
-        drawSolidHorizontalLine(x - i + 1, y + x1, (i - 1) * 2, color);
-        drawSolidHorizontalLine(x - i + 1, y - x1, (i - 1) * 2, color);
+        drawPlainHorizontalLine(x - i + 1, y + x1, (i - 1) * 2, color);
+        drawPlainHorizontalLine(x - i + 1, y - x1, (i - 1) * 2, color);
       }
       x1--;
     }
     // Draw lines from inside (center)
-    drawSolidHorizontalLine(x - x1, y + i, x1 * 2, color);
-    drawSolidHorizontalLine(x - x1, y - i, x1 * 2, color);
+    drawPlainHorizontalLine(x - x1, y + i, x1 * 2, color);
+    drawPlainHorizontalLine(x - x1, y - i, x1 * 2, color);
   }
 }
 
@@ -858,7 +922,7 @@ coord_t BitmapBuffer::drawSizedText(coord_t x, coord_t y, const char * s, uint8_
   coord_t & pos = (flags & VERTICAL) ? y : x;
   const coord_t orig_pos = pos;
 
-  while (len--) {
+  for (int i = 0; len == 0 || i < len; ++i) {
     unsigned int c = uint8_t(*s);
     // TRACE("c = %d %o 0x%X '%c'", c, c, c, c);
 
@@ -934,14 +998,6 @@ coord_t BitmapBuffer::drawNumber(coord_t x, coord_t y, int32_t val, LcdColor col
   }
   flags &= ~LEADING0;
   return drawText(x, y, s, color, flags);
-}
-
-void drawSolidRect(BitmapBuffer * dc, coord_t x, coord_t y, coord_t w, coord_t h, Color565 color, uint8_t thickness)
-{
-  dc->drawSolidFilledRect(x, y, thickness, h, color);
-  dc->drawSolidFilledRect(x+w-thickness, y, thickness, h, color);
-  dc->drawSolidFilledRect(x, y, w, thickness, color);
-  dc->drawSolidFilledRect(x, y+h-thickness, w, thickness, color);
 }
 
 //void BitmapBuffer::drawBitmapPie(int x0, int y0, const uint16_t * img, int startAngle, int endAngle)

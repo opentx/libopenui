@@ -45,8 +45,9 @@ constexpr WindowFlags NO_FOCUS =              1u << 3u;
 constexpr WindowFlags FORWARD_SCROLL =        1u << 4u;
 constexpr WindowFlags REFRESH_ALWAYS =        1u << 5u;
 constexpr WindowFlags PAINT_CHILDREN_FIRST =  1u << 6u;
-constexpr WindowFlags PUSH_FRONT =  1u << 7u;
-constexpr WindowFlags WINDOW_FLAGS_LAST =  PUSH_FRONT;
+constexpr WindowFlags PUSH_FRONT =            1u << 7u;
+constexpr WindowFlags MAIN_WINDOW =           1u << 8u;
+constexpr WindowFlags WINDOW_FLAGS_LAST =     MAIN_WINDOW;
 
 enum SetFocusFlag
 {
@@ -54,6 +55,8 @@ enum SetFocusFlag
   SET_FOCUS_FORWARD,
   SET_FOCUS_BACKWARD
 };
+
+namespace ui {
 
 class Window
 {
@@ -372,10 +375,7 @@ class Window
 
     bool isChildFullSize(const Window * window) const;
 
-    [[nodiscard]] bool isVisible() const
-    {
-      return parent && parent->isChildVisible(this);
-    }
+    [[nodiscard]] bool isVisible() const;
 
     [[nodiscard]] bool isInsideParentScrollingArea() const
     {
@@ -503,3 +503,5 @@ class Window
 
     [[nodiscard]] bool hasOpaqueRect(const rect_t & testRect) const;
 };
+
+}

@@ -22,6 +22,8 @@
 #include "button.h"
 #include "menu.h"
 
+namespace ui {
+
 int getFirstAvailable(int min, int max, std::function<bool(int)>isValueAvailable);
 
 class MenuToolbarButton: public Button {
@@ -169,4 +171,4 @@ class MenuToolbar: public FormGroup {
     }
 };
 
-
+}

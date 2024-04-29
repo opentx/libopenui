@@ -21,6 +21,8 @@
 
 #include "window.h"
 
+namespace ui {
+
 template <class T>
 class BufferedWindow: public T
 {
@@ -122,3 +124,4 @@ class TransparentBitmapBackground: public TransparentBufferedWindow<Window>
     }
 };
 
+}

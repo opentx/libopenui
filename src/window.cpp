@@ -20,6 +20,9 @@
 #include <algorithm>
 #include "window.h"
 #include "touch.h"
+#include "mainwindow.h"
+
+using namespace ui;
 
 Window * Window::focusWindow = nullptr;
 Window * Window::slidingWindow = nullptr;
@@ -57,9 +60,9 @@ void Window::deleteLater(bool detach, bool trash)
   if (_deleted)
     return;
 
-  TRACE_WINDOWS("Delete %p %s", this, getWindowDebugString().c_str());
+  _deleted = true;  
 
-  _deleted = true;
+  TRACE_WINDOWS("Delete %p %s", this, getWindowDebugString().c_str());
 
   if (static_cast<Window *>(focusWindow) == static_cast<Window *>(this)) {
     focusWindow = nullptr;
@@ -246,7 +249,7 @@ void Window::fullPaint(BitmapBuffer * dc)
     TRACE_WINDOWS_INDENT("%s%s", getWindowDebugString().c_str(), hasFocus() ? " (*)" : "");
     paint(dc);
 #if defined(WINDOWS_INSPECT_BORDER_COLOR)
-    dc->drawSolidRect(0, 0, width(), height(), WINDOWS_INSPECT_BORDER_COLOR, 1);
+    dc->drawPlainRectangle(0, 0, width(), height(), WINDOWS_INSPECT_BORDER_COLOR, 1);
 #endif
   }
   else {
@@ -261,6 +264,14 @@ void Window::fullPaint(BitmapBuffer * dc)
   if (!(windowFlags & PAINT_CHILDREN_FIRST)) {
     paintChildren(dc, firstChild);
   }
+}
+
+bool Window::isVisible() const
+{
+  if (windowFlags & MAIN_WINDOW)
+    return true;
+  else  
+    return parent && parent->isVisible() && parent->isChildVisible(this);
 }
 
 bool Window::isChildFullSize(const Window * child) const
@@ -575,7 +586,7 @@ void Window::drawVerticalScrollbar(BitmapBuffer * dc) const
       yhgt = 15;
     if (yhgt + yofs > rect.h)
       yhgt = rect.h - yofs;
-    dc->drawSolidFilledRect(rect.w - SCROLLBAR_WIDTH, scrollPositionY + yofs, SCROLLBAR_WIDTH, yhgt, SCROLLBAR_COLOR);
+    dc->drawPlainFilledRectangle(rect.w - SCROLLBAR_WIDTH, scrollPositionY + yofs, SCROLLBAR_WIDTH, yhgt, SCROLLBAR_COLOR);
   }
 }
 
@@ -588,6 +599,6 @@ void Window::drawHorizontalScrollbar(BitmapBuffer * dc) const
       xwdth = 15;
     if (xwdth + xofs > rect.w)
       xwdth = rect.w - xofs;
-    dc->drawSolidFilledRect(scrollPositionX + xofs, rect.h - SCROLLBAR_WIDTH, xwdth, SCROLLBAR_WIDTH, SCROLLBAR_COLOR);
+    dc->drawPlainFilledRectangle(scrollPositionX + xofs, rect.h - SCROLLBAR_WIDTH, xwdth, SCROLLBAR_WIDTH, SCROLLBAR_COLOR);
   }
 }

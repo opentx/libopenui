@@ -22,6 +22,8 @@
 #include "font.h"
 #include "layer.h"
 
+using namespace ui;
+
 ModalWindow::ModalWindow(Window * parent, bool closeWhenClickOutside):
   Window(parent->getFullScreenWindow(), {0, 0, LCD_W, LCD_H}),
   closeWhenClickOutside(closeWhenClickOutside)
@@ -41,12 +43,12 @@ void ModalWindow::deleteLater(bool detach, bool trash) // NOLINT(google-default-
 
 void ModalWindow::paint(BitmapBuffer * dc)
 {
-  dc->drawFilledRect(0, 0, width(), height(), OVERLAY_COLOR, SOLID);
+  dc->drawFilledRectangle(0, 0, width(), height(), OVERLAY_COLOR, SOLID);
 }
 
 void ModalWindowContent::paint(BitmapBuffer * dc)
 {
-  dc->drawSolidFilledRect(0, 0, width(), POPUP_HEADER_HEIGHT, FOCUS_BGCOLOR);
+  dc->drawPlainFilledRectangle(0, 0, width(), POPUP_HEADER_HEIGHT, FOCUS_BGCOLOR);
   dc->drawText(FIELD_PADDING_LEFT, (POPUP_HEADER_HEIGHT - getFontHeight(FONT(STD))) / 2, title.c_str(), FOCUS_COLOR);
-  dc->drawSolidFilledRect(0, POPUP_HEADER_HEIGHT, width(), height() - POPUP_HEADER_HEIGHT, DEFAULT_BGCOLOR);
+  dc->drawPlainFilledRectangle(0, POPUP_HEADER_HEIGHT, width(), height() - POPUP_HEADER_HEIGHT, DEFAULT_BGCOLOR);
 }

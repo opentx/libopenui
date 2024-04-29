@@ -19,6 +19,8 @@
 
 #include "expansion_panel.h"
 
+using namespace ui;
+
 void ExpansionPanel::updateHeight(bool move)
 {
   coord_t newHeight = (isOpen() ? header->height() + body->height() : header->height());

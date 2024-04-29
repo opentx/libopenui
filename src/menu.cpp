@@ -22,6 +22,8 @@
 #include "theme.h"
 #include "layer.h"
 
+using namespace ui;
+
 void MenuBody::select(int index)
 {
   selectedIndex = index;
@@ -129,7 +131,7 @@ void MenuBody::paint(BitmapBuffer * dc)
     if (selectedIndex == (int)i) {
       color = MENU_HIGHLIGHT_COLOR;
       if (MENU_HIGHLIGHT_BGCOLOR != MENU_BGCOLOR) {
-        dc->drawSolidFilledRect(0, i * MENUS_LINE_HEIGHT, width(), MENUS_LINE_HEIGHT, MENU_HIGHLIGHT_BGCOLOR);
+        dc->drawPlainFilledRectangle(0, i * MENUS_LINE_HEIGHT, width(), MENUS_LINE_HEIGHT, MENU_HIGHLIGHT_BGCOLOR);
       }
     }
     if (line.drawLine) {
@@ -149,7 +151,7 @@ void MenuBody::paint(BitmapBuffer * dc)
     }
 
     if (i > 0) {
-      dc->drawSolidHorizontalLine(0, i * MENUS_LINE_HEIGHT - 1, width(), MENU_LINE_COLOR);
+      dc->drawPlainHorizontalLine(0, i * MENUS_LINE_HEIGHT - 1, width(), MENU_LINE_COLOR);
     }
   }
 }
@@ -169,7 +171,7 @@ void MenuWindowContent::paint(BitmapBuffer * dc)
   // the title
   if (!title.empty()) {
     dc->drawText(MIN_MENUS_WIDTH / 2, (POPUP_HEADER_HEIGHT - getFontHeight(MENU_HEADER_FONT)) / 2, title.c_str(), DEFAULT_COLOR, CENTERED | MENU_HEADER_FONT);
-    dc->drawSolidHorizontalLine(0, POPUP_HEADER_HEIGHT - 1, MIN_MENUS_WIDTH, MENU_LINE_COLOR);
+    dc->drawPlainHorizontalLine(0, POPUP_HEADER_HEIGHT - 1, MIN_MENUS_WIDTH, MENU_LINE_COLOR);
   }
 }
 

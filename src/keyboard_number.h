@@ -21,6 +21,8 @@
 
 #include "keyboard_base.h"
 
+namespace ui {
+
 class NumberKeyboard: public Keyboard
 {
   public:
@@ -64,3 +66,5 @@ class DefaultNumberKeyboard: public NumberKeyboard
 
     void paint(BitmapBuffer * dc) override;
 };
+
+}

@@ -23,6 +23,8 @@
 #include "checkbox.h"
 #include "button.h"
 
+namespace ui {
+
 class Menu;
 class MenuWindowContent;
 class Dialog;
@@ -65,3 +67,4 @@ extern Theme * theme;
 MenuWindowContent * createMenuWindow(Menu * menu);
 DialogWindowContent * createDialogWindow(Dialog * dialog, const rect_t & rect);
 
+}

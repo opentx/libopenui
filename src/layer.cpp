@@ -19,4 +19,6 @@
 
 #include "layer.h"
 
+using namespace ui;
+
 std::list<Layer> Layer::stack;

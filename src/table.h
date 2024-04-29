@@ -25,6 +25,8 @@
 #include "libopenui_config.h"
 #include "font.h"
 
+namespace ui {
+
 class Table: public FormField
 {
   public:
@@ -287,7 +289,7 @@ class Table: public FormField
     };
 
   public:
-    Table(Window * parent, const rect_t & rect, uint8_t columnsCount, const std::function<Table::Header *(Table *)> & createHeader = nullptr, const std::function<Table::Body *(Table *)> & createBody = nullptr, WindowFlags windowFlags = OPAQUE | FORM_NO_BORDER):
+    Table(Window * parent, const rect_t & rect, uint8_t columnsCount, const std::function<Header *(Table *)> & createHeader = nullptr, const std::function<Body *(Table *)> & createBody = nullptr, WindowFlags windowFlags = OPAQUE | FORM_NO_BORDER):
       FormField(parent, rect, windowFlags),
       columnsCount(columnsCount),
       columnsWidth(columnsCount, width() / columnsCount),
@@ -444,3 +446,5 @@ class Table: public FormField
     Header * header;
     Body * body;
 };
+
+}

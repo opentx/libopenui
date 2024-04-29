@@ -21,6 +21,8 @@
 
 #include "window.h"
 
+namespace ui {
+
 class Progress: public Window {
   public:
     Progress(Window * parent, const rect_t & rect):
@@ -48,3 +50,5 @@ class Progress: public Window {
   protected:
     int value = 0;
 };
+
+}

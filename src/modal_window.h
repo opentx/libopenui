@@ -21,6 +21,8 @@
 
 #include "window.h"
 
+namespace ui {
+
 class ModalWindow: public Window
 {
   public:
@@ -105,3 +107,4 @@ class ModalWindowContent: public Window
     std::string title;
 };
 
+}

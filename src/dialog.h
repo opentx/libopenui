@@ -22,6 +22,8 @@
 #include "modal_window.h"
 #include "form.h"
 
+namespace ui {
+
 class Dialog;
 
 class DialogWindowContent: public ModalWindowContent
@@ -59,3 +61,4 @@ class Dialog: public ModalWindow {
     DialogWindowContent * content;
 };
 
+}

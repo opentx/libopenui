@@ -20,6 +20,8 @@
 #include "checkbox.h"
 #include "theme.h"
 
+using namespace ui;
+
 void CheckBox::paint(BitmapBuffer * dc)
 {
   theme->drawCheckBox(dc, this);

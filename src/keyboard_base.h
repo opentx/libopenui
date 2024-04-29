@@ -22,6 +22,8 @@
 #include "mainwindow.h"
 #include "form.h"
 
+namespace ui {
+
 class Keyboard: public FormWindow
 {
   public:
@@ -88,3 +90,5 @@ class Keyboard: public FormWindow
       }
     }
 };
+
+}
