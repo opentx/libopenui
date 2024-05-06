@@ -22,32 +22,6 @@
 #include "libopenui_file.h"
 #include "libopenui_defines.h"
 
-const char * getFileExtension(const char * filename, uint8_t size, uint8_t extMaxLen, uint8_t * fnlen, uint8_t * extlen)
-{
-  int len = size;
-  if (!size) {
-    len = strlen(filename);
-  }
-  if (!extMaxLen) {
-    extMaxLen = LEN_FILE_EXTENSION_MAX;
-  }
-  if (fnlen != nullptr) {
-    *fnlen = (uint8_t)len;
-  }
-  for (int i=len-1; i >= 0 && len-i <= extMaxLen; --i) {
-    if (filename[i] == '.') {
-      if (extlen) {
-        *extlen = len-i;
-      }
-      return &filename[i];
-    }
-  }
-  if (extlen != nullptr) {
-    *extlen = 0;
-  }
-  return nullptr;
-}
-
 /**
   Check if given extension exists in a list of extensions.
   @param extension The extension to search for, including leading period.
@@ -59,20 +33,20 @@ const char * getFileExtension(const char * filename, uint8_t size, uint8_t extMa
 */
 bool isExtensionMatching(const char * extension, const char * pattern, char * match)
 {
-  const char *ext;
-  uint8_t extlen, fnlen;
+  const char * ext;
+  uint8_t extLen, filenameLen;
   int plen;
 
-  ext = getFileExtension(pattern, 0, 0, &fnlen, &extlen);
-  plen = (int)fnlen;
+  ext = getFileExtension(pattern, 0, 0, &filenameLen, &extLen);
+  plen = (int)filenameLen;
   while (plen > 0 && ext) {
-    if (!strncasecmp(extension, ext, extlen)) {
-      if (match != nullptr) strncat(&(match[0]='\0'), ext, extlen);
+    if (!strncasecmp(extension, ext, extLen)) {
+      if (match != nullptr) strncat(&(match[0]='\0'), ext, extLen);
       return true;
     }
-    plen -= extlen;
+    plen -= extLen;
     if (plen > 0) {
-      ext = getFileExtension(pattern, plen, 0, nullptr, &extlen);
+      ext = getFileExtension(pattern, plen, 0, nullptr, &extLen);
     }
   }
   return false;

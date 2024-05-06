@@ -1012,7 +1012,7 @@ coord_t BitmapBuffer::drawNumber(coord_t x, coord_t y, int32_t val, LcdColor col
 
 BitmapBuffer * BitmapBuffer::load(const char * filename, int maxSize)
 {
-  const char * ext = getFileExtension(filename);
+  auto ext = getFileExtension(filename);
   if (ext && !strcmp(ext, ".bmp"))
     return load_bmp(filename, maxSize);
   else

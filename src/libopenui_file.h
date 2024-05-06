@@ -27,7 +27,30 @@
 
 constexpr uint8_t LEN_FILE_EXTENSION_MAX = 5;  // longest used, including the dot, excluding null term.
 
-const char * getFileExtension(const char * filename, uint8_t size = 0, uint8_t extMaxLen = 0, uint8_t * fnlen = nullptr, uint8_t * extlen = nullptr);
+template <typename T>
+T * getFileExtension(T * filename, uint8_t size = 0, uint8_t extMaxLen = 0, uint8_t * filenameLen = nullptr, uint8_t * extLen = nullptr)
+{
+  int len = (size == 0 ? strlen(filename) : size);
+  if (!extMaxLen) {
+    extMaxLen = LEN_FILE_EXTENSION_MAX;
+  }
+  if (filenameLen != nullptr) {
+    *filenameLen = (uint8_t)len;
+  }
+  for (int i = len - 1; i >= 0 && len - i <= extMaxLen; --i) {
+    if (filename[i] == '.') {
+      if (extLen) {
+        *extLen = len - i;
+      }
+      return &filename[i];
+    }
+  }
+  if (extLen != nullptr) {
+    *extLen = 0;
+  }
+  return nullptr;
+}
+
 bool isExtensionMatching(const char * extension, const char * pattern, char * match = nullptr);
 FRESULT sdReadDir(DIR * dir, FILINFO * fno, bool & firstTime);
 

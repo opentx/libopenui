@@ -53,7 +53,7 @@ bool FileChoice::openMenu()
   DIR dir;
   std::list<std::string> files;
   const char * fnExt;
-  uint8_t fnLen, extLen;
+  uint8_t fnLen;
 
   FRESULT res = f_opendir(&dir, folder.c_str()); // Open the directory
   if (res == FR_OK) {
@@ -69,10 +69,10 @@ bool FileChoice::openMenu()
       if (fno.fattrib & AM_SYS)
         continue; // skip system files
 
-      fnExt = getFileExtension(fno.fname, 0, 0, &fnLen, &extLen);
+      fnExt = getFileExtension(fno.fname, 0, 0, &fnLen);
       // fnLen -= extLen;
 
-      if (!fnLen || fnLen > maxlen)
+      if (fnLen == 0 || fnLen > maxlen)
         continue; // wrong size
       if (extension && !isExtensionMatching(fnExt, extension))
         continue; // wrong extension
