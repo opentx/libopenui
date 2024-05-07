@@ -234,6 +234,7 @@ class Table: public FormField
         {
           Window::clear();
           lines.clear();
+          setInnerHeight(0);
         }
 
         void select(int lineIndex, bool scroll)
@@ -423,6 +424,7 @@ class Table: public FormField
     {
       clearSelection();
       body->clear();
+      
     }
 
     [[nodiscard]] unsigned size() const
