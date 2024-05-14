@@ -21,6 +21,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <cmath>
 #include "bitmapdata.h"
 #include "libopenui_types.h"
 #include "libopenui_defines.h"
@@ -295,6 +296,64 @@ class BitmapBufferBase
         srcData -= 2 * width();
       }
 #endif
+      return result;
+    }
+
+    template <class C>
+    C * rotate(double radians) const
+    {
+      double sinA = sin(radians);
+      double cosA = cos(radians);
+
+      auto w = width();
+      auto h = height();
+
+      double x1 = -h * sinA; 
+      double y1 = h * cosA; 
+      double x3 = w * cosA; 
+      double y3 = w * sinA; 
+      double x2 = x1 + x3; 
+      double y2 = y1 + y3;
+
+      float minx = min(double(0), min(x1, min(x2, x3))); 
+      float miny = min(double(0), min(y1, min(y2, y3))); 
+      float maxx = max(x1, max(x2, x3)); 
+      float maxy = max(y1, max(y2, y3));
+
+      coord_t rW = ceil(fabs(maxx) - minx); 
+      coord_t rH = ceil(fabs(maxy) - miny); 
+
+      auto x0 = (w - 1) / 2;
+      auto y0 = (h - 1) / 2;
+
+      auto rX0 = (rW - 1) / 2;
+      auto rY0 = (rH - 1) / 2;
+
+      auto * result = new C(format, rW, rH);
+
+      auto * srcData = data;
+      auto * destData = result->data;
+
+      for (unsigned rX = 0; rX < rW; rX++) {
+        coord_t dX = rX - rX0;
+        for (unsigned rY = 0; rY < rH; rY++) {
+          coord_t dY = rY - rY0;
+          coord_t x = (double)dX * cosA + (double)dY * sinA + x0;
+          if (x >= 0 && x < w) {
+            coord_t y = (double)dY * cosA - (double)dX * sinA + y0;
+            if (y >= 0 && y < h) {
+              destData[rY * rW + rX] = srcData[y * w + x];
+            }
+            else {
+              destData[rY * rW + rX] = 0;
+            }
+          }
+          else {
+            destData[rY * rW + rX] = 0;
+          }
+        }
+      }
+
       return result;
     }
 
