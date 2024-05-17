@@ -300,10 +300,10 @@ class BitmapBufferBase
     }
 
     template <class C>
-    C * rotate(double radians) const
+    C * rotate(float radians) const
     {
-      double sine = sin(radians);
-      double cosine = cos(radians);
+      float sine = sinf(radians);
+      float cosine = cosf(radians);
 
       auto w = width();
       auto h = height();

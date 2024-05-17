@@ -22,6 +22,7 @@
 #include <cinttypes>
 #include <string>
 #include <cstring>
+#include <math.h>
 
 #if defined(min)
   #undef min
@@ -77,4 +78,10 @@ template<class T>
 inline T sgn(T a)
 {
   return a > 0 ? 1 : (a < 0 ? -1 : 0);
+}
+
+template<class T>
+inline T degrees2radians(T angle)
+{
+  return (angle * M_PI) / 180;
 }
