@@ -30,7 +30,7 @@ NumberEdit::NumberEdit(Window * parent, const rect_t & rect, int vmin, int vmax,
 {
 }
 
-std::string NumberEdit::getStringValue(int32_t value)
+std::string NumberEdit::getStringValue(int value)
 {
   if (value == 0 && !zeroText.empty())
     return zeroText;
