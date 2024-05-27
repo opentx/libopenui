@@ -41,6 +41,7 @@
 #include "clipboard.h"
 #endif
 
+#if defined(SOFTWARE_KEYBOARD)
 void TextEdit::setEditMode(bool newEditMode)
 {
   FormField::setEditMode(newEditMode);
@@ -48,6 +49,7 @@ void TextEdit::setEditMode(bool newEditMode)
     TextKeyboard::show(this);
   }
 }
+#endif
 
 void TextEdit::paint(BitmapBuffer * dc)
 {
