@@ -30,6 +30,16 @@ NumberEdit::NumberEdit(Window * parent, const rect_t & rect, int vmin, int vmax,
 {
 }
 
+std::string NumberEdit::getStringValue(int32_t value)
+{
+  if (value == 0 && !zeroText.empty())
+    return zeroText;
+  else if (_getStringValue)
+    return _getStringValue(value);
+  else
+    return numberToString(value, 0, prefix.c_str(), suffix.c_str(), textFlags);
+}
+
 void NumberEdit::paint(BitmapBuffer * dc)
 {
   FormField::paint(dc);
@@ -49,18 +59,12 @@ void NumberEdit::paint(BitmapBuffer * dc)
   if (displayFunction) {
     displayFunction(dc, textColor, value);
   }
-  else if (value == 0 && !zeroText.empty()) {
-    dc->drawText(FIELD_PADDING_LEFT, FIELD_PADDING_TOP, zeroText.c_str(), textColor, textFlags);
-    if (textFlags & RIGHT)
-      dc->drawText(rect.w - FIELD_PADDING_LEFT, FIELD_PADDING_TOP, zeroText.c_str(), textColor, textFlags);
-    else
-      dc->drawText(FIELD_PADDING_LEFT, FIELD_PADDING_TOP, zeroText.c_str(), textColor, textFlags);
-  }
   else {
+    auto s = numberToString(value, 0, prefix.c_str(), suffix.c_str(), textFlags);
     if (textFlags & RIGHT)
-      dc->drawNumber(rect.w - FIELD_PADDING_LEFT, FIELD_PADDING_TOP, value, textColor, textFlags, 0, prefix.c_str(), suffix.c_str());
+      dc->drawText(rect.w - FIELD_PADDING_LEFT, FIELD_PADDING_TOP, s, textColor, textFlags);
     else
-      dc->drawNumber(FIELD_PADDING_LEFT, FIELD_PADDING_TOP, value, textColor, textFlags, 0, prefix.c_str(), suffix.c_str());
+      dc->drawText(FIELD_PADDING_LEFT, FIELD_PADDING_TOP, s, textColor, textFlags);
   }
 }
 
@@ -101,56 +105,6 @@ void NumberEdit::onEvent(event_t event)
         return;
       }
 #endif
-
-#if defined(HARDWARE_TOUCH)
-      case EVT_VIRTUAL_KEY_PLUS: {
-        int value = getValue();
-        if (value < vmax)
-          setValue(value + getStep());
-        else
-          onKeyError();
-        break;
-      }
-
-      case EVT_VIRTUAL_KEY_MINUS: {
-        int value = getValue();
-        if (value > vmin)
-          setValue(value - getStep());
-        else
-          onKeyError();
-        break;
-      }
-
-      case EVT_VIRTUAL_KEY_FORWARD: {
-        int value = getValue();
-        if (value < vmax)
-          setValue(value + 10 * getStep());
-        else
-          onKeyError();
-        break;
-      }
-
-      case EVT_VIRTUAL_KEY_BACKWARD: {
-        int value = getValue();
-        if (value > vmin)
-          setValue(value - 10 * getStep());
-        else
-          onKeyError();
-        break;
-      }
-
-      case EVT_VIRTUAL_KEY_DEFAULT:
-        setValue(getDefault());
-        break;
-
-      case EVT_VIRTUAL_KEY_MAX:
-        setValue(getMax());
-        break;
-
-      case EVT_VIRTUAL_KEY_MIN:
-        setValue(getMin());
-        break;
-#endif
     }
   }
 
@@ -177,7 +131,7 @@ bool NumberEdit::onTouchEnd(coord_t, coord_t)
 void NumberEdit::onFocusLost()
 {
 #if defined(SOFTWARE_KEYBOARD)
-  Keyboard::hide();
+  KeyboardBase::hide();
 #endif
 
   FormField::onFocusLost();
@@ -197,7 +151,7 @@ void NumberEdit::setEditMode(bool newEditMode)
 void NumberEdit::deleteLater(bool detach, bool trash)
 {
   if (hasFocus()) {
-    Keyboard::hide();
+    KeyboardBase::hide();
   }
   BaseNumberEdit::deleteLater(detach, trash);
 }

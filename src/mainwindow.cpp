@@ -30,7 +30,7 @@ MainWindow * MainWindow::_instance = nullptr;
 
 #if defined(HARDWARE_TOUCH)
 TouchState touchState;
-Keyboard * Keyboard::activeKeyboard = nullptr;
+KeyboardBase * KeyboardBase::activeKeyboard = nullptr;
 #endif
 
 void MainWindow::emptyTrash()

@@ -41,8 +41,9 @@ class MenuBody: public Window
     friend class MenuBody;
 
     public:
-      MenuLine(std::string text, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked):
+      MenuLine(std::string text, const BitmapMask * icon, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked):
         text(std::move(text)),
+        icon(icon),
         onPress(std::move(onPress)),
         onSelect(std::move(onSelect)),
         isChecked(std::move(isChecked))
@@ -63,6 +64,7 @@ class MenuBody: public Window
 
     protected:
       std::string text;
+      const BitmapMask * icon;
       std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, LcdFlags flags)> drawLine;
       std::function<void()> onPress;
       std::function<void()> onSelect;
@@ -103,9 +105,11 @@ class MenuBody: public Window
     bool onTouchEnd(coord_t x, coord_t y) override;
 #endif
 
-    void addLine(const std::string & text, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
+    void addLine(const std::string & text, const BitmapMask * icon, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
     {
-      lines.emplace_back(text, std::move(onPress), std::move(onSelect), std::move(isChecked));
+      lines.emplace_back(text, icon, std::move(onPress), std::move(onSelect), std::move(isChecked));
+      if (icon)
+        displayIcons = true;
       invalidate();
     }
 
@@ -136,6 +140,7 @@ class MenuBody: public Window
     int selectedIndex = 0;
 #endif
     std::function<void()> onCancel;
+    bool displayIcons = false;
 
     inline Menu * getParentMenu();
 };
@@ -195,7 +200,11 @@ class Menu: public ModalWindow
 
     void setTitle(std::string text);
 
-    void addLine(const std::string & text, std::function<void()> onPress, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr);
+    void addLine(const std::string & text, const BitmapMask * icon, std::function<void()> onPress, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr);
+    void addLine(const std::string & text, std::function<void()> onPress, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr)
+    {
+      addLine(text, nullptr, std::move(onPress), std::move(onSelect), std::move(isChecked));
+    }
 
     void addCustomLine(std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, LcdFlags flags)> drawLine, std::function<void()> onPress, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr);
 

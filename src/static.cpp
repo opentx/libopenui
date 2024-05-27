@@ -30,12 +30,13 @@ coord_t StaticText::drawText(BitmapBuffer * dc, const rect_t & rect, const std::
   else if (textFlags & RIGHT)
     x += rect.w;
 
-  coord_t y = rect.y;
-  if (textFlags & VCENTERED)
-    y += (rect.h - getFontHeight(textFlags)) / 2;
-  else
-    y += FIELD_PADDING_TOP;
+  auto fontHeight = getFontHeight(textFlags);
 
+  coord_t y = rect.y;
+  if (textFlags & VCENTERED) {
+    y += (rect.h - fontHeight) / 2;
+  }
+  
   auto start = text.c_str();
   auto current = start;
   auto nextline = findNextLine(start);
@@ -44,11 +45,11 @@ coord_t StaticText::drawText(BitmapBuffer * dc, const rect_t & rect, const std::
       dc->drawText(x, y, text.substr(current - start, nextline - current).c_str(), textColor, textFlags);
       current = nextline + 1;
       nextline = findNextLine(current);
-      y += getFontHeight(textFlags) + 2;
+      y += fontHeight + 2;
     } while (nextline);
   }
   dc->drawText(x, y, current, textColor, textFlags);
-  y += getFontHeight(textFlags) + 2;
+  y += fontHeight + 2;
   return y;
 }
 
@@ -58,5 +59,5 @@ void StaticText::paint(BitmapBuffer * dc)
     dc->drawPlainFilledRectangle(0, 0, rect.w, rect.h, bgColor);
   }
 
-  drawText(dc, {0 + padding, 0, rect.w - padding * 2, rect.h}, text, textColor, textFlags);
+  drawText(dc, {horizontalPadding, verticalPadding, rect.w - horizontalPadding * 2, rect.h - verticalPadding * 2}, text, textColor, textFlags);
 }

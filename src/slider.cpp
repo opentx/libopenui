@@ -59,7 +59,9 @@ bool Slider::onTouchStart(coord_t x, coord_t y)
 {
   if (!hasFocus()) {
     onKeyPress();
-    setFocus(SET_FOCUS_DEFAULT);
+    if (!(windowFlags & NO_FOCUS)) {
+      setFocus(SET_FOCUS_DEFAULT);
+    }
   }
   sliding = (value(x) == getValue());
   return true;

@@ -19,62 +19,94 @@
 
 #include "keyboard_number.h"
 #include "button.h"
+#include "basenumberedit.h"
 
 using namespace ui;
 
 NumberKeyboard * NumberKeyboard::_instance = nullptr;
 
-void NumberKeyboard::show(FormField * field)
+void NumberKeyboard::show(NumberEdit * field)
 {
-  if (!_instance)
+  if (!_instance) {
     _instance = new DefaultNumberKeyboard();
+  }
   _instance->setField(field);
 }
 
 DefaultNumberKeyboard::DefaultNumberKeyboard() :
   NumberKeyboard()
 {
-  new TextButton(this, {LCD_W / 2 - 115, 10, 50, 30}, "<<",
-                 [=]() {
-                     pushEvent(EVT_VIRTUAL_KEY_BACKWARD);
-                     return 0;
-                 }, BUTTON_BACKGROUND | OPAQUE | NO_FOCUS);
+  new TextButton(
+      this, {LCD_W / 2 - 115, 10, 50, 30}, "<<",
+      [=]() {
+        int value = field->getValue();
+        if (value > field->getMin())
+          field->setValue(value - 10 * field->getStep());
+        else
+          onKeyError();
+        return 0;
+      },
+      BUTTON_BACKGROUND | OPAQUE | NO_FOCUS);
 
-  new TextButton(this, {LCD_W / 2 - 55, 10, 50, 30}, "-",
-                 [=]() {
-                     pushEvent(EVT_VIRTUAL_KEY_MINUS);
-                     return 0;
-                 }, BUTTON_BACKGROUND | OPAQUE | NO_FOCUS);
+  new TextButton(
+      this, {LCD_W / 2 - 55, 10, 50, 30}, "-",
+      [=]() {
+        int value = field->getValue();
+        if (value > field->getMin())
+          field->setValue(value - field->getStep());
+        else
+          onKeyError();
+        return 0;
+      },
+      BUTTON_BACKGROUND | OPAQUE | NO_FOCUS);
 
-  new TextButton(this, {LCD_W / 2 + 5, 10, 50, 30}, "+",
-                 [=]() {
-                     pushEvent(EVT_VIRTUAL_KEY_PLUS);
-                     return 0;
-                 }, BUTTON_BACKGROUND | OPAQUE | NO_FOCUS);
+  new TextButton(
+      this, {LCD_W / 2 + 5, 10, 50, 30}, "+",
+      [=]() {
+        int value = field->getValue();
+        if (value < field->getMax())
+          field->setValue(value + field->getStep());
+        else
+          onKeyError();
+        return 0;
+      },
+      BUTTON_BACKGROUND | OPAQUE | NO_FOCUS);
 
-  new TextButton(this, {LCD_W / 2 + 65, 10, 50, 30}, ">>",
-                 [=]() {
-                     pushEvent(EVT_VIRTUAL_KEY_FORWARD);
-                     return 0;
-                 }, BUTTON_BACKGROUND | OPAQUE | NO_FOCUS);
+  new TextButton(
+      this, {LCD_W / 2 + 65, 10, 50, 30}, ">>",
+      [=]() {
+        int value = field->getValue();
+        if (value < field->getMax())
+          field->setValue(value + 10 * field->getStep());
+        else
+          onKeyError();
+        return 0;
+      },
+      BUTTON_BACKGROUND | OPAQUE | NO_FOCUS);
 
-  new TextButton(this, {LCD_W / 2 - 115, 50, 50, 30}, "MIN",
-                 [=]() {
-                     pushEvent(EVT_VIRTUAL_KEY_MIN);
-                     return 0;
-                 }, BUTTON_BACKGROUND | OPAQUE | NO_FOCUS);
+  new TextButton(
+      this, {LCD_W / 2 - 115, 50, 50, 30}, "MIN",
+      [=]() {
+        field->setValue(field->getMin());
+        return 0;
+      },
+      BUTTON_BACKGROUND | OPAQUE | NO_FOCUS);
 
-  new TextButton(this, {LCD_W / 2 + 65, 50, 50, 30}, "MAX",
-                 [=]() {
-                     pushEvent(EVT_VIRTUAL_KEY_MAX);
-                     return 0;
-                 }, BUTTON_BACKGROUND | OPAQUE | NO_FOCUS);
+  new TextButton(
+      this, {LCD_W / 2 + 65, 50, 50, 30}, "MAX",
+      [=]() {
+        field->setValue(field->getMax());
+        return 0;
+      },
+      BUTTON_BACKGROUND | OPAQUE | NO_FOCUS);
 
-  new TextButton(this, {LCD_W / 2 - 55, 50, 110, 30}, "DEFAULT",
-                 [=]() {
-                     pushEvent(EVT_VIRTUAL_KEY_DEFAULT);
-                     return 0;
-                 }, BUTTON_BACKGROUND | OPAQUE | NO_FOCUS);
+  new TextButton(
+      this, {LCD_W / 2 - 55, 50, 110, 30}, "DEFAULT",
+      [=]() {
+        field->setValue(field->getDefault());
+        return 0;
+      },
+      BUTTON_BACKGROUND | OPAQUE | NO_FOCUS);
 }
 
 void DefaultNumberKeyboard::paint(BitmapBuffer * dc)

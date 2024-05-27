@@ -24,10 +24,10 @@
 
 namespace ui {
 
-class Keyboard: public FormWindow
+class KeyboardBase: public FormWindow
 {
   public:
-    explicit Keyboard(coord_t height):
+    explicit KeyboardBase(coord_t height):
       FormWindow(nullptr, {0, LCD_H - height, LCD_W, height}, OPAQUE)
     {
     }
@@ -40,13 +40,21 @@ class Keyboard: public FormWindow
       }
     }
 
+    virtual void clearField() = 0;
+
   protected:
-    static Keyboard * activeKeyboard;
-    FormField * field = nullptr;
+    static KeyboardBase * activeKeyboard;
     Window * fieldContainer = nullptr;
     coord_t fieldContainerOriginalHeight = 0;
+};
 
-    virtual void setField(FormField * newField)
+template <class T>
+class Keyboard: public KeyboardBase
+{
+  public:
+    using KeyboardBase::KeyboardBase;
+
+    virtual void setField(T * newField)
     {
       if (activeKeyboard) {
         if (activeKeyboard == this)
@@ -65,7 +73,7 @@ class Keyboard: public FormWindow
       field = newField;
     }
 
-    void clearField()
+    void clearField() override
     {
       detach();
       if (fieldContainer) {
@@ -79,12 +87,15 @@ class Keyboard: public FormWindow
       }
     }
 
+  protected:
+    T * field = nullptr;
+
     static Window * getFieldContainer(FormField * field)
     {
       Window * parent = field;
       while (true) {
         parent = parent->getParent();
-        if (!(parent->getWindowFlags() & FORWARD_SCROLL) /*&& tmp->width() == LCD_W && tmp->height() == LCD_H*/) {
+        if (!(parent->getWindowFlags() & FORWARD_SCROLL)) {
           return parent;
         }
       }

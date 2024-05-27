@@ -26,7 +26,7 @@ namespace ui {
 class BaseNumberEdit: public FormField
 {
   public:
-    BaseNumberEdit(Window * parent, const rect_t &rect, int vmin, int vmax,
+    BaseNumberEdit(Window * parent, const rect_t & rect, int vmin, int vmax,
                    std::function<int()> getValue, std::function<void(int)> setValue = nullptr, WindowFlags windowFlags = 0, LcdFlags textFlags = 0):
       FormField(parent, rect, windowFlags, textFlags),
       vmin(vmin),

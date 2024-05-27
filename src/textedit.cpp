@@ -21,6 +21,10 @@
 #include "font.h"
 #include "libopenui_config.h"
 
+#if defined(SOFTWARE_KEYBOARD)
+#include "keyboard_text.h"
+#endif
+
 #if !defined(STR_EDIT)
 #define STR_EDIT "Edit"
 #endif
@@ -36,6 +40,14 @@
 #if defined(CLIPBOARD)
 #include "clipboard.h"
 #endif
+
+void TextEdit::setEditMode(bool newEditMode)
+{
+  FormField::setEditMode(newEditMode);
+  if (editMode) {
+    TextKeyboard::show(this);
+  }
+}
 
 void TextEdit::paint(BitmapBuffer * dc)
 {

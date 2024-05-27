@@ -937,10 +937,10 @@ coord_t BitmapBuffer::drawSizedText(coord_t x, coord_t y, const char * s, uint8_
   return ((flags & RIGHT) ? orig_pos : pos) - offsetX;
 }
 
-coord_t BitmapBuffer::drawNumber(coord_t x, coord_t y, int32_t val, LcdColor color, LcdFlags flags, uint8_t len, const char * prefix, const char * suffix)
+char * numberToString(int32_t val, uint8_t len, const char * prefix, const char * suffix, LcdFlags flags)
 {
-  char str[48+1]; // max=16 for the prefix, 16 chars for the number, 16 chars for the suffix
-  char *s = str + 32;
+  static char str[48+1]; // max=16 for the prefix, 16 chars for the number, 16 chars for the suffix
+  char * s = str + 32;
   *s = '\0';
   int idx = 0;
   int prec = FLAGS_TO_PREC(flags);
@@ -973,6 +973,12 @@ coord_t BitmapBuffer::drawNumber(coord_t x, coord_t y, int32_t val, LcdColor col
   if (suffix) {
     strncpy(&str[32], suffix, 16);
   }
+  return s;
+}
+
+coord_t BitmapBuffer::drawNumber(coord_t x, coord_t y, int32_t val, LcdColor color, LcdFlags flags, uint8_t len, const char * prefix, const char * suffix)
+{
+  auto s = numberToString(val, len, prefix, suffix, flags);
   flags &= ~LEADING0;
   return drawText(x, y, s, color, flags);
 }

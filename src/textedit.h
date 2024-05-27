@@ -21,10 +21,6 @@
 
 #include "form.h"
 
-#if defined(SOFTWARE_KEYBOARD)
-#include "keyboard_text.h"
-#endif
-
 namespace ui {
 
 class TextEdit: public FormField
@@ -52,13 +48,7 @@ class TextEdit: public FormField
     }
 
 #if defined(SOFTWARE_KEYBOARD)
-    void setEditMode(bool newEditMode) override
-    {
-      FormField::setEditMode(newEditMode);
-      if (editMode) {
-        TextKeyboard::show(this);
-      }
-    }
+    void setEditMode(bool newEditMode) override;
 #endif
 
     uint8_t getMaxLength() const

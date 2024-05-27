@@ -20,6 +20,7 @@
 #pragma once
 
 #include "keyboard_base.h"
+#include "textedit.h"
 
 enum SpecialKey
 {
@@ -66,7 +67,7 @@ enum KeyboardLayout
 
 namespace ui {
 
-class TextKeyboard: public Keyboard
+class TextKeyboard: public Keyboard<TextEdit>
 {
   public:
     TextKeyboard();
@@ -90,7 +91,7 @@ class TextKeyboard: public Keyboard
       return _instance;
     }
 
-    static void show(FormField * field)
+    static void show(TextEdit * field)
     {
       if (!_instance) {
         _instance = new TextKeyboard();

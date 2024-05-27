@@ -56,6 +56,11 @@ class StaticText: public Window
       }
     }
 
+    coord_t getContentHeight() const
+    {
+      return getTextLinesCount(text.c_str()) * (getFontHeight(textFlags) + 2);
+    }
+
     void setBackgroundColor(LcdColor color)
     {
       bgColor = color;
@@ -71,9 +76,10 @@ class StaticText: public Window
       textColor = value;
     }
 
-    void setPadding(coord_t newPadding)
+    void setPadding(coord_t horizontalPadding, coord_t verticalPadding)
     {
-      padding = newPadding;
+      this->horizontalPadding = horizontalPadding;
+      this->verticalPadding = verticalPadding;
     }
 
     std::string getText() const
@@ -85,7 +91,18 @@ class StaticText: public Window
     std::string text;
     LcdColor bgColor = 0;
     LcdColor textColor = DEFAULT_COLOR;
-    coord_t padding = 0;
+    coord_t horizontalPadding = 0;
+    coord_t verticalPadding = 0;
+};
+
+class FormStaticText: public StaticText
+{
+  public:
+    FormStaticText(Window * parent, const rect_t & rect, std::string text = "", WindowFlags windowFlags = 0, LcdFlags textFlags = 0):
+      StaticText(parent, rect, std::move(text), windowFlags, textFlags)
+    {
+      setPadding(0, FIELD_PADDING_TOP);
+    }
 };
 
 class Subtitle: public StaticText
@@ -213,6 +230,16 @@ class DynamicText: public StaticText
   protected:
     std::function<std::string()> textHandler;
 };
+
+class FormDynamicText: public DynamicText
+{
+  public:
+   FormDynamicText(Window * parent, const rect_t & rect, std::function<std::string()> textHandler, LcdFlags textFlags = 0):
+    DynamicText(parent, rect, std::move(textHandler), textFlags)
+  {
+    setPadding(FIELD_PADDING_LEFT, FIELD_PADDING_TOP);
+  }
+}; 
 
 template <class T>
 class DynamicNumber: public Window

@@ -20,14 +20,15 @@
 #pragma once
 
 #include "keyboard_base.h"
+#include "numberedit.h"
 
 namespace ui {
 
-class NumberKeyboard: public Keyboard
+class NumberKeyboard: public Keyboard<NumberEdit>
 {
   public:
     NumberKeyboard():
-      Keyboard(NUMBER_KEYBOARD_HEIGHT)
+      Keyboard<NumberEdit>(NUMBER_KEYBOARD_HEIGHT)
     {
     }
 
@@ -53,7 +54,7 @@ class NumberKeyboard: public Keyboard
       _instance = keyboard;
     }
 
-    static void show(FormField * field);
+    static void show(NumberEdit * field);
 
   protected:
     static NumberKeyboard * _instance;

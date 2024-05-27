@@ -59,7 +59,7 @@ class Roller: public Choice
     {
       if (label) {
         // the label is another window, could be changed, but is it needed?
-        new StaticText(parent, {rect.x, rect.y - ROLLER_LINE_HEIGHT, rect.w, ROLLER_LINE_HEIGHT}, label, 0, CENTERED);
+        new FormStaticText(parent, {rect.x, rect.y - ROLLER_LINE_HEIGHT, rect.w, ROLLER_LINE_HEIGHT}, label, 0, CENTERED);
       }
 
       setHeight(ROLLER_LINE_HEIGHT * 3 - 1);

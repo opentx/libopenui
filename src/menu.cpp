@@ -128,8 +128,10 @@ void MenuBody::paint(BitmapBuffer * dc)
   for (unsigned i = 0; i < lines.size(); i++) {
     auto & line = lines[i];
     LcdColor color = MENU_COLOR;
+    LcdColor iconColor = GREY(0xA0);
     if (selectedIndex == (int)i) {
       color = MENU_HIGHLIGHT_COLOR;
+      iconColor = MENU_HIGHLIGHT_COLOR;
       if (MENU_HIGHLIGHT_BGCOLOR != MENU_BGCOLOR) {
         dc->drawPlainFilledRectangle(0, i * MENUS_LINE_HEIGHT, width(), MENUS_LINE_HEIGHT, MENU_HIGHLIGHT_BGCOLOR);
       }
@@ -139,10 +141,18 @@ void MenuBody::paint(BitmapBuffer * dc)
     }
     else {
       const char * text = line.text.data();
-      if (IS_TRANSLATION_RIGHT_TO_LEFT())
+      if (IS_TRANSLATION_RIGHT_TO_LEFT()) {
         dc->drawText(width() - MENUS_HORIZONTAL_PADDING, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - getFontHeight(MENU_FONT)) / 2, text[0] == '\0' ? "---" : text, color, MENU_FONT | RIGHT);
-      else
-        dc->drawText(MENUS_HORIZONTAL_PADDING, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - getFontHeight(MENU_FONT)) / 2, text[0] == '\0' ? "---" : text, color, MENU_FONT);
+      }
+      else {
+        if (line.icon) {
+          dc->drawMask(MENUS_HORIZONTAL_PADDING, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - line.icon->height()) / 2, line.icon, iconColor);
+        }
+        if (displayIcons)
+          dc->drawText(MENUS_HORIZONTAL_PADDING + MENUS_ICON_WIDTH, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - getFontHeight(MENU_FONT)) / 2, text[0] == '\0' ? "---" : text, color, MENU_FONT);
+        else
+          dc->drawText(MENUS_HORIZONTAL_PADDING, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - getFontHeight(MENU_FONT)) / 2, text[0] == '\0' ? "---" : text, color, MENU_FONT);
+      }
     }
 
     Menu * menu = getParentMenu();
@@ -199,9 +209,9 @@ void Menu::setTitle(std::string text)
   updatePosition();
 }
 
-void Menu::addLine(const std::string & text, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
+void Menu::addLine(const std::string & text, const BitmapMask * mask, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
 {
-  content->body.addLine(text, std::move(onPress), std::move(onSelect), std::move(isChecked));
+  content->body.addLine(text, mask, std::move(onPress), std::move(onSelect), std::move(isChecked));
   if (content->width() < MAX_MENUS_WIDTH) {
     auto lineWidth = min(MAX_MENUS_WIDTH, getTextWidth(text.c_str(), 0, MENU_FONT) + 2 * MENUS_HORIZONTAL_PADDING);
     if (lineWidth > content->width()) {

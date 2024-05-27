@@ -38,6 +38,8 @@ constexpr uint8_t STASHED = 0x33;
 #define APPLY_OFFSET() x += this->offsetX; y += this->offsetY
 #define RESTORE_OFFSET()  this->offsetX = offsetX, this->offsetY = offsetY
 
+extern char * numberToString(int32_t val, uint8_t len, const char * prefix, const char * suffix, LcdFlags flags);
+
 typedef uint16_t pixel_t;
 
 enum BitmapFormat

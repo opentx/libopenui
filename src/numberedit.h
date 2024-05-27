@@ -52,7 +52,7 @@ class NumberEdit: public BaseNumberEdit
 
     void setGetStringValueHandler(std::function<std::string(int)> handler)
     {
-      getStringValue = std::move(handler);
+      _getStringValue = std::move(handler);
     }
 
     void setPrefix(std::string value)
@@ -99,13 +99,15 @@ class NumberEdit: public BaseNumberEdit
     void setEditMode(bool newEditMode) override;
 #endif
 
+    std::string getStringValue(int value);
+
   protected:
     std::function<void(BitmapBuffer *, LcdFlags, int)> displayFunction;
     std::string prefix;
     std::string suffix;
     std::string zeroText;
     std::function<bool(int)> isValueAvailable;
-    std::function<std::string(int)> getStringValue;
+    std::function<std::string(int)> _getStringValue;
 #if defined(SOFTWARE_KEYBOARD)
     bool keyboardEnabled = true;
 #endif
