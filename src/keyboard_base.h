@@ -57,8 +57,6 @@ class Keyboard: public KeyboardBase
     virtual void setField(T * newField)
     {
       if (activeKeyboard) {
-        if (activeKeyboard == this)
-          return;
         activeKeyboard->clearField();
       }
       activeKeyboard = this;
@@ -69,7 +67,6 @@ class Keyboard: public KeyboardBase
       fieldContainer->scrollTo(newField);
       fieldContainer->disableScroll();
       invalidate();
-      newField->setEditMode(true);
       field = newField;
     }
 
