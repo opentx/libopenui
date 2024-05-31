@@ -114,16 +114,12 @@ void NumberEdit::onEvent(event_t event)
 #if defined(HARDWARE_TOUCH)
 bool NumberEdit::onTouchEnd(coord_t, coord_t)
 {
-  if (!enabled) {
-    return true;
+  if (enabled) {
+    if (!hasFocus()) {
+      setFocus(SET_FOCUS_DEFAULT);
+    }
+    setEditMode(true);
   }
-
-  if (!hasFocus()) {
-    setFocus(SET_FOCUS_DEFAULT);
-  }
-
-  setEditMode(true);
-
   return true;
 }
 #endif

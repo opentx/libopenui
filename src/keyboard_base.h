@@ -56,18 +56,20 @@ class Keyboard: public KeyboardBase
 
     virtual void setField(T * newField)
     {
-      if (activeKeyboard) {
-        activeKeyboard->clearField();
+      if (field != newField) {
+        if (activeKeyboard) {
+          activeKeyboard->clearField();
+        }
+        activeKeyboard = this;
+        attach(MainWindow::instance());
+        fieldContainer = getFieldContainer(newField);
+        fieldContainerOriginalHeight = fieldContainer->height();
+        fieldContainer->setHeight(fieldContainer->height() - height());
+        fieldContainer->scrollTo(newField);
+        fieldContainer->disableScroll();
+        invalidate();
+        field = newField;
       }
-      activeKeyboard = this;
-      attach(MainWindow::instance());
-      fieldContainer = getFieldContainer(newField);
-      fieldContainerOriginalHeight = fieldContainer->height();
-      fieldContainer->setHeight(fieldContainer->height() - height());
-      fieldContainer->scrollTo(newField);
-      fieldContainer->disableScroll();
-      invalidate();
-      field = newField;
     }
 
     void clearField() override
