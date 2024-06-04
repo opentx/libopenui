@@ -39,7 +39,7 @@ class MainWindow: public Window
   public:
     void deleteLater(bool detach = true, bool trash = true) override // NOLINT(google-default-arguments)
     {
-      if (_deleted)
+      if (deleted())
         return;
 
       Window::deleteLater(detach, trash);

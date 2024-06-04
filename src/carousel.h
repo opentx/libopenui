@@ -59,7 +59,7 @@ class CarouselWindow: public Window
 
     void deleteLater(bool detach = true, bool trash = true) override // NOLINT(google-default-arguments)
     {
-      if (_deleted)
+      if (deleted())
         return;
 
       clear();

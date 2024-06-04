@@ -42,7 +42,7 @@ void Table::Body::checkEvents()
 {
   Window::checkEvents();
 
-  if (_deleted)
+  if (deleted())
     return;
 
   coord_t y = 0;

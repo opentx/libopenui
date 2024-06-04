@@ -427,6 +427,16 @@ class Window
       }
     }
 
+    void incRefcount()
+    {
+      refCount++;
+    }
+
+    uint8_t decRefcount()
+    {
+      return --refCount;
+    }
+
     [[nodiscard]] bool deleted() const
     {
       return _deleted;
@@ -446,6 +456,8 @@ class Window
     WindowFlags windowFlags;
     LcdFlags textFlags;
     bool _deleted = false;
+    uint8_t refCount = 0;
+    
     bool scrollEnabled = true;
 
     static Window * focusWindow;

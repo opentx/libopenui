@@ -57,7 +57,7 @@ Window::~Window()
 
 void Window::deleteLater(bool detach, bool trash)
 {
-  if (_deleted)
+  if (deleted())
     return;
 
   _deleted = true;  
@@ -79,7 +79,7 @@ void Window::deleteLater(bool detach, bool trash)
     closeHandler();
   }
 
-  if (trash) {
+  if (trash && refCount == 0) {
     Window::trash.push_back(this);
   }
 }

@@ -33,7 +33,7 @@ ModalWindow::ModalWindow(Window * parent, bool closeWhenClickOutside):
 
 void ModalWindow::deleteLater(bool detach, bool trash) // NOLINT(google-default-arguments)
 {
-  if (_deleted)
+  if (deleted())
     return;
 
   Layer::pop(this);

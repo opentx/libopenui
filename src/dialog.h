@@ -35,7 +35,7 @@ class DialogWindowContent: public ModalWindowContent
 
     void deleteLater(bool detach = true, bool trash = true) override
     {
-      if (_deleted)
+      if (deleted())
         return;
 
       form.deleteLater(true, false);

@@ -40,7 +40,11 @@ class Layer
     {
       if (!stack.empty()) {
         Layer & parentLayer = stack.back();
-        parentLayer.focus = Window::getFocus();
+        auto focus = Window::getFocus();
+        if (focus) {
+          focus->incRefcount();
+          parentLayer.focus = focus;
+        }
       }
       stack.emplace_back(Layer(window));
 
@@ -63,7 +67,10 @@ class Layer
         if (!stack.empty()) {
           const auto & back = stack.back();
           if (back.focus) {
-            back.focus->setFocus(SET_FOCUS_DEFAULT);
+            if (back.focus->decRefcount() == 0 && back.focus->deleted())
+              delete back.focus;
+            else  
+              back.focus->setFocus(SET_FOCUS_DEFAULT);
           }
         }
 #if defined(DEBUG_WINDOWS)
