@@ -61,6 +61,7 @@ namespace ui {
 class Window
 {
   friend class GridLayout;
+  friend class Layer;
 
   public:
     Window(Window * parent, const rect_t & rect, WindowFlags windowFlags = 0, LcdFlags textFlags = 0);
