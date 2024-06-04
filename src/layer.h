@@ -67,7 +67,7 @@ class Layer
           const auto & back = stack.back();
           if (back.focus) {
             if (back.focus->decRefcount() == 0 && back.focus->deleted())
-              delete back.focus;
+              Window::trash.push_back(back.focus);
             else  
               back.focus->setFocus(SET_FOCUS_DEFAULT);
           }
