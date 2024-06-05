@@ -221,13 +221,27 @@ class Window
       }
     }
 
+    void adjustScrollPositionY()
+    {
+      if (innerHeight <= height()) {
+        setScrollPositionY(0);
+      }
+      else {
+        coord_t maxScrollPosition = innerHeight - height();
+        if (scrollPositionY > maxScrollPosition) {
+          setScrollPositionY(maxScrollPosition);
+        }
+      }
+    }
+
     void setHeight(coord_t value)
     {
       rect.h = max(minHeight, value);
-      if (windowFlags & FORWARD_SCROLL)
+      if (windowFlags & FORWARD_SCROLL) {
         innerHeight = height();
-      else if (innerHeight <= height()) {
-        setScrollPositionY(0);
+      }
+      else {
+        adjustScrollPositionY();
       }
       invalidate();
     }
@@ -336,14 +350,8 @@ class Window
           parent->adjustInnerHeight();
         }
       }
-      else if (height() >= h) {
-        setScrollPositionY(0);
-      }
       else {
-        coord_t maxScrollPosition = h - height();
-        if (scrollPositionY > maxScrollPosition) {
-          setScrollPositionY(maxScrollPosition);
-        }
+        adjustScrollPositionY();
       }
       invalidate();
     }
