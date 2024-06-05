@@ -30,16 +30,6 @@ NumberEdit::NumberEdit(Window * parent, const rect_t & rect, int vmin, int vmax,
 {
 }
 
-std::string NumberEdit::getStringValue(int value)
-{
-  if (value == 0 && !zeroText.empty())
-    return zeroText;
-  else if (_getStringValue)
-    return _getStringValue(value);
-  else
-    return numberToString(value, 0, prefix.c_str(), suffix.c_str(), textFlags);
-}
-
 void NumberEdit::paint(BitmapBuffer * dc)
 {
   FormField::paint(dc);

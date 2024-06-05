@@ -99,7 +99,20 @@ class NumberEdit: public BaseNumberEdit
     void setEditMode(bool newEditMode) override;
 #endif
 
-    std::string getStringValue(int value);
+    std::string getStringValue(int value) const
+    {
+      if (value == 0 && !zeroText.empty())
+        return zeroText;
+      else if (_getStringValue)
+        return _getStringValue(value);
+      else
+        return getDefaultStringValue(value);
+    }
+
+    std::string getDefaultStringValue(int value) const
+    {
+      return numberToString(value, 0, prefix.c_str(), suffix.c_str(), textFlags);
+    }
 
   protected:
     std::function<void(BitmapBuffer *, LcdFlags, int)> displayFunction;
