@@ -81,14 +81,14 @@ class ExpansionPanel: public FormGroup
       return _isOpen;
     }
 
-    virtual void open(bool state = true)
+    virtual void open(bool state = true, bool handler = true)
     {
       if (_isOpen != state) {
         _isOpen = state;
         body->attach(state ? this : nullptr);
         updateHeight();
         invalidate();
-        if (openHandler) {
+        if (handler && openHandler) {
           openHandler(state);
         }
       }
