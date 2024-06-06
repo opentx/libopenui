@@ -88,12 +88,20 @@ class ExpansionPanel: public FormGroup
         body->attach(state ? this : nullptr);
         updateHeight();
         invalidate();
+        if (openHandler) {
+          openHandler(state);
+        }
       }
     }
 
     void setCloseAllowed(bool value = true)
     {
       header->enable(value);
+    }
+
+    void setOpenHandler(std::function<void(bool)> handler)
+    {
+      openHandler = std::move(handler);
     }
 
     void enable(bool value = true)
@@ -128,6 +136,7 @@ class ExpansionPanel: public FormGroup
     bool _isOpen = false;
     ExpansionPanelHeader * header = nullptr;
     FormGroup * body = nullptr;
+    std::function<void(bool)> openHandler;
 };
 
 }
