@@ -78,25 +78,20 @@ class Table: public FormField
         bool valueChanged = false;
     };
 
-    class DynamicStringCell: public Cell
+    class DynamicStringCell: public StringCell
     {
       public:
-        explicit DynamicStringCell(std::function<std::string()> getText):
+        explicit DynamicStringCell(std::function<std::string()> getText, bool strEllipsis = true):
+          StringCell(getText(), strEllipsis),
           getText(std::move(getText))
         {
-        }
-
-        void paint(BitmapBuffer * dc, const rect_t & rect, LcdColor color, LcdFlags flags) override
-        {
-          auto text = getText();
-          dc->drawText(rect.x, rect.y  + (rect.h - getFontHeight(TABLE_BODY_FONT)) / 2, text.c_str(), color, flags);
         }
 
         [[nodiscard]] bool needsInvalidate() override
         {
           auto newText = getText();
-          if (newText != currentText) {
-            currentText = newText;
+          if (newText != value) {
+            value = newText;
             return true;
           }
           else {
@@ -106,7 +101,6 @@ class Table: public FormField
 
       protected:
         std::function<std::string()> getText;
-        std::string currentText;
     };
 
     class CustomCell: public Cell
