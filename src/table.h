@@ -45,14 +45,15 @@ class Table: public FormField
       public:
         StringCell() = default;
 
-        explicit StringCell(std::string value):
-          value(std::move(value))
+        explicit StringCell(std::string value, bool strEllipsis = true):
+          value(std::move(value)),
+          ellipsis(strEllipsis)
         {
         }
 
         void paint(BitmapBuffer * dc, const rect_t & rect, LcdColor color, LcdFlags flags) override
         {
-          dc->drawText(rect.x, rect.y + (rect.h - getFontHeight(TABLE_BODY_FONT)) / 2, value.c_str(), color, flags);
+          dc->drawText(rect.x, rect.y + (rect.h - getFontHeight(TABLE_BODY_FONT)) / 2, ellipsis ? strEllipsis(value, rect.w).c_str() : value.c_str(), color, flags);
         }
 
         [[nodiscard]] bool needsInvalidate() override
@@ -73,6 +74,7 @@ class Table: public FormField
 
       protected:
         std::string value;
+        bool ellipsis;
         bool valueChanged = false;
     };
 
