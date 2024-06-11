@@ -53,7 +53,7 @@ class Table: public FormField
 
         void paint(BitmapBuffer * dc, const rect_t & rect, LcdColor color, LcdFlags flags) override
         {
-          dc->drawText(rect.x, rect.y + (rect.h - getFontHeight(TABLE_BODY_FONT)) / 2, ellipsis ? strEllipsis(value, rect.w).c_str() : value.c_str(), color, flags);
+          dc->drawText(rect.x, rect.y + (rect.h - getFontHeight(TABLE_BODY_FONT)) / 2, ellipsis ? strEllipsis(value, rect.w - COMMON_MARGIN).c_str() : value.c_str(), color, flags);
         }
 
         [[nodiscard]] bool needsInvalidate() override
