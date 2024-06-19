@@ -543,17 +543,19 @@ coord_t Window::adjustHeight()
 
 void Window::moveWindowsTop(coord_t y, coord_t delta) // NOLINT(misc-no-recursion)
 {
-  if (getWindowFlags() & FORWARD_SCROLL) {
-    parent->moveWindowsTop(bottom(), delta);
-  }
-
-  for (auto child: children) {
-    if (child->rect.y >= y) {
-      child->rect.y += delta;
-      invalidate();
+  if (delta != 0) {
+    if (getWindowFlags() & FORWARD_SCROLL) {
+      parent->moveWindowsTop(bottom(), delta);
     }
+
+    for (auto child: children) {
+      if (child->rect.y >= y) {
+        child->rect.y += delta;
+        invalidate();
+      }
+    }
+    setInnerHeight(innerHeight + delta);
   }
-  setInnerHeight(innerHeight + delta);
 }
 
 void Window::invalidate(const rect_t & dirtyRect) // NOLINT(misc-no-recursion)
