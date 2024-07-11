@@ -52,12 +52,24 @@ bool isExtensionMatching(const char * extension, const char * pattern, char * ma
   return false;
 }
 
+bool isRootDir(const char * path)
+{
+  if (!path)
+    return false;
+  auto len = strlen(path);
+  if (len == 0)
+    return false;
+  if (path[len - 1] != '/')
+    return false;
+  return len == 1 || path[len - 2] == ':';
+}
+
 // returns true if current working dir is at the root level
 bool isCwdAtRoot()
 {
   char path[10];
   if (f_getcwd(path, sizeof(path)-1) == FR_OK) {
-    return (strcasecmp("/", path) == 0);
+    return isRootDir(path);
   }
   return false;
 }

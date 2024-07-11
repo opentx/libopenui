@@ -62,7 +62,7 @@ void Window::deleteLater(bool detach, bool trash)
 
   _deleted = true;  
 
-  TRACE_WINDOWS("Delete %p %s", this, getWindowDebugString().c_str());
+  TRACE_WINDOWS("Delete later %p %s", this, getWindowDebugString().c_str());
 
   if (static_cast<Window *>(focusWindow) == static_cast<Window *>(this)) {
     focusWindow = nullptr;
