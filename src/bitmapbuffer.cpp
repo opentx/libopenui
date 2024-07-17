@@ -23,6 +23,8 @@
 #include "libopenui_helpers.h"
 #include "libopenui_file.h"
 #include "font.h"
+#include "file_reader.h"
+#include "unaligned.h"
 
 BitmapBuffer::BitmapBuffer(uint8_t format, uint16_t width, uint16_t height):
   BitmapBufferBase<uint16_t>(format, width, height, nullptr),
@@ -1057,133 +1059,99 @@ BitmapBuffer * BitmapBuffer::loadMaskOnBackground(const char * filename, Color56
 
 BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
 {
-  UINT read;
   uint8_t palette[16];
-  uint8_t bmpBuf[LCD_W]; /* maximum with LCD_W */
-  uint8_t * buf = &bmpBuf[0];
-  auto imgFile = (FIL *)malloc(sizeof(FIL));
-  if (!imgFile)
-    return nullptr;
-
-  FRESULT result = f_open(imgFile, filename, FA_OPEN_EXISTING | FA_READ);
-  if (result != FR_OK) {
-    free(imgFile);
+  
+  auto fileReader = new FileReader(filename);
+  auto dataSize = fileReader->size();
+  if ((int)dataSize > maxSize) {
+    TRACE("load_bmp(%s) malloc refused", filename);
+    delete fileReader;
     return nullptr;
   }
 
-  if (f_size(imgFile) < 14) {
-    f_close(imgFile);
-    free(imgFile);
+  auto data = fileReader->read();
+  if (!data) {
+    TRACE("Bitmap::load(%s) failed: read error", filename);
+    delete fileReader;
     return nullptr;
   }
 
-  result = f_read(imgFile, buf, 14, &read);
-  if (result != FR_OK || read != 14) {
-    f_close(imgFile);
-    free(imgFile);
+  auto buf = data;
+  if (dataSize < 18 || buf[0] != 'B' || buf[1] != 'M') {
+    delete fileReader;
     return nullptr;
   }
 
-  if (buf[0] != 'B' || buf[1] != 'M') {
-    f_close(imgFile);
-    free(imgFile);
-    return nullptr;
-  }
-
-  uint32_t fsize  = *((uint32_t *)&buf[2]);
-  uint32_t hsize  = *((uint32_t *)&buf[10]); /* header size */
-
-  auto len = limit<uint32_t>(4, hsize - 14, 32);
-  result = f_read(imgFile, buf, len, &read);
-  if (result != FR_OK || read != len) {
-    f_close(imgFile);
-    free(imgFile);
-    return nullptr;
-  }
-
-  uint32_t ihsize = *((uint32_t *)&buf[0]); /* extra header size */
+  uint32_t fsize = UNALIGNED_LE32(buf + 2);
+  uint32_t hsize = UNALIGNED_LE32(buf + 10); /* header size */
+  uint32_t ihsize = UNALIGNED_LE32(buf + 14); /* extra header size */
 
   /* invalid extra header size */
   if (ihsize + 14 > hsize) {
-    f_close(imgFile);
-    free(imgFile);
+    delete fileReader;
     return nullptr;
   }
 
   /* sometimes file size is set to some headers size, set a real size in that case */
-  if (fsize == 14 || fsize == ihsize + 14)
-    fsize = f_size(imgFile) - 2;
+  if (fsize == 14 || fsize == ihsize + 14) {
+    fsize = dataSize - 2;
+  }
 
   /* declared file size less than header size */
   if (fsize <= hsize) {
-    f_close(imgFile);
-    free(imgFile);
+    delete fileReader;
     return nullptr;
   }
 
+  buf += 14;
   uint32_t w, h;
 
   switch (ihsize) {
-    case  40: // windib
-    case  56: // windib v3
-    case  64: // OS/2 v2
+    case 40: // windib
+    case 56: // windib v3
+    case 64: // OS/2 v2
     case 108: // windib v4
     case 124: // windib v5
-      w  = *((uint32_t *)&buf[4]);
-      h = *((uint32_t *)&buf[8]);
+      w = UNALIGNED_LE32(buf + 4);
+      h = UNALIGNED_LE32(buf + 8);
       buf += 12;
       break;
-    case  12: // OS/2 v1
-      w  = *((uint16_t *)&buf[4]);
-      h = *((uint16_t *)&buf[6]);
+    case 12: // OS/2 v1
+      w = UNALIGNED_LE16(buf + 4);
+      h = UNALIGNED_LE16(buf + 6);
       buf += 8;
       break;
     default:
-      f_close(imgFile);
-      free(imgFile);
+      delete fileReader;
       return nullptr;
   }
 
-  if (*((uint16_t *)&buf[0]) != 1) { /* planes */
-    f_close(imgFile);
-    free(imgFile);
+  if (UNALIGNED_LE16(buf) != 1) { /* planes */
+    delete fileReader;
     return nullptr;
   }
 
-  uint16_t depth = *((uint16_t *)&buf[2]);
-
-  buf = &bmpBuf[0];
+  uint16_t depth = UNALIGNED_LE16(buf + 2);
 
   if (depth == 4) {
-    if (f_lseek(imgFile, hsize - 64) != FR_OK || f_read(imgFile, buf, 64, &read) != FR_OK || read != 64) {
-      f_close(imgFile);
-      free(imgFile);
-      return nullptr;
-    }
+    buf = data + hsize - 64;
     for (uint8_t i = 0; i < 16; i++) {
-      palette[i] = buf[4*i];
-    }
-  }
-  else {
-    if (f_lseek(imgFile, hsize) != FR_OK) {
-      f_close(imgFile);
-      free(imgFile);
-      return nullptr;
+      palette[i] = buf[4 * i];
     }
   }
 
+  buf = data + hsize;
+
   if (maxSize >= 0 && int(w * h * 2) > maxSize) {
-    TRACE("load_stb(%s) malloc not allowed", filename);
-    f_close(imgFile);
-    free(imgFile);
+    TRACE("load_bmp(%s) malloc refused", filename);
+    delete fileReader;
     return nullptr;
   }
 
   auto bmp = new BitmapBuffer(BMP_RGB565, w, h);
   if (bmp == nullptr || bmp->getData() == nullptr) {
     TRACE("load_bmp(%s) malloc failed", filename);
-    f_close(imgFile);
-    free(imgFile);
+    delete fileReader;
     return nullptr;
   }
 
@@ -1195,17 +1163,12 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
       for (int i = h - 1; i >= 0; i--) {
         pixel_t * dest = bmp->getPixelPtrAbs(0, i);
         for (unsigned int j = 0; j < w; j++) {
-          result = f_read(imgFile, (uint8_t *)dest, 2, &read);
-          if (result != FR_OK || read != 2) {
-            f_close(imgFile);
-            free(imgFile);
-            delete bmp;
-            return nullptr;
-          }
+          *dest = UNALIGNED_LE16(buf);
+          buf += 2;
           dest = bmp->getNextPixel(dest);
         }
         if (w & 1) {
-          f_lseek(imgFile, f_tell(imgFile) + 2);
+          buf += 2;
         }
       }
       break;
@@ -1214,14 +1177,15 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
       for (int i = h - 1; i >= 0; i--) {
         pixel_t * dest = bmp->getPixelPtrAbs(0, i);
         for (unsigned int j = 0; j < w; j++) {
-          uint32_t pixel;
-          result = f_read(imgFile, (uint8_t *)&pixel, 4, &read);
-          if (result != FR_OK || read != 4) {
-            f_close(imgFile);
-            free(imgFile);
-            delete bmp;
-            return nullptr;
-          }
+          uint32_t pixel = UNALIGNED_LE32(buf);
+          buf += 4;
+          // result = f_read(imgFile, (uint8_t *)&pixel, 4, &read);
+          // if (result != FR_OK || read != 4) {
+          //   f_close(imgFile);
+          //   free(imgFile);
+          //   delete bmp;
+          //   return nullptr;
+          // }
           if (hasAlpha) {
             *dest = ARGB4444((pixel >> 24) & 0xFF, (pixel >> 16) & 0xFF, (pixel >> 8) & 0xFF, (pixel >> 0) & 0xFF);
           }
@@ -1250,13 +1214,13 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
     case 4:
       rowSize = ((4*w+31)/32)*4;
       for (int32_t i = h - 1; i >= 0; i--) {
-        result = f_read(imgFile, buf, rowSize, &read);
-        if (result != FR_OK || read != rowSize) {
-          f_close(imgFile);
-          free(imgFile);
-          delete bmp;
-          return nullptr;
-        }
+        // result = f_read(imgFile, buf, rowSize, &read);
+        // if (result != FR_OK || read != rowSize) {
+        //   f_close(imgFile);
+        //   free(imgFile);
+        //   delete bmp;
+        //   return nullptr;
+        // }
         pixel_t * dest = bmp->getPixelPtrAbs(0, i);
         for (uint32_t j = 0; j < w; j++) {
           uint8_t index = (buf[j/2] >> ((j & 1) ? 0 : 4)) & 0x0F;
@@ -1264,29 +1228,19 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
           *dest = RGB565(val, val, val);
           dest = bmp->getNextPixel(dest);
         }
+        buf += rowSize;
       }
       break;
 
     default:
-      f_close(imgFile);
-      free(imgFile);
+      delete fileReader;
       delete bmp;
       return nullptr;
   }
 
-  f_close(imgFile);
-  free(imgFile);
+  delete fileReader;
   return bmp;
 }
-
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_ONLY_PNG
-#define STBI_ONLY_JPEG
-#define STBI_ONLY_BMP
-#define STBI_ONLY_GIF
-#define STBI_NO_STDIO
-#define STBI_NO_HDR
-#define STBI_NO_LINEAR
 
 #define STBI_MALLOC(sz)                     stb_malloc(sz)
 #define STBI_REALLOC_SIZED(p,oldsz,newsz)   stb_realloc(p,oldsz,newsz)
@@ -1315,7 +1269,7 @@ void stb_free(void *ptr)
   free(ptr);
 }
 
-void *stb_realloc(void *ptr, unsigned int oldsz, unsigned int newsz)
+void * stb_realloc(void *ptr, unsigned int oldsz, unsigned int newsz)
 {
 #if defined(STB_MALLOC_MAXSIZE)
   if (newsz > STB_MALLOC_MAXSIZE) {
@@ -1323,7 +1277,7 @@ void *stb_realloc(void *ptr, unsigned int oldsz, unsigned int newsz)
     return nullptr;
   }
 #endif
-  void * res =  realloc(ptr, newsz);
+  void * res = realloc(ptr, newsz);
   TRACE_STB_MALLOC("realloc %p, %d -> %d = %p", ptr, oldsz, newsz, res);
   return res;
 }
@@ -1331,13 +1285,11 @@ void *stb_realloc(void *ptr, unsigned int oldsz, unsigned int newsz)
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #undef __I
+#define STBI_ONLY_PNG
+#define STBI_ONLY_JPEG
+#define STBI_NO_STDIO
 #define STBI_NO_HDR
-#define STBI_NO_PIC
-#define STBI_NO_GIF
-#define STBI_NO_PNM
-#define STBI_NO_PSD
-#define STBI_NO_TGA
-#define STBI_NO_BMP
+#define STBI_NO_LINEAR
 #define STB_IMAGE_IMPLEMENTATION
 #include "thirdparty/stb/stb_image.h"
 
@@ -1393,12 +1345,12 @@ BitmapBuffer * BitmapBuffer::load_stb(const char * filename, int maxSize)
   free(imgFile);
 
   if (!img) {
-    TRACE("load_stb(%s) failed: %s", filename, stbi_failure_reason());
+    TRACE("Bitmap::load(%s) failed: %s", filename, stbi_failure_reason());
     return nullptr;
   }
 
   if (maxSize >= 0 && w * h * 2 > maxSize) {
-    TRACE("load_stb(%s) malloc not allowed", filename);
+    TRACE("Bitmap::load(%s) malloc not allowed", filename);
     stbi_image_free(img);
     return nullptr;
   }
@@ -1406,7 +1358,7 @@ BitmapBuffer * BitmapBuffer::load_stb(const char * filename, int maxSize)
   // convert to RGB565 or ARGB4444 format
   auto bmp = new BitmapBuffer(n == 4 ? BMP_ARGB4444 : BMP_RGB565, w, h);
   if (bmp == nullptr || !bmp->isValid()) {
-    TRACE("load_stb(%s) malloc failed", filename);
+    TRACE("Bitmap::load(%s) malloc failed", filename);
     stbi_image_free(img);
     return nullptr;
   }
