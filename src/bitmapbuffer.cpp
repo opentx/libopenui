@@ -1025,11 +1025,9 @@ BitmapBuffer * BitmapBuffer::load(const char * filename, int maxSize)
     if (!strcmp(ext, ".bmp"))
       return load_bmp(filename, maxSize);
     else if (!strcmp(ext, ".png"))
-      return load_png(filename);
-//    else
-//      return load_jpg(filename, maxSize);
+      return load_png(filename, int maxSize);
   }
-  return nullptr;
+  return load_stb(filename, maxSize);;
 }
 
 BitmapMask * BitmapMask::load(const char * filename, int maxSize)
@@ -1247,6 +1245,178 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
   return bmp;
 }
 
+#define STBI_MALLOC(sz)                     stb_malloc(sz)
+#define STBI_REALLOC_SIZED(p,oldsz,newsz)   stb_realloc(p,oldsz,newsz)
+#define STBI_FREE(p)                        stb_free(p)
+
+#if !defined(TRACE_STB_MALLOC)
+#define TRACE_STB_MALLOC(...)
+#endif
+
+void * stb_malloc(unsigned int size)
+{
+#if defined(STB_MALLOC_MAXSIZE)
+  if (size > STB_MALLOC_MAXSIZE) {
+    TRACE("malloc size %d refused", size);
+    return nullptr;
+  }
+#endif
+  void * res = malloc(size);
+  TRACE_STB_MALLOC("malloc %d = %p", size, res);
+  return res;
+}
+
+void stb_free(void *ptr)
+{
+  TRACE_STB_MALLOC("free %p", ptr);
+  free(ptr);
+}
+
+void * stb_realloc(void *ptr, unsigned int oldsz, unsigned int newsz)
+{
+#if defined(STB_MALLOC_MAXSIZE)
+  if (newsz > STB_MALLOC_MAXSIZE) {
+    TRACE("realloc size %d refused", newsz);
+    return nullptr;
+  }
+#endif
+  void * res = realloc(ptr, newsz);
+  TRACE_STB_MALLOC("realloc %p, %d -> %d = %p", ptr, oldsz, newsz, res);
+  return res;
+}
+
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#undef __I
+#define STBI_ONLY_PNG
+#define STBI_ONLY_JPEG
+#define STBI_NO_STDIO
+#define STBI_NO_HDR
+#define STBI_NO_LINEAR
+#define STB_IMAGE_IMPLEMENTATION
+#include "thirdparty/stb/stb_image.h"
+
+// fill 'data' with 'size' bytes.  return number of bytes actually read
+int stbc_read(void *user, char * data, int size)
+{
+  FIL * fp = (FIL *)user;
+  UINT br = 0;
+  FRESULT res = f_read(fp, data, size, &br);
+  if (res == FR_OK) {
+    return (int)br;
+  }
+  return 0;
+}
+
+// skip the next 'n' bytes, or 'unget' the last -n bytes if negative
+void stbc_skip(void *user, int n)
+{
+  FIL * fp = (FIL *)user;
+  f_lseek(fp, f_tell(fp) + n);
+}
+
+// returns nonzero if we are at end of file/data
+int stbc_eof(void *user)
+{
+  FIL * fp = (FIL *)user;
+  int res = f_eof(fp);
+  return res;
+}
+
+// callbacks for stb-image
+const stbi_io_callbacks stbCallbacks = {
+  stbc_read,
+  stbc_skip,
+  stbc_eof
+};
+
+BitmapBuffer * BitmapBuffer::load_stb(const char * filename, int maxSize)
+{
+  auto imgFile = (FIL *)malloc(sizeof(FIL));
+  if (!imgFile)
+    return nullptr;
+
+  FRESULT result = f_open(imgFile, filename, FA_OPEN_EXISTING | FA_READ);
+  if (result != FR_OK) {
+    free(imgFile);
+    return nullptr;
+  }
+
+  int w, h, n;
+  unsigned char * img = stbi_load_from_callbacks(&stbCallbacks, imgFile, &w, &h, &n, 4);
+  f_close(imgFile);
+  free(imgFile);
+
+  if (!img) {
+    TRACE("Bitmap::load(%s) failed: %s", filename, stbi_failure_reason());
+    return nullptr;
+  }
+
+  if (maxSize >= 0 && w * h * 2 > maxSize) {
+    TRACE("Bitmap::load(%s) malloc not allowed", filename);
+    stbi_image_free(img);
+    return nullptr;
+  }
+
+  // convert to RGB565 or ARGB4444 format
+  auto bmp = new BitmapBuffer(n == 4 ? BMP_ARGB4444 : BMP_RGB565, w, h);
+  if (bmp == nullptr || !bmp->isValid()) {
+    TRACE("Bitmap::load(%s) malloc failed", filename);
+    stbi_image_free(img);
+    return nullptr;
+  }
+
+#if 0
+  DMABitmapConvert(bmp->data, img, w, h, n == 4 ? DMA2D_ARGB4444 : DMA2D_RGB565);
+#elif LCD_ORIENTATION == 270
+  const uint8_t * p = img;
+  if (n == 4) {
+    for (int row = 0; row < h; ++row) {
+      pixel_t * dest = bmp->getPixelPtrAbs(0, row);
+      for (int col = 0; col < w; ++col) {
+        *dest = ARGB4444(p[3], p[0], p[1], p[2]);
+        dest += bmp->height();
+        p += 4;
+      }
+    }
+  }
+  else {
+    for (int row = 0; row < h; ++row) {
+      pixel_t * dest = bmp->getPixelPtrAbs(0, row);
+      for (int col = 0; col < w; ++col) {
+        *dest = RGB565(p[0], p[1], p[2]);
+        dest += bmp->height();
+        p += 4;
+      }
+    }
+  }
+#else
+  pixel_t * dest = bmp->getPixelPtrAbs(0, 0);
+  const uint8_t * p = img;
+  if (n == 4) {
+    for (int row = 0; row < h; ++row) {
+      for (int col = 0; col < w; ++col) {
+        *dest = ARGB4444(p[3], p[0], p[1], p[2]);
+        dest = bmp->getNextPixel(dest);
+        p += 4;
+      }
+    }
+  }
+  else {
+    for (int row = 0; row < h; ++row) {
+      for (int col = 0; col < w; ++col) {
+        *dest = RGB565(p[0], p[1], p[2]);
+        dest = bmp->getNextPixel(dest);
+        p += 4;
+      }
+    }
+  }
+#endif
+
+  stbi_image_free(img);
+  return bmp;
+}
+
 #include "thirdparty/libspng/spng.h"
 
 static int fatfs_file_read_fn(spng_ctx *ctx, void *user, void *data, size_t n)
@@ -1262,7 +1432,7 @@ static int fatfs_file_read_fn(spng_ctx *ctx, void *user, void *data, size_t n)
   }
 }
 
-BitmapBuffer * BitmapBuffer::load_png(const char * filename)
+BitmapBuffer * BitmapBuffer::load_png(const char * filename, int maxSize = -1)
 {
   FRESULT result = f_open(&imgFile, filename, FA_OPEN_EXISTING | FA_READ);
   if (result != FR_OK) {
