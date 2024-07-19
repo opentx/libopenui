@@ -1293,56 +1293,26 @@ void * stb_realloc(void *ptr, unsigned int oldsz, unsigned int newsz)
 #define STB_IMAGE_IMPLEMENTATION
 #include "thirdparty/stb/stb_image.h"
 
-// fill 'data' with 'size' bytes.  return number of bytes actually read
-int stbc_read(void *user, char * data, int size)
-{
-  FIL * fp = (FIL *)user;
-  UINT br = 0;
-  FRESULT res = f_read(fp, data, size, &br);
-  if (res == FR_OK) {
-    return (int)br;
-  }
-  return 0;
-}
-
-// skip the next 'n' bytes, or 'unget' the last -n bytes if negative
-void stbc_skip(void *user, int n)
-{
-  FIL * fp = (FIL *)user;
-  f_lseek(fp, f_tell(fp) + n);
-}
-
-// returns nonzero if we are at end of file/data
-int stbc_eof(void *user)
-{
-  FIL * fp = (FIL *)user;
-  int res = f_eof(fp);
-  return res;
-}
-
-// callbacks for stb-image
-const stbi_io_callbacks stbCallbacks = {
-  stbc_read,
-  stbc_skip,
-  stbc_eof
-};
-
 BitmapBuffer * BitmapBuffer::load_stb(const char * filename, int maxSize)
 {
-  auto imgFile = (FIL *)malloc(sizeof(FIL));
-  if (!imgFile)
+  auto fileReader = new FileReader(filename);
+  auto dataSize = fileReader->size();
+  if (maxSize >= 0 && (int)dataSize > maxSize) {
+    TRACE("Bitmap::load(%s) failed: malloc refused", filename);
+    delete fileReader;
     return nullptr;
+  }
 
-  FRESULT result = f_open(imgFile, filename, FA_OPEN_EXISTING | FA_READ);
-  if (result != FR_OK) {
-    free(imgFile);
+  auto data = fileReader->read();
+  if (!data) {
+    TRACE("Bitmap::load(%s) failed: read error", filename);
+    delete fileReader;
     return nullptr;
   }
 
   int w, h, n;
-  unsigned char * img = stbi_load_from_callbacks(&stbCallbacks, imgFile, &w, &h, &n, 4);
-  f_close(imgFile);
-  free(imgFile);
+  unsigned char * img = stbi_load_from_memory(data, dataSize, &w, &h, &n, 4);
+  delete fileReader;
 
   if (!img) {
     TRACE("Bitmap::load(%s) failed: %s", filename, stbi_failure_reason());

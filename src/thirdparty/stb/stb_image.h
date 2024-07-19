@@ -726,40 +726,40 @@ typedef struct
    stbi__uint32 img_x, img_y;
    int img_n, img_out_n;
 
-   stbi_io_callbacks io;
-   void *io_user_data;
+   // stbi_io_callbacks io;
+   // void *io_user_data;
 
-   int read_from_callbacks;
-   int buflen;
-   stbi_uc buffer_start[128];
+   // int read_from_callbacks;
+   // int buflen;
+   // stbi_uc buffer_start[1024];
 
    stbi_uc *img_buffer, *img_buffer_end;
    stbi_uc *img_buffer_original, *img_buffer_original_end;
 } stbi__context;
 
 
-static void stbi__refill_buffer(stbi__context *s);
+// static void stbi__refill_buffer(stbi__context *s);
 
 // initialize a memory-decode context
 static void stbi__start_mem(stbi__context *s, stbi_uc const *buffer, int len)
 {
-   s->io.read = NULL;
-   s->read_from_callbacks = 0;
+   // s->io.read = NULL;
+   // s->read_from_callbacks = 0;
    s->img_buffer = s->img_buffer_original = (stbi_uc *) buffer;
    s->img_buffer_end = s->img_buffer_original_end = (stbi_uc *) buffer+len;
 }
 
 // initialize a callback-based context
-static void stbi__start_callbacks(stbi__context *s, stbi_io_callbacks *c, void *user)
-{
-   s->io = *c;
-   s->io_user_data = user;
-   s->buflen = sizeof(s->buffer_start);
-   s->read_from_callbacks = 1;
-   s->img_buffer_original = s->buffer_start;
-   stbi__refill_buffer(s);
-   s->img_buffer_original_end = s->img_buffer_end;
-}
+// static void stbi__start_callbacks(stbi__context *s, stbi_io_callbacks *c, void *user)
+// {
+//    s->io = *c;
+//    s->io_user_data = user;
+//    // s->buflen = sizeof(s->buffer_start);
+//    s->read_from_callbacks = 1;
+//    s->img_buffer_original = s->buffer_start;
+//    stbi__refill_buffer(s);
+//    s->img_buffer_original_end = s->img_buffer_end;
+// }
 
 #ifndef STBI_NO_STDIO
 
@@ -1275,12 +1275,12 @@ STBIDEF stbi_us *stbi_load_16_from_memory(stbi_uc const *buffer, int len, int *x
    return stbi__load_and_postprocess_16bit(&s,x,y,channels_in_file,desired_channels);
 }
 
-STBIDEF stbi_us *stbi_load_16_from_callbacks(stbi_io_callbacks const *clbk, void *user, int *x, int *y, int *channels_in_file, int desired_channels)
-{
-   stbi__context s;
-   stbi__start_callbacks(&s, (stbi_io_callbacks *)clbk, user);
-   return stbi__load_and_postprocess_16bit(&s,x,y,channels_in_file,desired_channels);
-}
+// STBIDEF stbi_us *stbi_load_16_from_callbacks(stbi_io_callbacks const *clbk, void *user, int *x, int *y, int *channels_in_file, int desired_channels)
+// {
+//    stbi__context s;
+//    stbi__start_callbacks(&s, (stbi_io_callbacks *)clbk, user);
+//    return stbi__load_and_postprocess_16bit(&s,x,y,channels_in_file,desired_channels);
+// }
 
 STBIDEF stbi_uc *stbi_load_from_memory(stbi_uc const *buffer, int len, int *x, int *y, int *comp, int req_comp)
 {
@@ -1289,12 +1289,14 @@ STBIDEF stbi_uc *stbi_load_from_memory(stbi_uc const *buffer, int len, int *x, i
    return stbi__load_and_postprocess_8bit(&s,x,y,comp,req_comp);
 }
 
-STBIDEF stbi_uc *stbi_load_from_callbacks(stbi_io_callbacks const *clbk, void *user, int *x, int *y, int *comp, int req_comp)
-{
-   stbi__context s;
-   stbi__start_callbacks(&s, (stbi_io_callbacks *) clbk, user);
-   return stbi__load_and_postprocess_8bit(&s,x,y,comp,req_comp);
-}
+// STBIDEF stbi_uc *stbi_load_from_callbacks(stbi_io_callbacks const *clbk, void *user, int *x, int *y, int *comp, int req_comp)
+// {
+//    stbi__context * s = (stbi__context *)stbi__malloc(sizeof(stbi__context));
+//    stbi__start_callbacks(s, (stbi_io_callbacks *) clbk, user);
+//    stbi_uc * result = stbi__load_and_postprocess_8bit(s,x,y,comp,req_comp);
+//    free(s);
+//    return result;
+// }
 
 #ifndef STBI_NO_GIF
 STBIDEF stbi_uc *stbi_load_gif_from_memory(stbi_uc const *buffer, int len, int **delays, int *x, int *y, int *z, int *comp, int req_comp)
@@ -1450,41 +1452,41 @@ enum
    STBI__SCAN_header
 };
 
-static void stbi__refill_buffer(stbi__context *s)
-{
-   int n = (s->io.read)(s->io_user_data,(char*)s->buffer_start,s->buflen);
-   if (n == 0) {
-      // at end of file, treat same as if from memory, but need to handle case
-      // where s->img_buffer isn't pointing to safe memory, e.g. 0-byte file
-      s->read_from_callbacks = 0;
-      s->img_buffer = s->buffer_start;
-      s->img_buffer_end = s->buffer_start+1;
-      *s->img_buffer = 0;
-   } else {
-      s->img_buffer = s->buffer_start;
-      s->img_buffer_end = s->buffer_start + n;
-   }
-}
+// static void stbi__refill_buffer(stbi__context *s)
+// {
+//    int n = (s->io.read)(s->io_user_data,(char*)s->buffer_start,sizeof(s->buffer_start));
+//    if (n == 0) {
+//       // at end of file, treat same as if from memory, but need to handle case
+//       // where s->img_buffer isn't pointing to safe memory, e.g. 0-byte file
+//       s->read_from_callbacks = 0;
+//       s->img_buffer = s->buffer_start;
+//       s->img_buffer_end = s->buffer_start+1;
+//       *s->img_buffer = 0;
+//    } else {
+//       s->img_buffer = s->buffer_start;
+//       s->img_buffer_end = s->buffer_start + n;
+//    }
+// }
 
 stbi_inline static stbi_uc stbi__get8(stbi__context *s)
 {
    if (s->img_buffer < s->img_buffer_end)
       return *s->img_buffer++;
-   if (s->read_from_callbacks) {
-      stbi__refill_buffer(s);
-      return *s->img_buffer++;
-   }
+   // if (s->read_from_callbacks) {
+   //    stbi__refill_buffer(s);
+   //    return *s->img_buffer++;
+   // }
    return 0;
 }
 
 stbi_inline static int stbi__at_eof(stbi__context *s)
 {
-   if (s->io.read) {
-      if (!(s->io.eof)(s->io_user_data)) return 0;
-      // if feof() is true, check if buffer = end
-      // special case: we've only got the special 0 character at the end
-      if (s->read_from_callbacks == 0) return 1;
-   }
+   // if (s->io.read) {
+   //    if (!(s->io.eof)(s->io_user_data)) return 0;
+   //    // if feof() is true, check if buffer = end
+   //    // special case: we've only got the special 0 character at the end
+   //    if (s->read_from_callbacks == 0) return 1;
+   // }
 
    return s->img_buffer >= s->img_buffer_end;
 }
@@ -1495,32 +1497,32 @@ static void stbi__skip(stbi__context *s, int n)
       s->img_buffer = s->img_buffer_end;
       return;
    }
-   if (s->io.read) {
-      int blen = (int) (s->img_buffer_end - s->img_buffer);
-      if (blen < n) {
-         s->img_buffer = s->img_buffer_end;
-         (s->io.skip)(s->io_user_data, n - blen);
-         return;
-      }
-   }
+   // if (s->io.read) {
+   //    int blen = (int) (s->img_buffer_end - s->img_buffer);
+   //    if (blen < n) {
+   //       s->img_buffer = s->img_buffer_end;
+   //       (s->io.skip)(s->io_user_data, n - blen);
+   //       return;
+   //    }
+   // }
    s->img_buffer += n;
 }
 
 static int stbi__getn(stbi__context *s, stbi_uc *buffer, int n)
 {
-   if (s->io.read) {
-      int blen = (int) (s->img_buffer_end - s->img_buffer);
-      if (blen < n) {
-         int res, count;
+   // if (s->io.read) {
+   //    int blen = (int) (s->img_buffer_end - s->img_buffer);
+   //    if (blen < n) {
+   //       int res, count;
 
-         memcpy(buffer, s->img_buffer, blen);
+   //       memcpy(buffer, s->img_buffer, blen);
 
-         count = (s->io.read)(s->io_user_data, (char*) buffer + blen, n - blen);
-         res = (count == (n-blen));
-         s->img_buffer = s->img_buffer_end;
-         return res;
-      }
-   }
+   //       count = (s->io.read)(s->io_user_data, (char*) buffer + blen, n - blen);
+   //       res = (count == (n-blen));
+   //       s->img_buffer = s->img_buffer_end;
+   //       return res;
+   //    }
+   // }
 
    if (s->img_buffer+n <= s->img_buffer_end) {
       memcpy(buffer, s->img_buffer, n);
@@ -5246,7 +5248,7 @@ static void *stbi__bmp_load(stbi__context *s, int *x, int *y, int *comp, int req
          psize = (info.offset - info.extra_read - info.hsz) >> 2;
    }
    if (psize == 0) {
-      STBI_ASSERT(info.offset == (s->img_buffer - s->buffer_start));
+      // STBI_ASSERT(info.offset == (s->img_buffer - s->buffer_start));
    }
 
    if (info.bpp == 24 && ma == 0xff000000)
@@ -7320,12 +7322,12 @@ STBIDEF int stbi_info_from_memory(stbi_uc const *buffer, int len, int *x, int *y
    return stbi__info_main(&s,x,y,comp);
 }
 
-STBIDEF int stbi_info_from_callbacks(stbi_io_callbacks const *c, void *user, int *x, int *y, int *comp)
-{
-   stbi__context s;
-   stbi__start_callbacks(&s, (stbi_io_callbacks *) c, user);
-   return stbi__info_main(&s,x,y,comp);
-}
+// STBIDEF int stbi_info_from_callbacks(stbi_io_callbacks const *c, void *user, int *x, int *y, int *comp)
+// {
+//    stbi__context s;
+//    stbi__start_callbacks(&s, (stbi_io_callbacks *) c, user);
+//    return stbi__info_main(&s,x,y,comp);
+// }
 
 STBIDEF int stbi_is_16_bit_from_memory(stbi_uc const *buffer, int len)
 {
@@ -7334,12 +7336,12 @@ STBIDEF int stbi_is_16_bit_from_memory(stbi_uc const *buffer, int len)
    return stbi__is_16_main(&s);
 }
 
-STBIDEF int stbi_is_16_bit_from_callbacks(stbi_io_callbacks const *c, void *user)
-{
-   stbi__context s;
-   stbi__start_callbacks(&s, (stbi_io_callbacks *) c, user);
-   return stbi__is_16_main(&s);
-}
+// STBIDEF int stbi_is_16_bit_from_callbacks(stbi_io_callbacks const *c, void *user)
+// {
+//    stbi__context s;
+//    stbi__start_callbacks(&s, (stbi_io_callbacks *) c, user);
+//    return stbi__is_16_main(&s);
+// }
 
 #endif // STB_IMAGE_IMPLEMENTATION
 
