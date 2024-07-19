@@ -423,33 +423,37 @@ static void spng__zfree(void *opqaue, void *ptr)
     spng__free(ctx, ptr);
 }
 
-static inline uint16_t read_u16(const void *_data)
-{
-    const unsigned char *data = _data;
+#define read_u16(addr) UNALIGNED_BE16(addr)
 
-    return (data[0] & 0xFFU) << 8 | (data[1] & 0xFFU);
-}
+// static inline uint16_t read_u16(const void *_data)
+// {
+//     const unsigned char *data = _data;
 
-static inline uint32_t read_u32(const void *_data)
-{
-    const unsigned char *data = _data;
+//     return (data[0] & 0xFFU) << 8 | (data[1] & 0xFFU);
+// }
 
-    return (data[0] & 0xFFUL) << 24 | (data[1] & 0xFFUL) << 16 |
-           (data[2] & 0xFFUL) << 8  | (data[3] & 0xFFUL);
-}
+#define read_u32(addr) UNALIGNED_BE32(addr)
+// static inline uint32_t read_u32(const void *_data)
+// {
+//     const uint8_t * data = _data;
 
-static inline int32_t read_s32(const void *_data)
-{
-    const unsigned char *data = _data;
+//     return (data[0] & 0xFFUL) << 24 | (data[1] & 0xFFUL) << 16 |
+//            (data[2] & 0xFFUL) << 8  | (data[3] & 0xFFUL);
+// }
 
-    int32_t ret;
-    uint32_t val = (data[0] & 0xFFUL) << 24 | (data[1] & 0xFFUL) << 16 |
-                   (data[2] & 0xFFUL) << 8  | (data[3] & 0xFFUL);
+#define read_s32(addr) UNALIGNED_BE32(addr)
+// static inline int32_t read_s32(const void *_data)
+// {
+//     const unsigned char *data = _data;
 
-    memcpy(&ret, &val, 4);
+//     int32_t ret;
+//     uint32_t val = (data[0] & 0xFFUL) << 24 | (data[1] & 0xFFUL) << 16 |
+//                    (data[2] & 0xFFUL) << 8  | (data[3] & 0xFFUL);
 
-    return ret;
-}
+//     memcpy(&ret, &val, 4);
+
+//     return ret;
+// }
 
 static inline void write_u16(void *dest, uint16_t x)
 {
@@ -916,6 +920,16 @@ static inline int read_and_check_crc(spng_ctx *ctx)
     return 0;
 }
 
+static void UNALIGNED_MEMCPY(void * dst, const void * src, int len)
+{
+    uint8_t * _dst = (uint8_t *)dst;
+    const uint8_t * _src = (const uint8_t *)src;
+
+    for (int i = 0; i < len; i++) {
+        _dst[i] = _src[i];
+    }
+}
+
 /* Read and validate the current chunk's crc and the next chunk header */
 static inline int read_header(spng_ctx *ctx)
 {
@@ -941,7 +955,7 @@ static inline int read_header(spng_ctx *ctx)
 
     chunk.length = read_u32(ctx->data);
 
-    memcpy(&chunk.type, ctx->data + 4, 4);
+    UNALIGNED_MEMCPY(&chunk.type, ctx->data + 4, 4);
 
     if(chunk.length > png_u32max) return SPNG_ECHUNK_STDLEN;
 

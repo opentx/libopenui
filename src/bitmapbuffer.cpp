@@ -1025,7 +1025,7 @@ BitmapBuffer * BitmapBuffer::load(const char * filename, int maxSize)
     if (!strcmp(ext, ".bmp"))
       return load_bmp(filename, maxSize);
     else if (!strcmp(ext, ".png"))
-      return load_png(filename, int maxSize);
+      return load_png(filename, maxSize);
   }
   return load_stb(filename, maxSize);;
 }
@@ -1066,8 +1066,8 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
   
   auto fileReader = new FileReader(filename);
   auto dataSize = fileReader->size();
-  if ((int)dataSize > maxSize) {
-    TRACE("load_bmp(%s) malloc refused", filename);
+  if (maxSize > 0 && (int)dataSize > maxSize) {
+    TRACE("BitmapBuffer::load(%s) malloc refused", filename);
     delete fileReader;
     return nullptr;
   }
@@ -1419,51 +1419,56 @@ BitmapBuffer * BitmapBuffer::load_stb(const char * filename, int maxSize)
 
 #include "thirdparty/libspng/spng.h"
 
-static int fatfs_file_read_fn(spng_ctx *ctx, void *user, void *data, size_t n)
+BitmapBuffer * BitmapBuffer::load_png(const char * filename, int maxSize)
 {
-  FIL * fp = (FIL *)user;
-  UINT br = 0;
-  FRESULT res = f_read(fp, data, n, &br);
-  if (res == FR_OK) {
-    return n == br ? 0 : SPNG_IO_EOF;
+  auto fileReader = new FileReader(filename);
+  auto dataSize = fileReader->size();
+  if (maxSize > 0 && (int)dataSize > maxSize) {
+    TRACE("Bitmap::load(%s) failed: malloc refused", filename);
+    delete fileReader;
+    return nullptr;
   }
-  else {
-    return SPNG_IO_ERROR;
-  }
-}
 
-BitmapBuffer * BitmapBuffer::load_png(const char * filename, int maxSize = -1)
-{
-  FRESULT result = f_open(&imgFile, filename, FA_OPEN_EXISTING | FA_READ);
-  if (result != FR_OK) {
-    TRACE("load_png: f_open failed");
+  auto data = fileReader->read();
+  if (!data) {
+    TRACE("Bitmap::load(%s) failed: read error", filename);
+    delete fileReader;
     return nullptr;
   }
 
   auto ctx = spng_ctx_new(0);
   if (!ctx) {
-    TRACE("load_png: spng_ctx_new failed");
+    TRACE("Bitmap::load(%s) failed: spng_ctx_new(0) failed", filename);
+    delete fileReader;
     return nullptr;
   }
 
-  spng_set_crc_action(ctx, SPNG_CRC_USE, SPNG_CRC_USE);
+  spng_set_png_buffer(ctx, data, dataSize);
+
+  // Ignore and don't calculate chunk CRC's
+  // spng_set_crc_action(ctx, SPNG_CRC_USE, SPNG_CRC_USE);
+
+  // Set memory usage limits for storing standard and unknown chunks
   size_t limit = 1024 * 32;
   spng_set_chunk_limits(ctx, limit, limit);
-  spng_set_png_stream(ctx, fatfs_file_read_fn, &imgFile);
 
   spng_ihdr ihdr;
   auto r = spng_get_ihdr(ctx, &ihdr);
   if (r) {
-    TRACE("load_png: spng_get_ihdr failed");
+    TRACE("Bitmap::load(%s) failed: spng_get_ihdr failed", filename);
     spng_ctx_free(ctx);
+    delete fileReader;
     return nullptr;
   }
+
+  // TRACE("load_png %s: %ux%u %d", filename, ihdr.width, ihdr.height, ihdr.color_type);
 
   spng_plte plte;
   r = spng_get_plte(ctx, &plte);
   if (r && r != SPNG_ECHUNKAVAIL) {
-    TRACE("load_png: spng_get_plte failed %d", r);
+    TRACE("Bitmap::load(%s) failed: spng_get_plte failed (error=%d)", filename, r);
     spng_ctx_free(ctx);
+    delete fileReader;
     return nullptr;
   }
 
@@ -1472,24 +1477,42 @@ BitmapBuffer * BitmapBuffer::load_png(const char * filename, int maxSize = -1)
   size_t out_size, out_width;
   r = spng_decoded_image_size(ctx, fmt, &out_size);
   if (r) {
-    TRACE("load_png: spng_decoded_image_size failed");
+    TRACE("Bitmap::load(%s) failed: spng_decoded_image_size failed", filename);
     spng_ctx_free(ctx);
+    delete fileReader;
     return nullptr;
   }
 
-  TRACE("load_png %s: %ux%u %d", filename, ihdr.width, ihdr.height, ihdr.color_type);
+  uint8_t * out = (uint8_t *)malloc(out_size);
+  if (!out) {
+    TRACE("Bitmap::load(%s) failed: malloc error", filename);
+    spng_ctx_free(ctx);
+    delete fileReader;
+    return nullptr;
+  }
+
+  r = spng_decode_image(ctx, out, out_size, fmt, 0);
+  if (r) {
+    TRACE("Bitmap::load(%s) failed: spng_decode_image error", filename);
+    spng_ctx_free(ctx);
+    delete fileReader;
+    return nullptr;
+  }
 
   auto * bmp = new BitmapBuffer(fmt == SPNG_FMT_RGBA8 ? BMP_ARGB4444 : BMP_RGB565, ihdr.width, ihdr.height);
   if (!bmp) {
-    TRACE("load_png() bitmap alloc failed");
+    TRACE("Bitmap::load(%s) failed: bitmap alloc error", filename);
     spng_ctx_free(ctx);
+    delete fileReader;
     return nullptr;
   }
 
-  r = spng_decode_image(ctx, nullptr, 0, fmt, SPNG_DECODE_PROGRESSIVE | SPNG_DECODE_TRNS);
+#if 0
+  r = spng_decode_image(ctx, nullptr,  0, fmt, SPNG_DECODE_PROGRESSIVE | SPNG_DECODE_TRNS);
   if (r) {
-    TRACE("spng_decode_image failed");
+    TRACE("Bitmap::load(%s) failed: spng_decode_image error", filename);
     spng_ctx_free(ctx);
+    delete fileReader;
     return nullptr;
   }
 
@@ -1508,21 +1531,70 @@ BitmapBuffer * BitmapBuffer::load_png(const char * filename, int maxSize = -1)
     const uint8_t * p = (uint8_t *)out;
     if (fmt == SPNG_FMT_RGBA8) {
       for (unsigned col = 0; col < ihdr.width; ++col) {
-        *dest = ARGB(p[3], p[0], p[1], p[2]);
-        MOVE_TO_NEXT_RIGHT_PIXEL(dest);
+        *dest = ARGB4444(p[3], p[0], p[1], p[2]);
+        dest = bmp->getNextPixel(dest);
         p += 4;
       }
     }
     else {
       for (unsigned col = 0; col < ihdr.width; ++col) {
-        *dest = RGB(p[0], p[1], p[2]);
-        MOVE_TO_NEXT_RIGHT_PIXEL(dest);
+        *dest = RGB565(p[0], p[1], p[2]);
+        dest = bmp->getNextPixel(dest);
         p += 3;
       }
     }
   }
   while (!r);
+#endif
 
+#if 0
+  DMABitmapConvert(bmp->data, img, w, h, fmt == SPNG_FMT_RGBA8 ? DMA2D_ARGB4444 : DMA2D_RGB565);
+#elif LCD_ORIENTATION == 270
+  const uint8_t * p = img;
+  if (fmt == SPNG_FMT_RGBA8) {
+    for (int row = 0; row < h; ++row) {
+      pixel_t * dest = bmp->getPixelPtrAbs(0, row);
+      for (int col = 0; col < w; ++col) {
+        *dest = ARGB4444(p[3], p[0], p[1], p[2]);
+        dest += bmp->height();
+        p += 4;
+      }
+    }
+  }
+  else {
+    for (int row = 0; row < h; ++row) {
+      pixel_t * dest = bmp->getPixelPtrAbs(0, row);
+      for (int col = 0; col < w; ++col) {
+        *dest = RGB565(p[0], p[1], p[2]);
+        dest += bmp->height();
+        p += 4;
+      }
+    }
+  }
+#else
+  pixel_t * dest = bmp->getPixelPtrAbs(0, 0);
+  const uint8_t * p = out;
+  if (fmt == SPNG_FMT_RGBA8) {
+    for (int row = 0; row < ihdr.height; ++row) {
+      for (int col = 0; col < ihdr.width; ++col) {
+        *dest = ARGB4444(p[3], p[0], p[1], p[2]);
+        dest = bmp->getNextPixel(dest);
+        p += 4;
+      }
+    }
+  }
+  else {
+    for (int row = 0; row < ihdr.height; ++row) {
+      for (int col = 0; col < ihdr.width; ++col) {
+        *dest = RGB565(p[0], p[1], p[2]);
+        dest = bmp->getNextPixel(dest);
+        p += 4;
+      }
+    }
+  }
+#endif
+
+  delete fileReader;
   free(out);
   spng_ctx_free(ctx);
 
