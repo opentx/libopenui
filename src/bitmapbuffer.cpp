@@ -1063,8 +1063,8 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
   
   auto fileReader = new FileReader(filename);
   auto dataSize = fileReader->size();
-  if ((int)dataSize > maxSize) {
-    TRACE("load_bmp(%s) malloc refused", filename);
+  if (maxSize >= 0 && (int)dataSize > maxSize) {
+    TRACE("Bitmap::load(%s) failed: malloc refused", filename);
     delete fileReader;
     return nullptr;
   }
@@ -1143,14 +1143,14 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
   buf = data + hsize;
 
   if (maxSize >= 0 && int(w * h * 2) > maxSize) {
-    TRACE("load_bmp(%s) malloc refused", filename);
+    TRACE("Bitmap::load(%s) failed: malloc refused", filename);
     delete fileReader;
     return nullptr;
   }
 
   auto bmp = new BitmapBuffer(BMP_RGB565, w, h);
   if (bmp == nullptr || bmp->getData() == nullptr) {
-    TRACE("load_bmp(%s) malloc failed", filename);
+    TRACE("Bitmap::load(%s) failed: malloc error", filename);
     delete fileReader;
     return nullptr;
   }
