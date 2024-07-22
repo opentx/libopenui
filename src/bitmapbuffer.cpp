@@ -92,8 +92,8 @@ void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx,
       return;
     }
 
-    if (bmp->getFormat() == BMP_ARGB4444)
-      DMACopyAlphaBitmap(data, format == BMP_ARGB4444, _width, _height, x, y, bmp->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
+    if (bmp->getFormat() == BMP_ARGB4444 || format == BMP_ARGB4444)
+      DMACopyAlphaBitmap(data, format == BMP_ARGB4444, _width, _height, x, y, bmp->getData(), bmp->getFormat() == BMP_ARGB4444, bmpw, bmph, srcx, srcy, srcw, srch);
     else
       DMACopyBitmap(data, _width, _height, x, y, bmp->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
   }
