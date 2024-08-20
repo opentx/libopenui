@@ -71,13 +71,13 @@ void Table::Body::paint(BitmapBuffer * dc)
   dc->clear(DEFAULT_BGCOLOR);
   for (auto line: lines) {
     bool highlight = (lineIndex == selection);
-    dc->drawPlainFilledRectangle(0, line->top(), line->width(), line->height() - TABLE_LINE_BORDER, highlight ? MENU_HIGHLIGHT_BGCOLOR : TABLE_BGCOLOR);
+    dc->drawPlainFilledRectangle(0, line->top(), line->width(), line->height() - TABLE_LINE_BORDER, highlight ? FOCUS_COLOR : TABLE_BGCOLOR);
     coord_t x = TABLE_HORIZONTAL_PADDING;
     for (unsigned i = 0; i < line->cells.size(); i++) {
       auto cell = line->cells[i];
       auto columnWidth = static_cast<Table *>(parent)->columnsWidth[i];
       if (cell) {
-        cell->paint(dc, rect_t{x, line->top(), columnWidth, line->height()}, highlight ? MENU_HIGHLIGHT_COLOR : line->color, line->font);
+        cell->paint(dc, rect_t{x, line->top(), columnWidth, line->height()}, highlight ? EDIT_COLOR : line->color, line->font);
       }
       x += columnWidth;
     }

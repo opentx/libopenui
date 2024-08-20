@@ -563,6 +563,8 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
 
     void drawPlainFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, Color565 color);
 
+    void drawMaskFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, const BitmapMask * mask, Color565 color);
+
     void drawCircle(coord_t x, coord_t y, coord_t radius, LcdColor color);
 
     void drawFilledCircle(coord_t x, coord_t y, coord_t radius, LcdColor color, uint8_t pat = SOLID);
@@ -580,12 +582,7 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
     static BitmapBuffer * loadMaskOnBackground(const char * filename, Color565 foreground, Color565 background, int maxSize = -1);
 
     template <class T>
-    void drawMask(coord_t x, coord_t y, const T * mask, Color565 color, coord_t srcx = 0, coord_t srcw = 0);
-
-//    void drawMask(coord_t x, coord_t y, const uint8_t * mask, Color565 color, coord_t srcx = 0, coord_t srcw = 0)
-//    {
-//      drawMask(x, y, (const BitmapData *)mask, flags, srcx, srcw);
-//    }
+    void drawMask(coord_t x, coord_t y, const T * mask, Color565 color, coord_t srcx = 0, coord_t srcy = 0, coord_t srcw = 0, coord_t srch = 0);
 
     void drawMask(coord_t x, coord_t y, const BitmapMask * mask, const BitmapBuffer * srcBitmap, coord_t offsetX = 0, coord_t offsetY = 0, coord_t width = 0, coord_t height = 0);
 

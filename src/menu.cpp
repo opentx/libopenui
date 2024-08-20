@@ -130,10 +130,10 @@ void MenuBody::paint(BitmapBuffer * dc)
     LcdColor color = MENU_COLOR;
     LcdColor iconColor = GREY(0xA0);
     if (selectedIndex == (int)i) {
-      color = MENU_HIGHLIGHT_COLOR;
-      iconColor = MENU_HIGHLIGHT_COLOR;
-      if (MENU_HIGHLIGHT_BGCOLOR != MENU_BGCOLOR) {
-        dc->drawPlainFilledRectangle(0, i * MENUS_LINE_HEIGHT, width(), MENUS_LINE_HEIGHT, MENU_HIGHLIGHT_BGCOLOR);
+      color = EDIT_COLOR;
+      iconColor = EDIT_COLOR;
+      if (FOCUS_COLOR != MENU_BGCOLOR) {
+        dc->drawPlainFilledRectangle(0, i * MENUS_LINE_HEIGHT, width(), MENUS_LINE_HEIGHT, FOCUS_COLOR);
       }
     }
     if (line.drawLine) {

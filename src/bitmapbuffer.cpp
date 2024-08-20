@@ -531,6 +531,27 @@ void BitmapBuffer::drawPlainFilledRectangle(coord_t x, coord_t y, coord_t w, coo
     fillRectangle(x, y, w, h, RGB565_TO_ARGB4444(color, 0xFF));
 }
 
+void BitmapBuffer::drawMaskFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, const BitmapMask * mask, Color565 color)
+{
+  coord_t maskHeight = mask->height();
+  while (h > 0) {
+    if (maskHeight > h)
+      maskHeight = h;
+    coord_t rowx = x;
+    coord_t roww = w;
+    coord_t maskWidth = mask->width();
+    while (roww > 0) {
+      if (maskWidth > roww)
+        maskWidth = roww;
+      drawMask(rowx, y, mask, color, 0, 0, maskWidth, maskHeight);
+      rowx += maskWidth;
+      roww -= maskWidth;
+    }
+    y += maskHeight;
+    h -= maskHeight;
+  }
+}
+
 void BitmapBuffer::drawFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, LcdColor color, uint8_t pat)
 {
   APPLY_OFFSET();
@@ -768,7 +789,7 @@ void BitmapBuffer::drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadiu
 }
 
 template <class T>
-void BitmapBuffer::drawMask(coord_t x, coord_t y, const T * mask, Color565 color, coord_t srcx, coord_t srcw)
+void BitmapBuffer::drawMask(coord_t x, coord_t y, const T * mask, Color565 color, coord_t srcx, coord_t srcy, coord_t srcw, coord_t srch)
 {
   if (!mask)
     return;
@@ -782,8 +803,9 @@ void BitmapBuffer::drawMask(coord_t x, coord_t y, const T * mask, Color565 color
     srcw = maskWidth;
   }
 
-  coord_t srcy = 0;
-  coord_t srch = maskHeight;
+  if (!srch) {
+    srch = maskHeight;
+  }
 
   if (srcx + srcw > maskWidth) {
     srcw = maskWidth - srcx;
@@ -818,9 +840,9 @@ void BitmapBuffer::drawMask(coord_t x, coord_t y, const T * mask, Color565 color
   DMACopyAlphaMask(data, format == BMP_ARGB4444, _width, _height, x, y, mask->getData(), maskWidth, maskHeight, srcx, srcy, srcw, srch, rgb565);
 }
 
-template void BitmapBuffer::drawMask(int, int, const BitmapData *, Color565, int, int);
-template void BitmapBuffer::drawMask(int, int, const BitmapMask *, Color565, int, int);
-template void BitmapBuffer::drawMask(int, int, const StaticMask *, Color565, int, int);
+template void BitmapBuffer::drawMask(coord_t, coord_t, const BitmapData *, Color565, coord_t, coord_t, coord_t, coord_t);
+template void BitmapBuffer::drawMask(coord_t, coord_t, const BitmapMask *, Color565, coord_t, coord_t, coord_t, coord_t);
+template void BitmapBuffer::drawMask(coord_t, coord_t, const StaticMask *, Color565, coord_t, coord_t, coord_t, coord_t);
 
 void BitmapBuffer::drawMask(coord_t x, coord_t y, const BitmapMask * mask, const BitmapBuffer * srcBitmap, coord_t offsetX, coord_t offsetY, coord_t width, coord_t height)
 {
@@ -869,7 +891,7 @@ void BitmapBuffer::drawMask(coord_t x, coord_t y, const BitmapMask * mask, const
 uint8_t BitmapBuffer::drawChar(coord_t x, coord_t y, const Font::Glyph & glyph, LcdColor color)
 {
   if (glyph.width) {
-    drawMask(x, y, glyph.font->getBitmapData(), color, glyph.offset, glyph.width);
+    drawMask(x, y, glyph.font->getBitmapData(), color, glyph.offset, 0, glyph.width);
   }
   return glyph.width;
 }
