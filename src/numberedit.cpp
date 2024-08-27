@@ -58,6 +58,36 @@ void NumberEdit::paint(BitmapBuffer * dc)
   }
 }
 
+void NumberEdit::increment(int step)
+{
+  int value = getValue();
+  if (value < vmax) {
+    do {
+      value += step;
+    } while (isValueAvailable && !isValueAvailable(value) && value <= vmax);
+    setValue(value);
+    onKeyPress();
+  }
+  else {
+    onKeyError();
+  }
+}
+
+void NumberEdit::decrement(int step)
+{
+  int value = getValue();
+  if (value > vmin) {
+    do {
+      value -= step;
+    } while (isValueAvailable && !isValueAvailable(value) && value >= vmin);
+    setValue(value);
+    onKeyPress();
+  }
+  else {
+    onKeyError();
+  }
+}
+
 void NumberEdit::onEvent(event_t event)
 {
   TRACE_WINDOWS("%s received event 0x%X", getWindowDebugString().c_str(), event);
@@ -66,32 +96,12 @@ void NumberEdit::onEvent(event_t event)
     switch (event) {
 #if defined(HARDWARE_KEYS)
       case EVT_ROTARY_RIGHT: {
-        int value = getValue();
-        if (value < vmax) {
-          do {
-            value += ROTARY_ENCODER_SPEED() * step;
-          } while (isValueAvailable && !isValueAvailable(value) && value <= vmax);
-          setValue(value);
-          onKeyPress();
-        }
-        else {
-          onKeyError();
-        }
+        increment(ROTARY_ENCODER_SPEED() * step);
         return;
       }
 
       case EVT_ROTARY_LEFT: {
-        int value = getValue();
-        if (value > vmin) {
-          do {
-            value -= ROTARY_ENCODER_SPEED() * step;
-          } while (isValueAvailable && !isValueAvailable(value) && value >= vmin);
-          setValue(value);
-          onKeyPress();
-        }
-        else {
-          onKeyError();
-        }
+        decrement(ROTARY_ENCODER_SPEED() * step);
         return;
       }
 #endif

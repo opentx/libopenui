@@ -114,6 +114,9 @@ class NumberEdit: public BaseNumberEdit
       return numberToString(value, 0, prefix.c_str(), suffix.c_str(), textFlags);
     }
 
+    void increment(int step);
+    void decrement(int step);
+
   protected:
     std::function<void(BitmapBuffer *, LcdFlags, int)> displayFunction;
     std::string prefix;

@@ -121,11 +121,22 @@ class BaseNumberEdit: public FormField
       }
     }
 
+    void setStepMultiplier(int value)
+    {
+      stepMultiplier = value;
+    }
+
+    int getStepMultiplier() const
+    {
+      return stepMultiplier;
+    }
+
   protected:
     int vdefault = 0;
     int vmin;
     int vmax;
     int step = 1;
+    int stepMultiplier = 10;
     int currentValue;
     bool instantChange = true;
     bool dirty = false;
