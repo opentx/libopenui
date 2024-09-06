@@ -32,7 +32,7 @@
 
 constexpr uint8_t SOLID = 0xFF;
 constexpr uint8_t DOTTED  = 0x55;
-constexpr uint8_t STASHED = 0x33;
+constexpr uint8_t DASHED = 0x33;
 
 #define MOVE_OFFSET() coord_t offsetX = this->offsetX; x += offsetX; this->offsetX = 0; coord_t offsetY = this->offsetY; y += offsetY; this->offsetY = 0
 #define APPLY_OFFSET() x += this->offsetX; y += this->offsetY
