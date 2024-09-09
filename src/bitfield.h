@@ -73,8 +73,31 @@ inline T bfBitGet(T y, T mask)
 }
 
 template <class T>
+inline T bfBitSet(T y, T mask)
+{
+  return (y | mask);
+}
+
+template <class T>
+inline T bfBitToggle(T y, T mask)
+{
+  return (y ^ mask);
+}
+
+template <class T>
 inline T bfSingleBitGet(T y, uint8_t i)
 {
   return bfBitGet(y, bfBit<T>(i));
 }
 
+template <class T>
+inline T bfSingleBitSet(T y, uint8_t i)
+{
+  return bfBitSet(y, bfBit<T>(i));
+}
+
+template <class T>
+inline T bfSingleBitToggle(T y, uint8_t i)
+{
+  return bfBitToggle(y, bfBit<T>(i));
+}
