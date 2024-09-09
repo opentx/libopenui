@@ -150,7 +150,7 @@ class MenuWindowContent: public ModalWindowContent
   friend class Menu;
 
   public:
-    explicit MenuWindowContent(Menu * parent);
+    explicit MenuWindowContent(Menu * parent, bool footer = false);
 
     void deleteLater(bool detach = true, bool trash = true) override
     {
@@ -170,8 +170,14 @@ class MenuWindowContent: public ModalWindowContent
 
     void paint(BitmapBuffer * dc) override;
 
+    Window * getFooter() const
+    {
+      return footer;
+    }
+
   protected:
     MenuBody body;
+    Window * footer = nullptr;
 };
 
 class Menu: public ModalWindow
@@ -179,7 +185,7 @@ class Menu: public ModalWindow
   friend class MenuBody;
 
   public:
-    explicit Menu(Window * parent, bool multiple = false);
+    explicit Menu(Window * parent, bool multiple = false, bool footer = false);
 
 #if defined(DEBUG_WINDOWS)
     [[nodiscard]] std::string getName() const override

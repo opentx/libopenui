@@ -64,7 +64,7 @@ class Theme
 
 extern Theme * theme;
 
-MenuWindowContent * createMenuWindow(Menu * menu);
+MenuWindowContent * createMenuWindow(Menu * menu, bool footer = false);
 DialogWindowContent * createDialogWindow(Dialog * dialog, const rect_t & rect);
 
 }

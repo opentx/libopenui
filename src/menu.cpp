@@ -101,7 +101,7 @@ bool MenuBody::onTouchEnd(coord_t /*x*/, coord_t y)
   if (index < (int)lines.size()) {
     onKeyPress();
     if (menu->multiple) {
-      if (selectedIndex == index)
+      if (selectedIndex == index && lines[index].onPress)
         lines[index].onPress();
       else
         select(index);
@@ -166,11 +166,14 @@ void MenuBody::paint(BitmapBuffer * dc)
   }
 }
 
-MenuWindowContent::MenuWindowContent(Menu * parent):
+MenuWindowContent::MenuWindowContent(Menu * parent, bool footer):
   ModalWindowContent(parent, {(LCD_W - MIN_MENUS_WIDTH) / 2, (LCD_H - MIN_MENUS_WIDTH) / 2, MIN_MENUS_WIDTH, 0}),
   body(this, {0, 0, MIN_MENUS_WIDTH, 0})
 {
   body.setFocus(SET_FOCUS_DEFAULT);
+  if (footer) {
+    this->footer = new Window(this, {0, 0, MIN_MENUS_WIDTH, POPUP_HEADER_HEIGHT});
+  }
 }
 
 void MenuWindowContent::paint(BitmapBuffer * dc)
@@ -185,9 +188,9 @@ void MenuWindowContent::paint(BitmapBuffer * dc)
   }
 }
 
-Menu::Menu(Window * parent, bool multiple):
+Menu::Menu(Window * parent, bool multiple, bool footer):
   ModalWindow(parent, true),
-  content(createMenuWindow(this)),
+  content(createMenuWindow(this, footer)),
   multiple(multiple)
 {
 }
@@ -195,12 +198,16 @@ Menu::Menu(Window * parent, bool multiple):
 void Menu::updatePosition()
 {
   auto headerHeight = content->title.empty() ? 0 : POPUP_HEADER_HEIGHT;
+  auto footerHeight = content->footer ? POPUP_HEADER_HEIGHT : 0;
   auto bodyHeight = limit<coord_t>(MENUS_MIN_HEIGHT, content->body.lines.size() * MENUS_LINE_HEIGHT - 1, MENUS_MAX_HEIGHT);
-  content->setTop((LCD_H - headerHeight - bodyHeight) / 2 + MENUS_OFFSET_TOP);
-  content->setHeight(headerHeight + bodyHeight);
+  content->setHeight(headerHeight + bodyHeight + footerHeight);
+  content->setTop((LCD_H - content->height()) / 2 + MENUS_OFFSET_TOP);
   content->body.setTop(headerHeight);
   content->body.setHeight(bodyHeight);
   content->body.setInnerHeight(content->body.lines.size() * MENUS_LINE_HEIGHT - 1);
+  if (content->footer) {
+    content->footer->setTop(content->body.bottom());
+  }
 }
 
 void Menu::setTitle(std::string text)
