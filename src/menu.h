@@ -23,6 +23,7 @@
 #include <functional>
 #include <utility>
 #include "modal_window.h"
+#include "form.h"
 
 constexpr coord_t MENUS_HORIZONTAL_PADDING = 10;
 
@@ -168,16 +169,20 @@ class MenuWindowContent: public ModalWindowContent
     }
 #endif
 
+#if defined(HARDWARE_KEYS)
+    void onEvent(event_t event) override;
+#endif
+
     void paint(BitmapBuffer * dc) override;
 
-    Window * getFooter() const
+    FormGroup * getFooter() const
     {
       return footer;
     }
 
   protected:
     MenuBody body;
-    Window * footer = nullptr;
+    FormGroup * footer = nullptr;
 };
 
 class Menu: public ModalWindow

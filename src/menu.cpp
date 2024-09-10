@@ -172,9 +172,28 @@ MenuWindowContent::MenuWindowContent(Menu * parent, bool footer):
 {
   body.setFocus(SET_FOCUS_DEFAULT);
   if (footer) {
-    this->footer = new Window(this, {0, 0, MIN_MENUS_WIDTH, POPUP_HEADER_HEIGHT});
+    this->footer = new FormGroup(this, {0, 0, MIN_MENUS_WIDTH, POPUP_HEADER_HEIGHT}, FORM_NO_BORDER | FORM_FORWARD_FOCUS);
   }
 }
+
+#if defined(HARDWARE_KEYS)
+void MenuWindowContent::onEvent(event_t event)
+{
+  if (event == EVT_KEY_BREAK(KEY_PAGE) && this->footer) {
+    onKeyPress();
+    if (body.hasFocus()) {
+      footer->setFocus();
+    }
+    else {
+      body.setFocus();
+    }
+  }
+  else {
+    Window::onEvent(event);
+  }
+}
+#endif
+
 
 void MenuWindowContent::paint(BitmapBuffer * dc)
 {
