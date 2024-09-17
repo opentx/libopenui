@@ -172,7 +172,7 @@ MenuWindowContent::MenuWindowContent(Menu * parent, bool footer):
 {
   body.setFocus(SET_FOCUS_DEFAULT);
   if (footer) {
-    this->footer = new FormGroup(this, {0, 0, MIN_MENUS_WIDTH, POPUP_HEADER_HEIGHT}, FORM_NO_BORDER | FORM_FORWARD_FOCUS);
+    this->footer = new FormGroup(this, {0, 0, MIN_MENUS_WIDTH, POPUP_FOOTER_HEIGHT}, FORM_NO_BORDER | FORM_FORWARD_FOCUS);
   }
 }
 
@@ -217,7 +217,7 @@ Menu::Menu(Window * parent, bool multiple, bool footer):
 void Menu::updatePosition()
 {
   auto headerHeight = content->title.empty() ? 0 : POPUP_HEADER_HEIGHT;
-  auto footerHeight = content->footer ? POPUP_HEADER_HEIGHT : 0;
+  auto footerHeight = content->footer ? POPUP_FOOTER_HEIGHT : 0;
   auto bodyHeight = limit<coord_t>(MENUS_MIN_HEIGHT, content->body.lines.size() * MENUS_LINE_HEIGHT - 1, MENUS_MAX_HEIGHT);
   content->setHeight(headerHeight + bodyHeight + footerHeight);
   content->setTop((LCD_H - content->height()) / 2 + MENUS_OFFSET_TOP);
