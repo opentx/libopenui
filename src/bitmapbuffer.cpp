@@ -594,22 +594,22 @@ void BitmapBuffer::drawCircle(coord_t x, coord_t y, coord_t radius, LcdColor col
 
 void BitmapBuffer::drawPlainFilledCircle(coord_t x, coord_t y, coord_t radius, Color565 color)
 {
-  coord_t imax = ((coord_t)((coord_t)radius * 707)) / 1000 + 1;
-  coord_t sqmax = (coord_t)radius * (coord_t)radius + (coord_t)radius / 2;
+  coord_t imax = (radius * 707) / 1000 + 1;
+  coord_t sqmax = radius * radius + radius / 2;
   coord_t x1 = radius;
-  drawPlainHorizontalLine(x - radius, y, radius * 2, color);
+  drawPlainHorizontalLine(x - radius, y, radius * 2 + 1, color);
   for (coord_t i = 1; i <= imax; i++) {
     if ((i * i + x1 * x1) > sqmax) {
       // Draw lines from outside
       if (x1 > imax) {
-        drawPlainHorizontalLine(x - i + 1, y + x1, (i - 1) * 2, color);
-        drawPlainHorizontalLine(x - i + 1, y - x1, (i - 1) * 2, color);
+        drawPlainHorizontalLine(x - i + 1, y + x1, (i - 1) * 2 + 1, color);
+        drawPlainHorizontalLine(x - i + 1, y - x1, (i - 1) * 2 + 1, color);
       }
       x1--;
     }
     // Draw lines from inside (center)
-    drawPlainHorizontalLine(x - x1, y + i, x1 * 2, color);
-    drawPlainHorizontalLine(x - x1, y - i, x1 * 2, color);
+    drawPlainHorizontalLine(x - x1, y + i, x1 * 2 + 1, color);
+    drawPlainHorizontalLine(x - x1, y - i, x1 * 2 + 1, color);
   }
 }
 
