@@ -138,6 +138,6 @@ void MainWindow::run(bool trash)
 
   auto delta = ticksNow() - start;
   if (delta > 10 * SYSTEM_TICKS_1MS) {
-    TRACE_WINDOWS("MainWindow::run took %dms", (ticksNow() - start) / SYSTEM_TICKS_1MS);
+    TRACE_WINDOWS("MainWindow::run took %dms", delta / SYSTEM_TICKS_1MS);
   }
 }
