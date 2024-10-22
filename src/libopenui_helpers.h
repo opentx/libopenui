@@ -30,19 +30,19 @@
 #endif
 
 template<class T>
-inline T min(T a, T b)
+inline T constexpr min(T a, T b)
 {
   return a < b ? a : b;
 }
 
 template<class T>
-inline T max(T a, T b)
+inline constexpr T max(T a, T b)
 {
   return a > b ? a : b;
 }
 
 template<class T>
-inline T limit(T vmin, T x, T vmax)
+inline constexpr T limit(T vmin, T x, T vmax)
 {
   return ::min(::max(vmin, x), vmax);
 }
