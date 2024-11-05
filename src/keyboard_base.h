@@ -35,8 +35,9 @@ class KeyboardBase: public FormWindow
     static void hide()
     {
       if (activeKeyboard) {
-        activeKeyboard->clearField();
+        auto keyboard = activeKeyboard;
         activeKeyboard = nullptr;
+        keyboard->clearField();
       }
     }
 

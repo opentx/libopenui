@@ -137,8 +137,13 @@ void NumberEdit::onFocusLost()
 void NumberEdit::setEditMode(bool newEditMode)
 {
   BaseNumberEdit::setEditMode(newEditMode);
-  if (editMode && keyboardEnabled) {
-    NumberKeyboard::show(this);
+  if (keyboardEnabled) {
+    if (editMode) {
+      NumberKeyboard::show(this);
+    }
+    else {
+      KeyboardBase::hide();
+    }
   }
 }
 #endif
