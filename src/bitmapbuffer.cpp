@@ -24,7 +24,7 @@
 #include "libopenui_file.h"
 #include "font.h"
 #include "file_reader.h"
-#include "unaligned.h"
+#include "intconversions.h"
 
 BitmapBuffer::BitmapBuffer(uint8_t format, uint16_t width, uint16_t height):
   BitmapBufferBase<uint16_t>(format, width, height, nullptr),
@@ -1104,9 +1104,9 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
     return nullptr;
   }
 
-  uint32_t fsize = UNALIGNED_LE32(buf + 2);
-  uint32_t hsize = UNALIGNED_LE32(buf + 10); /* header size */
-  uint32_t ihsize = UNALIGNED_LE32(buf + 14); /* extra header size */
+  uint32_t fsize = UINT32LE(buf + 2);
+  uint32_t hsize = UINT32LE(buf + 10); /* header size */
+  uint32_t ihsize = UINT32LE(buf + 14); /* extra header size */
 
   /* invalid extra header size */
   if (ihsize + 14 > hsize) {
@@ -1134,13 +1134,13 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
     case 64: // OS/2 v2
     case 108: // windib v4
     case 124: // windib v5
-      w = UNALIGNED_LE32(buf + 4);
-      h = UNALIGNED_LE32(buf + 8);
+      w = UINT32LE(buf + 4);
+      h = UINT32LE(buf + 8);
       buf += 12;
       break;
     case 12: // OS/2 v1
-      w = UNALIGNED_LE16(buf + 4);
-      h = UNALIGNED_LE16(buf + 6);
+      w = UINT16LE(buf + 4);
+      h = UINT16LE(buf + 6);
       buf += 8;
       break;
     default:
@@ -1148,12 +1148,12 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
       return nullptr;
   }
 
-  if (UNALIGNED_LE16(buf) != 1) { /* planes */
+  if (UINT16LE(buf) != 1) { /* planes */
     delete fileReader;
     return nullptr;
   }
 
-  uint16_t depth = UNALIGNED_LE16(buf + 2);
+  uint16_t depth = UINT16LE(buf + 2);
 
   if (depth == 4) {
     buf = data + hsize - 64;
@@ -1185,7 +1185,7 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
       for (int i = h - 1; i >= 0; i--) {
         pixel_t * dest = bmp->getPixelPtrAbs(0, i);
         for (unsigned int j = 0; j < w; j++) {
-          *dest = UNALIGNED_LE16(buf);
+          *dest = UINT16LE(buf);
           buf += 2;
           dest = bmp->getNextPixel(dest);
         }
@@ -1199,7 +1199,7 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
       for (int i = h - 1; i >= 0; i--) {
         pixel_t * dest = bmp->getPixelPtrAbs(0, i);
         for (unsigned int j = 0; j < w; j++) {
-          uint32_t pixel = UNALIGNED_LE32(buf);
+          uint32_t pixel = UINT32LE(buf);
           buf += 4;
           // result = f_read(imgFile, (uint8_t *)&pixel, 4, &read);
           // if (result != FR_OK || read != 4) {
