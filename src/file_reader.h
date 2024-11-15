@@ -42,6 +42,7 @@ class FileReaderBase
       }
 
       if (f_open(file, path, FA_OPEN_EXISTING | FA_READ) != FR_OK) {
+        TRACE("File::load(%s) failed: read error", path);
         free(file);
         file = nullptr;
         return false;

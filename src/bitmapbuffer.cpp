@@ -1319,6 +1319,12 @@ BitmapBuffer * BitmapBuffer::load_stb(const char * filename, int maxSize)
 {
   auto fileReader = new FileReader(filename);
   auto dataSize = fileReader->size();
+
+  if (dataSize == 0) {
+    delete fileReader;
+    return nullptr;
+  }
+
   if (maxSize >= 0 && (int)dataSize > maxSize) {
     TRACE("Bitmap::load(%s) failed: malloc refused", filename);
     delete fileReader;
