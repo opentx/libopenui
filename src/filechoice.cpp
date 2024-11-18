@@ -80,6 +80,8 @@ bool FileChoice::openMenu()
       files.emplace_back(fno.fname, fnLen);
     }
 
+    f_closedir(&dir);
+
     if (!files.empty()) {
       // sort files
       files.sort(compare_nocase);
