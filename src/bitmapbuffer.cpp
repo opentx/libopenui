@@ -1053,10 +1053,12 @@ BitmapMask * BitmapMask::load(const char * filename, int maxSize)
 {
   BitmapBuffer * bitmap = BitmapBuffer::load(filename, maxSize);
   if (bitmap) {
-    BitmapMask * result = new BitmapMask(BMP_RGB565, bitmap->width(), bitmap->height());
-    auto * q = result->getData();
-    for (const auto * p = bitmap->getData(); p < bitmap->getDataEnd(); p++) {
-      *q++ = (ALPHA_MAX - ((*p) >> 12)) << 4;
+    BitmapMask * result = BitmapMask::allocate(BMP_RGB565, bitmap->width(), bitmap->height());
+    if (result) {
+      auto * q = result->getData();
+      for (const auto * p = bitmap->getData(); p < bitmap->getDataEnd(); p++) {
+        *q++ = (ALPHA_MAX - ((*p) >> 12)) << 4;
+      }
     }
     delete bitmap;
     return result;
@@ -1069,7 +1071,7 @@ BitmapBuffer * BitmapBuffer::loadMaskOnBackground(const char * filename, Color56
   BitmapBuffer * result = nullptr;
   const auto * mask = BitmapMask::load(filename, maxSize);
   if (mask) {
-    result = new BitmapBuffer(BMP_RGB565, mask->width(), mask->height());
+    result = BitmapBuffer::allocate(BMP_RGB565, mask->width(), mask->height());
     if (result) {
       result->clear(background);
       result->drawMask(0, 0, mask, foreground);
@@ -1170,8 +1172,8 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
     return nullptr;
   }
 
-  auto bmp = new BitmapBuffer(BMP_RGB565, w, h);
-  if (bmp == nullptr || bmp->getData() == nullptr) {
+  auto bmp = BitmapBuffer::allocate(BMP_RGB565, w, h);
+  if (!bmp) {
     TRACE("Bitmap::load(%s) failed: malloc error", filename);
     delete fileReader;
     return nullptr;
@@ -1354,8 +1356,8 @@ BitmapBuffer * BitmapBuffer::load_stb(const char * filename, int maxSize)
   }
 
   // convert to RGB565 or ARGB4444 format
-  auto bmp = new BitmapBuffer(n == 4 ? BMP_ARGB4444 : BMP_RGB565, w, h);
-  if (bmp == nullptr || !bmp->isValid()) {
+  auto bmp = BitmapBuffer::allocate(n == 4 ? BMP_ARGB4444 : BMP_RGB565, w, h);
+  if (!bmp) {
     TRACE("Bitmap::load(%s) malloc failed", filename);
     stbi_image_free(img);
     return nullptr;

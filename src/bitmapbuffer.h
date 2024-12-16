@@ -74,6 +74,11 @@ class BitmapBufferBase
     {
     }
 
+    [[nodiscard]] inline bool isValid() const
+    {
+      return data != nullptr;
+    }
+
     inline void clearClippingRect()
     {
       xmin = 0;
@@ -254,7 +259,11 @@ class BitmapBufferBase
     template <class C>
     C * horizontalFlip() const
     {
-      auto * result = new C(format, width(), height());
+      auto * result = C::allocate(format, width(), height());
+      if (!result) {
+        return nullptr;
+      }
+
 #if LCD_ORIENTATION == 270
       for (uint8_t y = 0; y < height(); y++) {
         for (uint8_t x = 0; x < width(); x++) {
@@ -279,7 +288,11 @@ class BitmapBufferBase
     template <class C>
     C * verticalFlip() const
     {
-      auto * result = new C(format, width(), height());
+      auto * result = C::allocate(format, width(), height());
+      if (!result) {
+        return nullptr;
+      }
+      
 #if LCD_ORIENTATION == 270
       for (uint8_t y = 0; y < height(); y++) {
         for (uint8_t x = 0; x < width(); x++) {
@@ -313,7 +326,11 @@ class BitmapBufferBase
       auto x0 = w / 2;
       auto y0 = h / 2;
 
-      auto * result = new C(format, w, h);
+      auto * result = C::allocate(format, w, h);
+      if (!result) {
+        return nullptr;
+      }
+
       auto * srcData = data;
       auto * destData = result->data;
 
@@ -343,7 +360,11 @@ class BitmapBufferBase
     template <class C>
     C * rotate90() const
     {
-      auto * result = new C(format, height(), width());
+      auto * result = C::allocate(format, height(), width());
+      if (!result) {
+        return nullptr;
+      }
+
   #if LCD_ORIENTATION == 270
       auto * srcData = data;
       auto * destData = result->data;
@@ -387,14 +408,14 @@ typedef BitmapBufferBase<const uint8_t> StaticMask;
 class RLEBitmap: public BitmapBufferBase<uint16_t>
 {
   public:
-    RLEBitmap(uint8_t format, const uint8_t* rle_data) :
+    RLEBitmap(uint8_t format, const uint8_t * rleData) :
       BitmapBufferBase<uint16_t>(format, 0, 0, nullptr)
     {
-      _width = *((uint16_t *)rle_data);
-      _height = *(((uint16_t *)rle_data)+1);
+      _width = *((uint16_t *)rleData);
+      _height = *(((uint16_t *)rleData) + 1);
       uint32_t pixels = _width * _height;
       data = (uint16_t*)malloc(align32(pixels * sizeof(uint16_t)));
-      decode((uint8_t *)data, pixels * sizeof(uint16_t), rle_data+4);
+      decode((uint8_t *)data, pixels * sizeof(uint16_t), rleData + 4);
       dataEnd = data + pixels;
     }
 
@@ -440,11 +461,23 @@ class RLEBitmap: public BitmapBufferBase<uint16_t>
 class BitmapMask: public BitmapBufferBase<uint8_t>
 {
   public:
+    static BitmapMask * allocate(uint8_t format, uint16_t width, uint16_t height)
+    {
+      auto result = new BitmapMask(format, width, height);
+      if (result && !result->isValid()) {
+        delete result;
+        result = nullptr;
+      }
+      return result;
+    }
+  
+  protected:
     BitmapMask(uint8_t format, uint16_t width, uint16_t height):
       BitmapBufferBase<uint8_t>(format, width, height, (uint8_t *)malloc(align32(width * height)))
     {
     }
 
+  public:
     ~BitmapMask()
     {
       free(data);
@@ -452,15 +485,17 @@ class BitmapMask: public BitmapBufferBase<uint8_t>
 
     [[nodiscard]] BitmapMask * invert() const
     {
-      auto result = new BitmapMask(format, width(), height());
-      auto * srcData = data;
-      auto * destData = result->data;
-      for (auto y = 0; y < height(); y++) {
-        for (auto x = 0; x < width(); x++) {
-          destData[x] = 0xFF - srcData[x];
+      auto result = BitmapMask::allocate(format, width(), height());
+      if (result) {
+        auto * srcData = data;
+        auto * destData = result->data;
+        for (auto y = 0; y < height(); y++) {
+          for (auto x = 0; x < width(); x++) {
+            destData[x] = 0xFF - srcData[x];
+          }
+          srcData += width();
+          destData += width();
         }
-        srcData += width();
-        destData += width();
       }
       return result;
     }
@@ -471,15 +506,23 @@ class BitmapMask: public BitmapBufferBase<uint8_t>
 class BitmapBuffer: public BitmapBufferBase<pixel_t>
 {
   public:
+    static BitmapBuffer * allocate(uint8_t format, uint16_t width, uint16_t height) 
+    {
+      auto result = new BitmapBuffer(format, width, height);
+      if (result && !result->isValid()) {
+        delete result;
+        result = nullptr;
+      }
+      return result;
+    }
+
+  protected:
     BitmapBuffer(uint8_t format, uint16_t width, uint16_t height);
+
+  public:
     BitmapBuffer(uint8_t format, uint16_t width, uint16_t height, uint16_t * data);
 
     ~BitmapBuffer();
-
-    [[nodiscard]] inline bool isValid() const
-    {
-      return data != nullptr;
-    }
 
     [[nodiscard]] double getScale(coord_t w, coord_t h) const
     {

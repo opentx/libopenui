@@ -47,28 +47,6 @@ class BufferedWindow: public T
 };
 
 template <class T>
-class OpaqueBufferedWindow: public BufferedWindow<T>
-{
-  public:
-    using BufferedWindow<T>::BufferedWindow;
-
-    void paint(BitmapBuffer * dc) override
-    {
-      if (!this->bitmap) {
-        this->bitmap = new BitmapBuffer(BMP_RGB565, T::width(), T::height());
-        this->paintUpdateNeeded = true;
-      }
-
-      if (this->paintUpdateNeeded) {
-        this->paintUpdate(this->bitmap);
-        this->paintUpdateNeeded = false;
-      }
-
-      dc->drawBitmap(0, 0, this->bitmap);
-    }
-};
-
-template <class T>
 class TransparentBufferedWindow: public BufferedWindow<T>
 {
   public:
@@ -76,23 +54,25 @@ class TransparentBufferedWindow: public BufferedWindow<T>
 
     void paint(BitmapBuffer * dc) override
     {
-      if (!BufferedWindow<T>::bitmap) {
-        this->bitmap = new BitmapBuffer(BMP_RGB565, T::width(), T::height());
+      if (!this->bitmap) {
+        this->bitmap = BitmapBuffer::allocate(BMP_RGB565, T::width(), T::height());
         this->paintUpdateNeeded = true;
       }
 
-      if (this->paintUpdateNeeded) {
-        this->paintUpdate(dc);
-        // we can only store the bitmap if fully drawn
-        coord_t xmin, xmax, ymin, ymax;
-        dc->getClippingRect(xmin, xmax, ymin, ymax);
-        if (xmax - xmin >= this->width() && ymax - ymin >= this->height()) {
-          this->bitmap->drawBitmap(0, 0, dc, dc->getOffsetX(), dc->getOffsetY());
-          this->paintUpdateNeeded = false;
+      if (this->bitmap) {
+        if (this->paintUpdateNeeded) {
+          this->paintUpdate(dc);
+          // we can only store the bitmap if fully drawn
+          coord_t xmin, xmax, ymin, ymax;
+          dc->getClippingRect(xmin, xmax, ymin, ymax);
+          if (xmax - xmin >= this->width() && ymax - ymin >= this->height()) {
+            this->bitmap->drawBitmap(0, 0, dc, dc->getOffsetX(), dc->getOffsetY());
+            this->paintUpdateNeeded = false;
+          }
         }
-      }
-      else {
-        dc->drawBitmap(0, 0, this->bitmap);
+        else {
+          dc->drawBitmap(0, 0, this->bitmap);
+        }
       }
     }
 };
