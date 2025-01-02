@@ -388,6 +388,23 @@ class BitmapBufferBase
       return result;
     }
 
+    template <class C>
+    C * rotate180() const
+    {
+      auto * result = C::allocate(format, width(), height());
+      if (!result) {
+        return nullptr;
+      }
+
+      auto * srcData = data;
+      auto * destData = result->dataEnd;
+      while (destData > result->data) {
+        *(--destData) = *srcData++;
+      }
+
+      return result;
+    }
+
   protected:
     uint8_t format;
     coord_t _width;
