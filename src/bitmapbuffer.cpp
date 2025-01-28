@@ -261,13 +261,24 @@ void BitmapBuffer::drawHorizontalLineAbs(coord_t x, coord_t y, coord_t w, LcdCol
   }
 }
 
+template <class T>
+T ror(T n, unsigned d)
+{
+   return (n >> d) | (n << (sizeof(n) * 8 - d));
+}
+
 void BitmapBuffer::drawVerticalLine(coord_t x, coord_t y, coord_t h, LcdColor color, uint8_t pat)
 {
   APPLY_OFFSET();
 
   coord_t w = 1;
+  coord_t h0 = h;
   if (!applyClippingRect(x, y, w, h))
     return;
+
+  if (h0 != h) {
+    pat = ror<uint8_t>(pat, (h0 - h) & 7);
+  }
 
   auto rgb565 = COLOR_TO_RGB565(color);
   uint8_t alpha = GET_COLOR_ALPHA(color);
