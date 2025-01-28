@@ -1096,24 +1096,21 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
 {
   uint8_t palette[16];
   
-  auto fileReader = new FileReader(filename);
-  auto dataSize = fileReader->size();
+  FileReader fileReader(filename);
+  auto dataSize = fileReader.size();
   if (maxSize >= 0 && (int)dataSize > maxSize) {
     TRACE("Bitmap::load(%s) failed: malloc refused", filename);
-    delete fileReader;
     return nullptr;
   }
 
-  auto data = fileReader->read();
+  auto data = fileReader.read();
   if (!data) {
     TRACE("Bitmap::load(%s) failed: read error", filename);
-    delete fileReader;
     return nullptr;
   }
 
   auto buf = data;
   if (dataSize < 18 || buf[0] != 'B' || buf[1] != 'M') {
-    delete fileReader;
     return nullptr;
   }
 
@@ -1123,7 +1120,6 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
 
   /* invalid extra header size */
   if (ihsize + 14 > hsize) {
-    delete fileReader;
     return nullptr;
   }
 
@@ -1134,7 +1130,6 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
 
   /* declared file size less than header size */
   if (fsize <= hsize) {
-    delete fileReader;
     return nullptr;
   }
 
@@ -1157,12 +1152,10 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
       buf += 8;
       break;
     default:
-      delete fileReader;
       return nullptr;
   }
 
   if (UINT16LE(buf) != 1) { /* planes */
-    delete fileReader;
     return nullptr;
   }
 
@@ -1179,14 +1172,12 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
 
   if (maxSize >= 0 && int(w * h * 2) > maxSize) {
     TRACE("Bitmap::load(%s) failed: malloc refused", filename);
-    delete fileReader;
     return nullptr;
   }
 
   auto bmp = BitmapBuffer::allocate(BMP_RGB565, w, h);
   if (!bmp) {
     TRACE("Bitmap::load(%s) failed: malloc error", filename);
-    delete fileReader;
     return nullptr;
   }
 
@@ -1268,12 +1259,10 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
       break;
 
     default:
-      delete fileReader;
       delete bmp;
       return nullptr;
   }
 
-  delete fileReader;
   return bmp;
 }
 
@@ -1330,40 +1319,39 @@ void * stb_realloc(void *ptr, unsigned int oldsz, unsigned int newsz)
 
 BitmapBuffer * BitmapBuffer::load_stb(const char * filename, int maxSize)
 {
-  auto fileReader = new FileReader(filename);
-  auto dataSize = fileReader->size();
-
-  if (dataSize == 0) {
-    delete fileReader;
-    return nullptr;
-  }
-
-  if (maxSize >= 0 && (int)dataSize > maxSize) {
-    TRACE("Bitmap::load(%s) failed: malloc refused", filename);
-    delete fileReader;
-    return nullptr;
-  }
-
-  auto data = fileReader->read();
-  if (!data) {
-    TRACE("Bitmap::load(%s) failed: read error", filename);
-    delete fileReader;
-    return nullptr;
-  }
-
   int w, h, n;
-  unsigned char * img = stbi_load_from_memory(data, dataSize, &w, &h, &n, 4);
-  delete fileReader;
+  unsigned char * img;
 
-  if (!img) {
-    TRACE("Bitmap::load(%s) failed: %s", filename, stbi_failure_reason());
-    return nullptr;
-  }
+  {
+    FileReader fileReader(filename);
+    auto dataSize = fileReader.size();
 
-  if (maxSize >= 0 && w * h * 2 > maxSize) {
-    TRACE("Bitmap::load(%s) malloc not allowed", filename);
-    stbi_image_free(img);
-    return nullptr;
+    if (dataSize == 0) {
+      return nullptr;
+    }
+
+    if (maxSize >= 0 && (int)dataSize > maxSize) {
+      TRACE("Bitmap::load(%s) failed: malloc refused", filename);
+      return nullptr;
+    }
+
+    auto data = fileReader.read();
+    if (!data) {
+      TRACE("Bitmap::load(%s) failed: read error", filename);
+      return nullptr;
+    }
+
+    img = stbi_load_from_memory(data, dataSize, &w, &h, &n, 4);
+    if (!img) {
+      TRACE("Bitmap::load(%s) failed: %s", filename, stbi_failure_reason());
+      return nullptr;
+    }
+
+    if (maxSize >= 0 && w * h * 2 > maxSize) {
+      TRACE("Bitmap::load(%s) malloc not allowed", filename);
+      stbi_image_free(img);
+      return nullptr;
+    }
   }
 
   // convert to RGB565 or ARGB4444 format

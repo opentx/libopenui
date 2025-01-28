@@ -81,12 +81,16 @@ class FileReader: public FileReaderBase
     const uint8_t * read()
     {
       data = (uint8_t *)malloc(fileSize);
-      auto result = FileReaderBase::read(data, fileSize);
-      free(file);
-      file = nullptr;
-      return result ? data : nullptr;;
+      if (data) {
+        auto result = FileReaderBase::read(data, fileSize);
+        free(file);
+        file = nullptr;
+        return result ? data : nullptr;
+      }
+      else {
+        return nullptr;
+      }
     }
-
 
   protected:
     uint8_t * data = nullptr;
