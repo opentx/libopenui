@@ -108,15 +108,20 @@ class BaseNumberEdit: public FormField
 
     void setEditMode(bool newEditMode) override
     {
-      auto previousEditMode = editMode;
-      FormField::setEditMode(newEditMode);
-      if (!instantChange) {
-        if (!previousEditMode && newEditMode) {
-          currentValue = _getValue();
-        }
-        else if (previousEditMode && !newEditMode && dirty) {
-          _setValue(currentValue);
-          dirty = false;
+      if (editMode != newEditMode) {
+        FormField::setEditMode(newEditMode);
+        if (!instantChange) {
+          if (newEditMode) {
+            if (!dirty) {
+              currentValue = _getValue();
+            }
+          }
+          else {
+            if (dirty) {
+              _setValue(currentValue);
+              dirty = false;
+            }
+          }
         }
       }
     }
