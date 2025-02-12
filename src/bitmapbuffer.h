@@ -541,10 +541,10 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
 
     ~BitmapBuffer();
 
-    [[nodiscard]] double getScale(coord_t w, coord_t h) const
+    [[nodiscard]] float getScale(coord_t w, coord_t h) const
     {
-      double vscale = double(h) / height();
-      double hscale = double(w) / width();
+      auto vscale = float(h) / height();
+      auto hscale = float(w) / width();
       return vscale < hscale ? vscale : hscale;
     }
 

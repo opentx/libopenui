@@ -174,7 +174,7 @@ template<class T>
 void BitmapBuffer::drawScaledBitmap(const T * bitmap, coord_t x, coord_t y, coord_t w, coord_t h)
 {
   if (bitmap) {
-    float scale = bitmap->getScale(w, h);
+    auto scale = bitmap->getScale(w, h);
     int xshift = (w - (bitmap->width() * scale)) / 2;
     int yshift = (h - (bitmap->height() * scale)) / 2;
     drawBitmap(x + xshift, y + yshift, bitmap, 0, 0, 0, 0, scale);
