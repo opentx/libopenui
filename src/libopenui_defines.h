@@ -50,6 +50,7 @@ constexpr uint32_t VERTICAL = 0x4000u;
 #define LEADING0                       0x40u
 
 #define FONT_MASK                      0x0F00u
+#define FONTS_MAX_COUNT                16
 #define FONT_INDEX(flags)              (((flags) & FONT_MASK) >> 8u)
 #define FONT(xx)                       (unsigned(FONT_ ## xx ## _INDEX) << 8u)
 
