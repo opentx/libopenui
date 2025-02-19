@@ -40,14 +40,16 @@ constexpr uint32_t VERTICAL = 0x4000u;
 // unused 0x8000u
 
 /* drawNumber flags */
-#define PREC_MASK                      0x30u
-#define PREC1                          0x10u
-#define PREC2                          0x20u
-#define PREC3                          0x30u
-#define FLAGS_TO_PREC(flags)           (uint8_t((flags) & 0x30u) >> 4u)
-#define PREC_TO_FLAGS(prec)            (uint8_t(prec) << 4u)
+constexpr uint8_t DECIMALS_MASK = 0x70;
+constexpr uint8_t FLAGS_TO_DECIMALS(uint8_t flags) 
+{
+  return (flags & DECIMALS_MASK) >> 4u;
+}
 
-#define LEADING0                       0x40u
+constexpr uint8_t DECIMALS(uint8_t value)
+{
+  return value << 4u;
+}
 
 #define FONT_MASK                      0x0F00u
 #define FONTS_MAX_COUNT                16

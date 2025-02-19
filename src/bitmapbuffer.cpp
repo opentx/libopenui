@@ -978,7 +978,7 @@ char * numberToString(int32_t val, uint8_t len, const char * prefix, const char 
   char * s = str + 32;
   *s = '\0';
   int idx = 0;
-  int prec = FLAGS_TO_PREC(flags);
+  int prec = FLAGS_TO_DECIMALS(flags);
   bool neg = false;
   if (val < 0) {
     val = -val;
@@ -994,7 +994,7 @@ char * numberToString(int32_t val, uint8_t len, const char * prefix, const char 
       if (val == 0)
         *--s = '0';
     }
-  } while (val != 0 || prec > 0 || ((flags & LEADING0) && idx < len));
+  } while (val != 0 || prec > 0);
   if (neg) *--s = '-';
 
   // TODO needs check on all string lengths ...
@@ -1014,7 +1014,6 @@ char * numberToString(int32_t val, uint8_t len, const char * prefix, const char 
 coord_t BitmapBuffer::drawNumber(coord_t x, coord_t y, int32_t val, LcdColor color, LcdFlags flags, uint8_t len, const char * prefix, const char * suffix)
 {
   auto s = numberToString(val, len, prefix, suffix, flags);
-  flags &= ~LEADING0;
   return drawText(x, y, s, color, flags);
 }
 
