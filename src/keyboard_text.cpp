@@ -100,8 +100,8 @@ const char * const KEYBOARD_QWERTZ_UPPERCASE[] = {
 
 const char * const KEYBOARD_NUMBERS[] = {
   "1234567890",
-  KEYBOARD_NUMBERS_FIRST_LINE_SPECIAL_CHARS,
-  KEYBOARD_NUMBERS_SECOND_LINE_SPECIAL_CHARS KEYBOARD_BACKSPACE,
+  KEYBOARD_SPECIAL_CHAR_1 KEYBOARD_SPECIAL_CHAR_2 KEYBOARD_SPECIAL_CHAR_3 KEYBOARD_SPECIAL_CHAR_4 KEYBOARD_SPECIAL_CHAR_5 KEYBOARD_SPECIAL_CHAR_6 KEYBOARD_SPECIAL_CHAR_7 KEYBOARD_SPECIAL_CHAR_8 KEYBOARD_SPECIAL_CHAR_9 KEYBOARD_SPECIAL_CHAR_10,
+  KEYBOARD_SPECIAL_CHAR_11 KEYBOARD_SPECIAL_CHAR_12 KEYBOARD_SPECIAL_CHAR_13 KEYBOARD_SPECIAL_CHAR_14 KEYBOARD_SPECIAL_CHAR_15 KEYBOARD_SPECIAL_CHAR_16 KEYBOARD_SPECIAL_CHAR_17 KEYBOARD_SPECIAL_CHAR_18 KEYBOARD_SPECIAL_CHAR_19 KEYBOARD_BACKSPACE,
   KEYBOARD_SET_LETTERS KEYBOARD_SPACE KEYBOARD_ENTER
 };
 
@@ -139,6 +139,11 @@ void TextKeyboard::paint(BitmapBuffer * dc)
       if (*c == ' ') {
         x += 15;
       }
+      else if (uint8_t(*c) < KEYBOARD_SPACE[0]) {
+        // special keys drawn with a bitmap
+        dc->drawMask(x, y, (const BitmapData *)LBM_SPECIAL_KEYS[uint8_t(*c) - 1], DEFAULT_COLOR);
+        x += 45;
+      }
       else if (*c == KEYBOARD_SPACE[0]) {
         // spacebar
         dc->drawMask(x, y, (const BitmapData *)LBM_KEY_SPACEBAR, DEFAULT_COLOR);
@@ -147,12 +152,15 @@ void TextKeyboard::paint(BitmapBuffer * dc)
       else if (*c == KEYBOARD_ENTER[0]) {
         // enter
         dc->drawPlainFilledRectangle(x, y - 2, 80, 25, DISABLE_COLOR);
-        dc->drawText(x+40, y, "ENTER", DEFAULT_COLOR, CENTERED);
+        dc->drawText(x + 40, y, "ENTER", DEFAULT_COLOR, CENTERED);
         x += 80;
       }
-      else if (uint8_t(*c) <= KEYBOARD_SET_NUMBERS[0]) {
-        dc->drawMask(x, y, (const BitmapData *)LBM_SPECIAL_KEYS[uint8_t(*c) - 1], DEFAULT_COLOR);
-        x += 45;
+      else if (uint8_t(*c) <= KEYBOARD_SPECIAL_CHAR_LAST[0]) {
+        // special chars
+        dc->drawPlainFilledRectangle(x, y - 2, 80, 25, DISABLE_COLOR);
+        auto pos = getUnicodeStringAtPosition(STR(SPECIAL_CHARS), uint8_t(*c) - KEYBOARD_SPECIAL_CHAR_1[0]);
+        dc->drawSizedText(x + 40, y, pos, 1, DEFAULT_COLOR, CENTERED);
+        x += 80;
       }
       else {
         dc->drawSizedText(x, y, c, 1, DEFAULT_COLOR);
@@ -194,24 +202,24 @@ bool TextKeyboard::onTouchEnd(coord_t x, coord_t y)
       if (x <= 45) {
         uint8_t specialKey = *key;
         switch (specialKey) {
-          case SPECIAL_KEY_BACKSPACE:
+          case KEYBOARD_BACKSPACE[0]:
             // backspace
             events.push(EVT_VIRTUAL_KEY(KEYBOARD_BACKSPACE[0]));
             break;
-          case SPECIAL_KEY_SET_LOWERCASE:
-            layoutIndex = getKeyboardLayout() + LOWERCASE_OPTION;
-            invalidate();
-            break;
-          case SPECIAL_KEY_SET_UPPERCASE:
+          case KEYBOARD_SET_UPPERCASE[0]:
             layoutIndex = getKeyboardLayout();
             invalidate();
             break;
-          case SPECIAL_KEY_SET_NUMBERS:
-            layoutIndex = KEYBOARD_LAYOUT_NUMBERS;
+          case KEYBOARD_SET_LOWERCASE[0]:
+            layoutIndex = getKeyboardLayout() + LOWERCASE_OPTION;
             invalidate();
             break;
-          case SPECIAL_KEY_SET_LETTERS:
+          case KEYBOARD_SET_LETTERS[0]:
             layoutIndex = getKeyboardLayout() + LOWERCASE_OPTION;
+            invalidate();
+            break;
+          case KEYBOARD_SET_NUMBERS[0]:
+            layoutIndex = KEYBOARD_LAYOUT_NUMBERS;
             invalidate();
             break;
         }
