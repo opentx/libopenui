@@ -899,14 +899,6 @@ void BitmapBuffer::drawMask(coord_t x, coord_t y, const BitmapMask * mask, const
   }
 }
 
-uint8_t BitmapBuffer::drawChar(coord_t x, coord_t y, const Font::Glyph & glyph, LcdColor color)
-{
-  if (glyph.width) {
-    drawMask(x, y, glyph.font->getBitmapData(), color, glyph.offset, 0, glyph.width);
-  }
-  return glyph.width;
-}
-
 #define INCREMENT_POS(delta)    do { if (flags & VERTICAL) y -= delta; else x += delta; } while(0)
 
 coord_t BitmapBuffer::drawSizedText(coord_t x, coord_t y, const char * s, uint8_t len, LcdColor color, LcdFlags flags)
@@ -934,37 +926,103 @@ coord_t BitmapBuffer::drawSizedText(coord_t x, coord_t y, const char * s, uint8_
   coord_t & pos = (flags & VERTICAL) ? y : x;
   const coord_t orig_pos = pos;
 
-  for (int i = 0; len == 0 || i < len; ++i) {
-    unsigned int c = uint8_t(*s);
-    // TRACE("c = %d %o 0x%X '%c'", c, c, c, c);
+  auto curr = s;
+  while (len == 0 || curr - s < len) {
+    auto c = getNextUnicodeChar(curr);
 
     if (!c) {
       break;
     }
-    else if (c >= CJK_BYTE1_MIN) {
-      // CJK char
-      auto glyph = font->getCJKChar(c, *++s);
-      // TRACE("CJK = %d", c);
-      uint8_t width = drawChar(x, y, glyph, color);
-      INCREMENT_POS(width + CHAR_SPACING);
+
+    if (c == ' ') {
+      INCREMENT_POS(font->getSpaceWidth());
+      continue;
     }
-    else if (c >= 0x20) {
-      auto glyph = font->getChar(c);
-      uint8_t width = drawChar(x, y, glyph, color);
-      if (c >= '0' && c <= '9')
-        INCREMENT_POS(font->getChar('9').width + CHAR_SPACING);
-      else
-        INCREMENT_POS(width + CHAR_SPACING);
-    }
-    else if (c == '\n') {
+
+    if (c == '\n') {
       pos = orig_pos;
       if (flags & VERTICAL)
         x += height;
       else
         y += height;
+      continue;
     }
 
-    s++;
+    auto glyph = font->getGlyph(c);
+    // TRACE("c = '%lc' 0x%X offset=%d width=%d", c, c, glyph.offset, glyph.width);
+    if (glyph.width) {
+      drawChar(x, y, glyph, color);
+      INCREMENT_POS(glyph.width + font->getSpacing());
+    }
+    else {
+      TRACE("Missing glyph '%lc' hex=0x%X", c, c);
+      INCREMENT_POS(font->getSpacing());
+    }
+  }
+
+  RESTORE_OFFSET();
+
+  return ((flags & RIGHT) ? orig_pos : pos) - offsetX;
+}
+
+
+coord_t BitmapBuffer::drawSizedText(coord_t x, coord_t y, const wchar_t * s, uint8_t len, LcdColor color, LcdFlags flags)
+{
+  MOVE_OFFSET();
+
+  auto font = getFont(flags);
+  int height = font->getHeight();
+
+  if (y + height <= ymin || y >= ymax) {
+    RESTORE_OFFSET();
+    return x;
+  }
+
+  if (flags & (RIGHT | CENTERED)) {
+    int width = font->getTextWidth(s, len);
+    if (flags & RIGHT) {
+      INCREMENT_POS(-width);
+    }
+    else if (flags & CENTERED) {
+      INCREMENT_POS(-width / 2);
+    }
+  }
+
+  coord_t & pos = (flags & VERTICAL) ? y : x;
+  const coord_t orig_pos = pos;
+
+  auto curr = s;
+  while (len == 0 || curr - s < len) {
+    auto c = *curr++;
+
+    if (!c) {
+      break;
+    }
+
+    if (c == ' ') {
+      INCREMENT_POS(font->getSpaceWidth());
+      continue;
+    }
+
+    if (c == '\n') {
+      pos = orig_pos;
+      if (flags & VERTICAL)
+        x += height;
+      else
+        y += height;
+      continue;
+    }
+
+    auto glyph = font->getGlyph(c);
+    // TRACE("c = '%lc' 0x%X offset=%d width=%d", c, c, glyph.offset, glyph.width);
+    if (glyph.width) {
+      drawChar(x, y, glyph, color);
+      INCREMENT_POS(glyph.width + font->getSpacing());
+    }
+    else {
+      TRACE("Missing glyph '%lc' hex=0x%X", c, c);
+      INCREMENT_POS(font->getSpacing());
+    }
   }
 
   RESTORE_OFFSET();

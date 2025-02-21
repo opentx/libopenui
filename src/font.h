@@ -19,56 +19,78 @@
 
 #pragma once
 
+#include <list>
 #include "libopenui_types.h"
 #include "libopenui_config.h"
 #include "bitmapdata.h"
+#include "unicode.h"
 
-constexpr uint8_t CJK_BYTE1_MIN = 0xFD;
+constexpr uint8_t LEN_FONT_NAME = 8;
 
-inline bool hasChineseChars(const char * str)
-{
-  while (*str) {
-    uint8_t c = *str++;
-    if (c >= CJK_BYTE1_MIN) {
-      return true;
-    }
-  }
-  return false;
-}
+// TODO
+// inline const char * findNextLine(const char * str)
+// {
+  // while (true) {
+  //   auto c = getNextUnicodeChar(str);
+  //   if (c == '\0')
+  //     return nullptr;
+  //   else if (c == '\n')
+  //     return 
 
-inline const char * findNextLine(const char * stack)
-{
-  while (true) {
-    const char * pos = strchr(stack, '\n');
-    if (!pos)
-      return nullptr;
-    if (pos == stack || *((uint8_t *)(pos - 1)) < CJK_BYTE1_MIN)
-      return pos;
-    stack = pos + 1;
-  }
-}
+
+  //   const char * pos = strchr(stack, '\n');
+  //   if (!pos)
+  //     return nullptr;
+  //   if (pos == stack || *((uint8_t *)(pos - 1)) < CJK_BYTE1_MIN)
+  //     return pos;
+  //   stack = pos + 1;
+  // }
+// }
 
 class Font
 {
   public:
+
+    struct GlyphRange
+    {
+      uint32_t begin;
+      uint32_t end;
+      const BitmapData * data;
+      const uint16_t * specs;
+    };
+
     struct Glyph
     {
-      const Font * font;
+      const BitmapData * data;
       unsigned offset;
       uint8_t width;
     };
 
-    Font(const char * name, uint16_t count, const BitmapData * data, const uint16_t * specs):
-      name(name),
-      count(count),
-      data(data),
-      specs(specs)
+    Font() = default;
+
+    Font(const char * name)
     {
+      strlcpy(this->name, name, sizeof(this->name));
+    }
+
+    Font(const char * name, const BitmapData * data, const uint16_t * specs):
+      ranges({{0x21, 0x7F, data, specs}})
+    {
+      strlcpy(this->name, name, sizeof(this->name));
+    }
+
+    bool loadFile(const char * path);
+
+    void addGlyphs(const Font * other)
+    {
+      for (auto range: other->ranges) {
+        ranges.push_back(range);
+      }
     }
 
     coord_t getHeight() const
     {
-      return specs[0];
+      return ranges.empty() ? 0 : ranges.front().data->height();
     }
 
     const char * getName() const
@@ -76,78 +98,114 @@ class Font
       return name;
     }
 
-    Glyph getGlyph(unsigned index) const
+    Glyph getGlyph(wchar_t index) const
     {
-      // TODO check index not over table
-      auto offset = specs[index + 1];
-      return {this, offset, uint8_t(specs[index + 2] - offset)};
+      for (auto & range: ranges) {
+        if (range.begin <= index && index < range.end) {
+          index -= range.begin;
+          auto offset = range.specs[index];
+          return {range.data, offset, uint8_t(range.specs[index + 1] - offset)};
+        }
+      }
+      return {};
     }
 
-    Glyph getChar(uint8_t c) const
+    uint8_t getGlyphWidth(wchar_t c) const
     {
-      if (c >= 0x20) {
-        return getGlyph(c - 0x20);
+      if (c == ' ') {
+        return spaceWidth;
       }
       else {
-        return {this, 0, 0};
+        auto glyph = getGlyph(c);
+        return glyph.width + spacing;
       }
-    }
-
-    [[nodiscard]] Glyph getCJKChar(uint8_t byte1, uint8_t byte2) const
-    {
-      unsigned result = byte2 + ((byte1 - CJK_BYTE1_MIN) << 8u) - 1;
-      if (result >= 0x200)
-        result -= 1;
-      if (result >= 0x100)
-        result -= 1;
-      return getGlyph(CJK_FIRST_LETTER_INDEX + result);
     }
 
     coord_t getTextWidth(const char * s, int len = 0) const
     {
       int currentLineWidth = 0;
       int result = 0;
-      for (int i = 0; len == 0 || i < len; ++i) {
-        unsigned c = uint8_t(*s);
+
+      auto curr = s;
+      while (len == 0 || curr - s < len) {
+        auto c = getNextUnicodeChar(curr);
         if (!c) {
           break;
         }
-        else if (c >= CJK_BYTE1_MIN) {
-          currentLineWidth += getCJKChar(c, *++s).width + CHAR_SPACING;
-        }
-        else if (c >= 0x20) {
-          if (c >= '0' && c <= '9')
-            currentLineWidth += getChar('9').width + CHAR_SPACING;
-          else
-            currentLineWidth += getChar(c).width + CHAR_SPACING;
-        }
-        else if (c == '\n') {
+        if (c == '\n') {
           if (currentLineWidth > result)
             result = currentLineWidth;
           currentLineWidth = 0;
         }
-
-        ++s;
+        else {
+          currentLineWidth += getGlyphWidth(c);
+        }
       }
 
       return currentLineWidth > result ? currentLineWidth : result;
     }
 
-    [[nodiscard]] const BitmapData * getBitmapData() const
+    coord_t getTextWidth(const wchar_t * s, int len = 0) const
     {
-      return data;
+      int currentLineWidth = 0;
+      int result = 0;
+
+      auto curr = s;
+      while (len == 0 || curr - s < len) {
+        auto c = *curr++;
+        if (!c) {
+          break;
+        }
+        if (c == '\n') {
+          if (currentLineWidth > result)
+            result = currentLineWidth;
+          currentLineWidth = 0;
+        }
+        else {
+          currentLineWidth += getGlyphWidth(c);
+        }
+      }
+
+      return currentLineWidth > result ? currentLineWidth : result;
     }
 
-    [[nodiscard]] bool hasCJKChars() const
+    uint8_t getSpacing() const
     {
-      return count > CJK_FIRST_LETTER_INDEX;
+      return spacing;
+    }
+
+    uint8_t getSpaceWidth() const
+    {
+      return spaceWidth;
+    }
+
+    wchar_t begin() const 
+    {
+      wchar_t result = ' ';
+      for (auto & range: ranges) {
+        if (range.begin < result) {
+          result = range.begin;
+        }
+      }
+      return result;
+    }
+
+    wchar_t end() const 
+    {
+      wchar_t result = ' ';
+      for (auto & range: ranges) {
+        if (range.end > result) {
+          result = range.end;
+        }
+      }
+      return result;
     }
 
   protected:
-    const char * name;
-    uint16_t count;
-    const BitmapData * data;
-    const uint16_t * specs;
+    char name[LEN_FONT_NAME + 1];
+    uint8_t spacing = 1;
+    uint8_t spaceWidth = 4;
+    std::list<GlyphRange> ranges;
 };
 
 const Font * getFont(LcdFlags flags);
@@ -158,7 +216,8 @@ inline coord_t getFontHeight(LcdFlags flags)
   return getFont(flags)->getHeight();
 }
 
-inline coord_t getTextWidth(const char * s, int len = 0, LcdFlags flags = 0)
+template <class T>
+inline coord_t getTextWidth(const T * s, int len = 0, LcdFlags flags = 0)
 {
   return getFont(flags)->getTextWidth(s, len);
 }

@@ -51,8 +51,8 @@ constexpr uint8_t DECIMALS(uint8_t value)
   return value << 4u;
 }
 
-#define FONT_MASK                      0x0F00u
-#define FONTS_MAX_COUNT                16
+#define FONT_MASK                      0x1F00u
+#define MAX_FONTS                      0x20
 #define FONT_INDEX(flags)              (((flags) & FONT_MASK) >> 8u)
 #define FONT(xx)                       (unsigned(FONT_ ## xx ## _INDEX) << 8u)
 
