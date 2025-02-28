@@ -50,8 +50,15 @@ class NumberEdit: public BaseNumberEdit
       isValueAvailable = std::move(handler);
     }
 
-    void setGetStringValueHandler(std::function<std::string(int)> handler)
+    enum ValueContext {
+      ContextField = 0x01,
+      ContextKeyboard = 0x02,
+      ContextAll = 0xFF,
+    };
+
+    void setGetStringValueHandler(std::function<std::string(int)> handler, ValueContext context = ContextAll)
     {
+      _getStringValueContext = context;
       _getStringValue = std::move(handler);
     }
 
@@ -99,11 +106,11 @@ class NumberEdit: public BaseNumberEdit
     void setEditMode(bool newEditMode) override;
 #endif
 
-    std::string getStringValue(int value) const
+    std::string getStringValue(int value, ValueContext context = ContextField) const
     {
       if (value == 0 && !zeroText.empty())
         return zeroText;
-      else if (_getStringValue)
+      else if (_getStringValue && (context & _getStringValueContext))
         return _getStringValue(value);
       else
         return getDefaultStringValue(value);
@@ -127,6 +134,7 @@ class NumberEdit: public BaseNumberEdit
 #if defined(SOFTWARE_KEYBOARD)
     bool keyboardEnabled = true;
 #endif
+    ValueContext _getStringValueContext;
 };
 
 }
