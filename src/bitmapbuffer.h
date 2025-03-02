@@ -647,8 +647,14 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
     void drawMask(coord_t x, coord_t y, const BitmapMask * mask, const BitmapBuffer * srcBitmap, coord_t offsetX = 0, coord_t offsetY = 0, coord_t width = 0, coord_t height = 0);
 
     coord_t drawSizedText(coord_t x, coord_t y, const char * s, uint8_t len, LcdColor color, LcdFlags flags = 0);
+    coord_t drawSizedText(coord_t x, coord_t y, const wchar_t * s, uint8_t len, LcdColor color, LcdFlags flags = 0);
 
     coord_t drawText(coord_t x, coord_t y, const char * s, LcdColor color, LcdFlags flags = 0)
+    {
+      return drawSizedText(x, y, s, 0, color, flags);
+    }
+
+    coord_t drawText(coord_t x, coord_t y, const wchar_t * s, LcdColor color, LcdFlags flags = 0)
     {
       return drawSizedText(x, y, s, 0, color, flags);
     }
@@ -716,7 +722,10 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
       return applyClippingRect(x, y, w, h);
     }
 
-    uint8_t drawChar(coord_t x, coord_t y, const Font::Glyph & glyph, LcdColor color);
+    void drawChar(coord_t x, coord_t y, const Font::Glyph & glyph, LcdColor color)
+    {
+      drawMask(x, y, glyph.data, color, glyph.offset, 0, glyph.width);
+    }
 
     inline void drawPixel(pixel_t * p, pixel_t value)
     {
