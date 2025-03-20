@@ -460,7 +460,7 @@ void BitmapBuffer::fillBottomFlatTriangle(coord_t x0, coord_t y0, coord_t x1, co
   float w = 1;
 
   for (int y = y0; y <= y12; y++) {
-    drawHorizontalLine(x, y, w, color, SOLID);
+    drawHorizontalLine(round(x), y, round(w), color, SOLID);
     x += slopex;
     w += slopew;
   }
@@ -476,7 +476,7 @@ void BitmapBuffer::fillTopFlatTriangle(coord_t x0, coord_t y01, coord_t x1, coor
   float w = 1;
 
   for (int y = y2; y >= y01; y--) {
-    drawHorizontalLine(x, y, w, color, SOLID);
+    drawHorizontalLine(round(x), y, round(w), color, SOLID);
     x += slopex;
     w += slopew;
   }
