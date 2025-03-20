@@ -22,24 +22,33 @@
 #include "keyboard_base.h"
 #include "textedit.h"
 
-enum SpecialKey
-{
-  SPECIAL_KEY_BACKSPACE = 1,
-  SPECIAL_KEY_SET_UPPERCASE = 2,
-  SPECIAL_KEY_SET_LOWERCASE = 3,
-  SPECIAL_KEY_SET_LETTERS = 4,
-  SPECIAL_KEY_SET_NUMBERS = 5,
-  SPECIAL_KEY_SPACE = '\t',
-  SPECIAL_KEY_ENTER = '\n',
-};
-
-#define KEYBOARD_BACKSPACE     "\001"
-#define KEYBOARD_SET_UPPERCASE "\002"
-#define KEYBOARD_SET_LOWERCASE "\003"
-#define KEYBOARD_SET_LETTERS   "\004"
-#define KEYBOARD_SET_NUMBERS   "\005"
-#define KEYBOARD_SPACE         "\t"
-#define KEYBOARD_ENTER         "\n"
+#define KEYBOARD_BACKSPACE     "\x01"
+#define KEYBOARD_SET_UPPERCASE "\x02"
+#define KEYBOARD_SET_LOWERCASE "\x03"
+#define KEYBOARD_SET_LETTERS   "\x04"
+#define KEYBOARD_SET_NUMBERS   "\x05"
+#define KEYBOARD_SPACE         "\x06"
+#define KEYBOARD_ENTER         "\x07"
+#define KEYBOARD_SPECIAL_CHAR_1 "\x08"
+#define KEYBOARD_SPECIAL_CHAR_2 "\x09"
+#define KEYBOARD_SPECIAL_CHAR_3 "\x0A"
+#define KEYBOARD_SPECIAL_CHAR_4 "\x0B"
+#define KEYBOARD_SPECIAL_CHAR_5 "\x0C"
+#define KEYBOARD_SPECIAL_CHAR_6 "\x0D"
+#define KEYBOARD_SPECIAL_CHAR_7 "\x0E"
+#define KEYBOARD_SPECIAL_CHAR_8 "\x0F"
+#define KEYBOARD_SPECIAL_CHAR_9 "\x10"
+#define KEYBOARD_SPECIAL_CHAR_10 "\x11"
+#define KEYBOARD_SPECIAL_CHAR_11 "\x12"
+#define KEYBOARD_SPECIAL_CHAR_12 "\x13"
+#define KEYBOARD_SPECIAL_CHAR_13 "\x14"
+#define KEYBOARD_SPECIAL_CHAR_14 "\x15"
+#define KEYBOARD_SPECIAL_CHAR_15 "\x16"
+#define KEYBOARD_SPECIAL_CHAR_16 "\x17"
+#define KEYBOARD_SPECIAL_CHAR_17 "\x18"
+#define KEYBOARD_SPECIAL_CHAR_18 "\x19"
+#define KEYBOARD_SPECIAL_CHAR_19 "\x1A"
+#define KEYBOARD_SPECIAL_CHAR_LAST KEYBOARD_SPECIAL_CHAR_19
 
 extern const uint8_t LBM_KEY_SPACEBAR[];
 extern const uint8_t * const LBM_SPECIAL_KEYS[];
@@ -67,7 +76,7 @@ enum KeyboardLayout
 
 namespace ui {
 
-class TextKeyboard: public Keyboard<TextEdit>
+class TextKeyboard: public Keyboard<FormField>
 {
   public:
     TextKeyboard();
@@ -91,7 +100,7 @@ class TextKeyboard: public Keyboard<TextEdit>
       return _instance;
     }
 
-    static void show(TextEdit * field)
+    static void show(FormField * field)
     {
       if (!_instance) {
         _instance = new TextKeyboard();

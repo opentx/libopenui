@@ -92,33 +92,29 @@ class TextEdit: public FormField
       }
     }
 
-    static uint8_t getNextChar(uint8_t c, uint8_t previous)
+    static uint32_t getNextAvailableChar(uint32_t index)
     {
-      if (c == ' ' || c == 0)
-        return (previous >= 'a' && previous <= 'z') ? 'a' : 'A';
-
-      for (auto & suite: charsSuite) {
-        if (c == suite[0])
-          return suite[1];
+      auto end = stdFont.end();
+      while (++index < end) {
+        if (stdFont.getGlyph(index).width > 0) {
+          return index;
+        }
       }
-
-      return c + 1;
+      return index;
     }
 
-    static uint8_t getPreviousChar(uint8_t c)
+    static uint32_t getPreviousAvailableChar(uint32_t index)
     {
-      if (c == 'A')
-        return ' ';
-
-      for (auto & suite: charsSuite) {
-        if (c == suite[1])
-          return suite[0];
+      auto begin = stdFont.begin();
+      while (--index >= begin) {
+        if (stdFont.getGlyph(index).width > 0) {
+          return index;
+        }
       }
-
-      return c - 1;
+      return index;
     }
 
-    static uint8_t toggleCase(uint8_t c)
+    static wchar_t toggleCase(wchar_t c)
     {
       if (c >= 'A' && c <= 'Z')
         return c + 32; // tolower
@@ -127,6 +123,8 @@ class TextEdit: public FormField
       else
         return c;
     }
+
+    void onVirtualKeyEvent(event_t event);
 };
 
 }
