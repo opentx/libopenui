@@ -45,11 +45,11 @@ coord_t StaticText::drawText(BitmapBuffer * dc, const rect_t & rect, const std::
       dc->drawText(x, y, text.substr(current - start, nextline - current).c_str(), textColor, textFlags);
       current = nextline + 1;
       nextline = findNextLine(current);
-      y += fontHeight + 2;
+      y += fontHeight + STATIC_TEXT_INTERLINE_HEIGHT;
     } while (nextline);
   }
   dc->drawText(x, y, current, textColor, textFlags);
-  y += fontHeight + 2;
+  y += fontHeight + STATIC_TEXT_INTERLINE_HEIGHT;
   return y;
 }
 

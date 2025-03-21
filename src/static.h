@@ -22,6 +22,8 @@
 #include "window.h"
 #include "button.h" // TODO just for BUTTON_BACKGROUND
 
+constexpr coord_t STATIC_TEXT_INTERLINE_HEIGHT = 2;
+
 namespace ui {
 
 class StaticText: public Window
