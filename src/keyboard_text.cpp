@@ -196,7 +196,7 @@ bool TextKeyboard::onTouchEnd(coord_t x, coord_t y)
         switch (specialKey) {
           case SPECIAL_KEY_BACKSPACE:
             // backspace
-            events.push(EVT_VIRTUAL_KEY(KEYBOARD_BACKSPACE[0]));
+            events.push(EVT_VIRTUAL_KEY(SPECIAL_KEY_BACKSPACE));
             break;
           case SPECIAL_KEY_SET_LOWERCASE:
             layoutIndex = getKeyboardLayout() + LOWERCASE_OPTION;

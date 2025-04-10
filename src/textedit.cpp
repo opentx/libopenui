@@ -105,7 +105,7 @@ void TextEdit::onEvent(event_t event)
 #if defined(SOFTWARE_KEYBOARD)
   if (IS_VIRTUAL_KEY_EVENT(event)) {
     uint8_t c = event & 0xFF;
-    if (c == (uint8_t)KEYBOARD_BACKSPACE[0]) {
+    if (c == SPECIAL_KEY_BACKSPACE) {
       if (cursorPos > 0) {
         memmove(value + cursorPos - 1, value + cursorPos, length - cursorPos);
         value[length - 1] = '\0';
@@ -131,7 +131,7 @@ void TextEdit::onEvent(event_t event)
 #endif
 #if defined(KEYBOARD_END)
     else if (c == SPECIAL_KEY_END) {
-      setCursorPos(length);
+      setCursorPos(strlen(value));
     }
 #endif
     else if (cursorPos < length) {
