@@ -71,6 +71,12 @@ class TextEdit: public FormField
 
     void onFocusLost() override;
 
+    void setCursorPos(uint8_t value)
+    {
+      cursorPos = value;
+      invalidate();
+    }
+
   protected:
     char * value;
     bool changed = false;

@@ -114,6 +114,26 @@ void TextEdit::onEvent(event_t event)
         changed = true;
       }
     }
+#if defined(KEYBOARD_DELETE)
+    else if (c == SPECIAL_KEY_DELETE) {
+      if (cursorPos < length - 1) {
+        memmove(value + cursorPos, value + cursorPos + 1, length - cursorPos - 1);
+        value[length - 1] = '\0';
+        invalidate();
+        changed = true;
+      }
+    }
+#endif
+#if defined(KEYBOARD_HOME)
+    else if (c == SPECIAL_KEY_HOME) {
+      setCursorPos(0);
+    }
+#endif
+#if defined(KEYBOARD_END)
+    else if (c == SPECIAL_KEY_END) {
+      setCursorPos(length);
+    }
+#endif
     else if (cursorPos < length) {
       memmove(value + cursorPos + 1, value + cursorPos, length - cursorPos - 1);
       value[cursorPos++] = c;
@@ -144,8 +164,7 @@ void TextEdit::onEvent(event_t event)
 
       case EVT_KEY_BREAK(KEY_LEFT):
         if (cursorPos > 0) {
-          cursorPos--;
-          invalidate();
+          setCursorPos(cursorPos - 1);
         }
         break;
 
@@ -153,13 +172,11 @@ void TextEdit::onEvent(event_t event)
       {
 #if defined(SOFTWARE_KEYBOARD)
         if (cursorPos < length && value[cursorPos] != '\0') {
-          cursorPos++;
-          invalidate();
+          setCursorPos(cursorPos + 1);
         }
 #else
         if (cursorPos < length - 1 && value[cursorPos + 1] != '\0') {
-          cursorPos++;
-          invalidate();
+          setCursorPos(cursorPos + 1);
         }
 #endif
         break;
@@ -171,12 +188,11 @@ void TextEdit::onEvent(event_t event)
             value[cursorPos] = ' ';
             changed = true;
           }
-          cursorPos++;
+          setCursorPos(cursorPos + 1);
           if (value[cursorPos] == '\0') {
             value[cursorPos] = ' ';
             changed = true;
           }
-          invalidate();
         }
         else {
           changeEnd();
