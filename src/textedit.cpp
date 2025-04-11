@@ -41,13 +41,20 @@
 #include "clipboard.h"
 #endif
 
-#if defined(SOFTWARE_KEYBOARD)
+#if defined(SOFTWARE_KEYBOARD) || defined(SIMULATION)
 void TextEdit::setEditMode(bool newEditMode)
 {
   FormField::setEditMode(newEditMode);
+
+#if defined(SOFTWARE_KEYBOARD)
   if (editMode) {
     TextKeyboard::show(this);
   }
+#endif
+
+#if defined(SIMULATION)
+  enableSimulatorKeyboard(newEditMode);
+#endif
 }
 #endif
 
@@ -102,7 +109,7 @@ void TextEdit::onEvent(event_t event)
 {
   TRACE_WINDOWS("%s received event 0x%X", getWindowDebugString().c_str(), event);
 
-#if defined(SOFTWARE_KEYBOARD)
+#if defined(SOFTWARE_KEYBOARD) || defined(SIMULATION)
   if (IS_VIRTUAL_KEY_EVENT(event)) {
     uint8_t c = event & 0xFF;
     if (c == SPECIAL_KEY_BACKSPACE) {

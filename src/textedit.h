@@ -47,7 +47,7 @@ class TextEdit: public FormField
       changeHandler = std::move(handler);
     }
 
-#if defined(SOFTWARE_KEYBOARD)
+#if defined(SOFTWARE_KEYBOARD) || defined(SIMULATION)
     void setEditMode(bool newEditMode) override;
 #endif
 
