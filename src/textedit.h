@@ -101,7 +101,7 @@ class TextEdit: public FormField
     static uint32_t getNextAvailableChar(uint32_t index)
     {
       auto end = stdFont.end();
-      while (++index < end) {
+      while (++index < uint32_t(end)) {
         if (stdFont.getGlyph(index).width > 0) {
           return index;
         }
@@ -112,7 +112,7 @@ class TextEdit: public FormField
     static uint32_t getPreviousAvailableChar(uint32_t index)
     {
       auto begin = stdFont.begin();
-      while (--index >= begin) {
+      while (--index >= uint32_t(begin)) {
         if (stdFont.getGlyph(index).width > 0) {
           return index;
         }

@@ -101,7 +101,7 @@ class Font
     Glyph getGlyph(wchar_t index) const
     {
       for (auto & range: ranges) {
-        if (range.begin <= index && index < range.end) {
+        if (range.begin <= uint32_t(index) && uint32_t(index) < range.end) {
           index -= range.begin;
           auto offset = range.specs[index];
           return {range.data, offset, uint8_t(range.specs[index + 1] - offset)};
@@ -183,7 +183,7 @@ class Font
     {
       wchar_t result = ' ';
       for (auto & range: ranges) {
-        if (range.begin < result) {
+        if (range.begin < uint32_t(result)) {
           result = range.begin;
         }
       }
@@ -194,7 +194,7 @@ class Font
     {
       wchar_t result = ' ';
       for (auto & range: ranges) {
-        if (range.end > result) {
+        if (range.end > uint32_t(result)) {
           result = range.end;
         }
       }
