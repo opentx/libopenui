@@ -204,7 +204,7 @@ bool TextKeyboard::onTouchEnd(coord_t x, coord_t y)
         switch (specialKey) {
           case KEYBOARD_BACKSPACE[0]:
             // backspace
-            events.push(EVT_VIRTUAL_KEY(KEYBOARD_BACKSPACE[0]));
+            events.push(EVT_VIRTUAL_KEY(SPECIAL_KEY_BACKSPACE));
             break;
           case KEYBOARD_SET_UPPERCASE[0]:
             layoutIndex = getKeyboardLayout();

@@ -87,6 +87,11 @@ class Keyboard: public KeyboardBase
       }
     }
 
+    T * getField()
+    {
+      return field;
+    }
+
   protected:
     T * field = nullptr;
 

@@ -41,13 +41,20 @@
 #include "clipboard.h"
 #endif
 
-#if defined(SOFTWARE_KEYBOARD)
+#if defined(SOFTWARE_KEYBOARD) || defined(SIMULATION)
 void TextEdit::setEditMode(bool newEditMode)
 {
   FormField::setEditMode(newEditMode);
+
+#if defined(SOFTWARE_KEYBOARD)
   if (editMode) {
     TextKeyboard::show(this);
   }
+#endif
+
+#if defined(SIMULATION)
+  enableSimulatorKeyboard(newEditMode);
+#endif
 }
 #endif
 
@@ -103,7 +110,7 @@ void TextEdit::trim()
 void TextEdit::onVirtualKeyEvent(event_t event)
 {
   auto c = event & MSK_VIRTUAL_KEY;
-  if (c == (uint8_t)KEYBOARD_BACKSPACE[0]) {
+  if (c == SPECIAL_KEY_BACKSPACE) {
     if (cursorPos > 0) {
       auto pos = getUnicodeStringAtPosition(value, cursorPos - 1);
       char * tmp = pos;
@@ -115,6 +122,27 @@ void TextEdit::onVirtualKeyEvent(event_t event)
       changed = true;
     }
   }
+#if defined(KEYBOARD_DELETE)
+  else if (c == SPECIAL_KEY_DELETE) {
+    // TODO check this!
+    if (cursorPos < length - 1) {
+      memmove(value + cursorPos, value + cursorPos + 1, length - cursorPos - 1);
+      value[length - 1] = '\0';
+      invalidate();
+      changed = true;
+    }
+  }
+#endif
+#if defined(KEYBOARD_HOME)
+  else if (c == SPECIAL_KEY_HOME) {
+    setCursorPos(0);
+  }
+#endif
+#if defined(KEYBOARD_END)
+  else if (c == SPECIAL_KEY_END) {
+    setCursorPos(strlen(value)); // TODO NOT GOOD!
+  }
+#endif  
   else {
     auto len = getUnicodeCharLength(c);
     if (strlen(value) + len <= length) {
@@ -131,7 +159,7 @@ void TextEdit::onEvent(event_t event)
 {
   TRACE_WINDOWS("%s received event 0x%X", getWindowDebugString().c_str(), event);
 
-#if defined(SOFTWARE_KEYBOARD)
+#if defined(SOFTWARE_KEYBOARD) || defined(SIMULATION)
   if (IS_VIRTUAL_KEY_EVENT(event)) {
     onVirtualKeyEvent(event);
     return;
@@ -158,8 +186,7 @@ void TextEdit::onEvent(event_t event)
 
       case EVT_KEY_BREAK(KEY_LEFT):
         if (cursorPos > 0) {
-          cursorPos--;
-          invalidate();
+          setCursorPos(cursorPos - 1);
         }
         break;
 
