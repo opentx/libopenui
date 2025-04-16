@@ -39,7 +39,6 @@ coord_t StaticText::drawText(BitmapBuffer * dc, const rect_t & rect, const std::
   
   auto start = text.c_str();
   auto current = start;
-  /* TODO duplicated code! 
   auto nextline = findNextLine(start);
   if (nextline) {
     do {
@@ -48,7 +47,7 @@ coord_t StaticText::drawText(BitmapBuffer * dc, const rect_t & rect, const std::
       nextline = findNextLine(current);
       y += fontHeight + STATIC_TEXT_INTERLINE_HEIGHT;
     } while (nextline);
-  } */
+  }
   dc->drawText(x, y, current, textColor, textFlags);
   y += fontHeight + STATIC_TEXT_INTERLINE_HEIGHT;
   return y;

@@ -105,7 +105,7 @@ void TextEdit::trim()
   }
 }
 
-#if defined(SOFTWARE_KEYBOARD)
+#if defined(SOFTWARE_KEYBOARD) || defined(SIMULATION)
 void TextEdit::onVirtualKeyEvent(event_t event)
 {
   auto c = event & MSK_VIRTUAL_KEY;
