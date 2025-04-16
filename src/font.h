@@ -27,25 +27,16 @@
 
 constexpr uint8_t LEN_FONT_NAME = 8;
 
-// TODO
-// inline const char * findNextLine(const char * str)
-// {
-  // while (true) {
-  //   auto c = getNextUnicodeChar(str);
-  //   if (c == '\0')
-  //     return nullptr;
-  //   else if (c == '\n')
-  //     return 
-
-
-  //   const char * pos = strchr(stack, '\n');
-  //   if (!pos)
-  //     return nullptr;
-  //   if (pos == stack || *((uint8_t *)(pos - 1)) < CJK_BYTE1_MIN)
-  //     return pos;
-  //   stack = pos + 1;
-  // }
-// }
+inline const char * findNextLine(const char * str)
+{
+  while (true) {
+    auto c = getNextUnicodeChar(str);
+    if (c == '\0')
+      return nullptr;
+    else if (c == '\n')
+      return str;
+  }
+}
 
 class Font
 {

@@ -97,13 +97,12 @@ void TextEdit::paint(BitmapBuffer * dc)
 
 void TextEdit::trim()
 {
-  /* TODO */
-  /*for (int i = length - 1; i >= 0; i--) {
+  for (int i = length - 1; i >= 0; i--) {
     if (value[i] == ' ' || value[i] == '\0')
       value[i] = '\0';
     else
       break;
-  }*/
+  }
 }
 
 #if defined(SOFTWARE_KEYBOARD)
@@ -122,27 +121,6 @@ void TextEdit::onVirtualKeyEvent(event_t event)
       changed = true;
     }
   }
-#if defined(KEYBOARD_DELETE)
-  else if (c == SPECIAL_KEY_DELETE) {
-    // TODO check this!
-    if (cursorPos < length - 1) {
-      memmove(value + cursorPos, value + cursorPos + 1, length - cursorPos - 1);
-      value[length - 1] = '\0';
-      invalidate();
-      changed = true;
-    }
-  }
-#endif
-#if defined(KEYBOARD_HOME)
-  else if (c == SPECIAL_KEY_HOME) {
-    setCursorPos(0);
-  }
-#endif
-#if defined(KEYBOARD_END)
-  else if (c == SPECIAL_KEY_END) {
-    setCursorPos(strlen(value)); // TODO NOT GOOD!
-  }
-#endif  
   else {
     auto len = getUnicodeCharLength(c);
     if (strlen(value) + len <= length) {
@@ -191,33 +169,30 @@ void TextEdit::onEvent(event_t event)
         break;
 
       case EVT_KEY_BREAK(KEY_RIGHT):
-      {
         if (cursorPos < getUnicodeStringLength(value)) {
           cursorPos++;
           invalidate();
         }
         break;
-      }
 
-      // TODO
-      // case EVT_KEY_BREAK(KEY_ENTER):
-      //   if (cursorPos < length - 1) {
-      //     if (value[cursorPos] == '\0') {
-      //       value[cursorPos] = ' ';
-      //       changed = true;
-      //     }
-      //     cursorPos++;
-      //     if (value[cursorPos] == '\0') {
-      //       value[cursorPos] = ' ';
-      //       changed = true;
-      //     }
-      //     invalidate();
-      //   }
-      //   else {
-      //     changeEnd();
-      //     FormField::onEvent(event);
-      //   }
-      //   break;
+      case EVT_KEY_BREAK(KEY_ENTER):
+        if (cursorPos < length - 1) {
+          if (value[cursorPos] == '\0') {
+            value[cursorPos] = ' ';
+            changed = true;
+          }
+          cursorPos++;
+          if (value[cursorPos] == '\0') {
+            value[cursorPos] = ' ';
+            changed = true;
+          }
+          invalidate();
+        }
+        else {
+          changeEnd();
+          FormField::onEvent(event);
+        }
+        break;
 
       case EVT_KEY_BREAK(KEY_EXIT):
         changeEnd();
