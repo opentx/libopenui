@@ -90,7 +90,7 @@ bool Font::loadFile(const char * path)
   } header;
   UINT read;
   result = f_read(file, (uint8_t *)&header, sizeof(header), &read);
-  if (result != FR_OK || read != sizeof(header) || strncmp(header.fmt, "FNT0", sizeof(header.fmt)) != 0) {
+  if (result != FR_OK || read != sizeof(header) || strncmp(header.fmt, "FNT1", sizeof(header.fmt)) != 0) {
     TRACE("loadFont('%s'): invalid header", path);
     f_close(file);
     free(file);
