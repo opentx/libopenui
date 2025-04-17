@@ -60,7 +60,7 @@ void rotateBitmapData(BitmapData * bitmap)
 }
 
 /* Font format
- * 'F', 'N', 'T', '\0'
+ * 'F', 'N', 'T', '1'
  * begin: 4bytes (glyphs index start)
  * end: 4bytes (glyphs index end, not included)
  * specs: 2bytes * (count + 1)
