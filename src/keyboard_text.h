@@ -48,7 +48,7 @@ enum KeyboardLayout
 
 namespace ui {
 
-class TextKeyboard: public Keyboard<TextEdit>
+class TextKeyboard: public Keyboard<FormField>
 {
   public:
     TextKeyboard();
@@ -72,7 +72,7 @@ class TextKeyboard: public Keyboard<TextEdit>
       return _instance;
     }
 
-    static void show(TextEdit * field)
+    static void show(FormField * field)
     {
       if (!_instance) {
         _instance = new TextKeyboard();
