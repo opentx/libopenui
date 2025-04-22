@@ -30,11 +30,12 @@ constexpr uint8_t LEN_FONT_NAME = 8;
 inline const char * findNextLine(const char * str)
 {
   while (true) {
+    auto current = str;
     auto c = getNextUnicodeChar(str);
     if (c == '\0')
       return nullptr;
     else if (c == '\n')
-      return str;
+      return current;
   }
 }
 
