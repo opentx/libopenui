@@ -279,7 +279,7 @@ bool TextEdit::onTouchEnd(coord_t x, coord_t y)
   TextKeyboard::show(this);
 #endif
 
-  auto font = getFont(FONT(STD));
+  auto font = getFont(FONT(M));
 
   coord_t rest = x;
   for (cursorPos = 0; cursorPos < length; cursorPos++) {
