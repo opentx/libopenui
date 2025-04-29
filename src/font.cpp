@@ -158,6 +158,11 @@ bool Font::loadFile(const char * path)
     ranges.push_back({rangeHeader.begin, rangeHeader.end, bitmapData, specs});
   }
 
+  // TRACE("Ranges...");
+  // for (auto & range: ranges) {
+  //   TRACE("  %d-%d", range.begin, range.end);
+  // }
+
   f_close(file);
   free(file);
   

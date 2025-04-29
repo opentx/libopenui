@@ -65,8 +65,8 @@ class Font
       strlcpy(this->name, name, sizeof(this->name));
     }
 
-    Font(const char * name, const BitmapData * data, const uint16_t * specs):
-      ranges({{0x21, 0x7F, data, specs}})
+    Font(const char * name, std::list<GlyphRange> ranges):
+      ranges(std::move(ranges))
     {
       strlcpy(this->name, name, sizeof(this->name));
     }
@@ -76,8 +76,13 @@ class Font
     void addGlyphs(const Font * other)
     {
       for (auto range: other->ranges) {
-        ranges.push_back(range);
+        addRange(range);
       }
+    }
+
+    void addRange(const GlyphRange & range)
+    {
+      ranges.push_back(range);
     }
 
     coord_t getHeight() const
@@ -90,13 +95,16 @@ class Font
       return name;
     }
 
-    Glyph getGlyph(wchar_t index) const
+    Glyph getGlyph(wchar_t c) const
     {
       for (auto & range: ranges) {
-        if (range.begin <= uint32_t(index) && uint32_t(index) < range.end) {
-          index -= range.begin;
-          auto offset = range.specs[index];
-          return {range.data, offset, uint8_t(range.specs[index + 1] - offset)};
+        if (range.begin <= uint32_t(c) && uint32_t(c) < range.end) {
+          auto index = c - range.begin;
+          unsigned offset = range.specs[index];
+          uint8_t width = range.specs[index + 1] - offset;
+          if (width > 0) {
+            return {range.data, offset, width};
+          }
         }
       }
       return {};
@@ -193,8 +201,19 @@ class Font
       return result;
     }
 
+    uint8_t isSubsetLoaded(uint8_t index) const
+    {
+      return subsetsMask & (1 << index);
+    }
+
+    void setSubsetLoaded(uint8_t index)
+    {
+      subsetsMask |= 1 << index;
+    }
+
   protected:
     char name[LEN_FONT_NAME + 1];
+    uint8_t subsetsMask = 0;
     uint8_t spacing = 1;
     uint8_t spaceWidth = 4;
     std::list<GlyphRange> ranges;
