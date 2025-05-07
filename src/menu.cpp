@@ -235,7 +235,7 @@ void Menu::setTitle(std::string text)
   updatePosition();
 }
 
-void Menu::addLine(const std::string & text, const BitmapMask * mask, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
+void Menu::addLine(const std::string & text, const StaticMask * mask, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
 {
   content->body.addLine(text, mask, std::move(onPress), std::move(onSelect), std::move(isChecked));
   if (content->width() < MAX_MENUS_WIDTH) {

@@ -146,7 +146,7 @@ class StaticBitmap: public Window
     {
     }
 
-    StaticBitmap(Window * parent, const rect_t & rect, const BitmapMask * mask, LcdFlags color, bool scale = false):
+    StaticBitmap(Window * parent, const rect_t & rect, const StaticMask * mask, LcdFlags color, bool scale = false):
       Window(parent, rect),
       mask(mask),
       color(color),
@@ -171,9 +171,9 @@ class StaticBitmap: public Window
       invalidate();
     }
 
-    void setMask(const BitmapMask * newMask)
+    void setMask(const StaticMask * newMask)
     {
-      delete mask;
+      // delete mask; TODO ???
       mask = newMask;
       invalidate();
     }
@@ -199,7 +199,7 @@ class StaticBitmap: public Window
     }
 
   protected:
-    const BitmapMask * mask = nullptr;
+    const StaticMask * mask = nullptr;
     const BitmapBuffer * bitmap = nullptr;
     LcdFlags color = 0;
     bool scale = false;

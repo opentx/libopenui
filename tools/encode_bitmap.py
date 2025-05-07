@@ -70,6 +70,16 @@ class ImageEncoder:
         else:
             self.extend(width, height)
 
+    @staticmethod
+    def guess_format(image):
+        if image.mode == "P":
+            print("Indexed bitmap, will use RGBA")
+            return "4/4/4/4"
+        elif image.mode == "RGBA":
+            return "4/4/4/4"
+        else:
+            return "5/6/5"
+
     def encode_1bit(self, image, rows):
         image = image.convert(mode='1')
         width, height = image.size
@@ -113,6 +123,7 @@ class ImageEncoder:
     def encode_8bits(self, image):
         image = image.convert(mode='L')
         width, height = image.size
+        self.append(0)
         self.append_size(width, height)
         if self.orientation == 270:
             for x in range(width):
@@ -129,10 +140,12 @@ class ImageEncoder:
 
     def encode_5_6_5(self, image):
         width, height = image.size
+        self.append(0)
         self.append_size(width, height)
         for y in range(height):
             for x in range(width):
                 pixel = self.get_pixel(image, x, y)
+                # print(pixel)
                 val = ((pixel[0] >> 3) << 11) + ((pixel[1] >> 2) << 5) + ((pixel[2] >> 3) << 0)
                 self.encode_byte(val & 255)
                 self.encode_byte(val >> 8)
@@ -141,6 +154,7 @@ class ImageEncoder:
 
     def encode_4_4_4_4(self, image):
         width, height = image.size
+        self.append(1)
         self.append_size(width, height)
         for y in range(height):
             for x in range(width):
@@ -181,15 +195,18 @@ def main():
     image = Image.open(args.input)
     encoder = ImageEncoder.create(args.size_format, args.orientation, RleMixin if args.rle else RawMixin)
 
-    if args.format == "1bit":
+    format = args.format
+    if format == "auto":
+        format = encoder.guess_format(image)
+    if format == "1bit":
         bytes = encoder.encode_1bit(image, args.rows)
-    elif args.format == "4bits":
+    elif format == "4bits":
         bytes = encoder.encode_4bits(image)
-    elif args.format == "8bits":
+    elif format == "8bits":
         bytes = encoder.encode_8bits(image)
-    elif args.format == "4/4/4/4":
+    elif format == "4/4/4/4":
         bytes = encoder.encode_4_4_4_4(image)
-    elif args.format == "5/6/5":
+    elif format == "5/6/5":
         bytes = encoder.encode_5_6_5(image)
 
     with open(args.output, "w") as f:

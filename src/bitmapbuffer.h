@@ -22,6 +22,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
+#include <optional>
 #include "bitmapdata.h"
 #include "libopenui_types.h"
 #include "libopenui_defines.h"
@@ -63,13 +64,13 @@ class BitmapBufferBase
     {
     }
 
-    BitmapBufferBase(uint8_t format, T * data):
-      format(format),
-      _width(*((uint16_t*)data)),
-      _height(*(((uint16_t*)data) + 1)),
+    BitmapBufferBase(const uint8_t * data):
+      format(*(data)),
+      _width(*((uint16_t *)(data + 1))),
+      _height(*((uint16_t *)(data + 3))),
       xmax(_width),
       ymax(_height),
-      data((T *)(((uint16_t *)data) + 2)),
+      data((T *)(uint16_t *)(data + 5)),
       dataEnd((T *)(((uint16_t *)data) + 2) + (_width * _height))
     {
     }
@@ -257,6 +258,24 @@ class BitmapBufferBase
     }
 
     template <class C>
+    C * invert() const
+    {
+      auto result = C::allocate(format, width(), height());
+      if (result) {
+        auto * srcData = data;
+        auto * destData = result->getData();
+        for (auto y = 0; y < height(); y++) {
+          for (auto x = 0; x < width(); x++) {
+            destData[x] = 0xFF - srcData[x];
+          }
+          srcData += width();
+          destData += width();
+        }
+      }
+      return result;
+    }
+
+    template <class C>
     C * horizontalFlip() const
     {
       auto * result = C::allocate(format, width(), height());
@@ -274,7 +293,7 @@ class BitmapBufferBase
       }
 #else
       auto * srcData = data + width();
-      auto * destData = result->data;
+      auto * destData = result->getData();
       for (uint8_t y = 0; y < height(); y++) {
         for (uint8_t x = 0; x < width(); x++) {
           *(destData++) = *(--srcData);
@@ -478,6 +497,16 @@ class RLEBitmap: public BitmapBufferBase<uint16_t>
 class BitmapMask: public BitmapBufferBase<uint8_t>
 {
   public:
+    mutable std::optional<BitmapBufferBase<const uint8_t>> _constView;
+
+    const BitmapBufferBase<const uint8_t>* asConstView() const 
+    {
+      if (!_constView.has_value()) {
+          _constView.emplace(format, width(), height(), data);
+      }
+      return &*_constView;
+    }
+
     static BitmapMask * allocate(uint8_t format, uint16_t width, uint16_t height)
     {
       auto result = new BitmapMask(format, width, height);
@@ -500,23 +529,6 @@ class BitmapMask: public BitmapBufferBase<uint8_t>
       free(data);
     }
 
-    [[nodiscard]] BitmapMask * invert() const
-    {
-      auto result = BitmapMask::allocate(format, width(), height());
-      if (result) {
-        auto * srcData = data;
-        auto * destData = result->data;
-        for (auto y = 0; y < height(); y++) {
-          for (auto x = 0; x < width(); x++) {
-            destData[x] = 0xFF - srcData[x];
-          }
-          srcData += width();
-          destData += width();
-        }
-      }
-      return result;
-    }
-
     static BitmapMask * load(const char * filename, int maxSize = -1);
 };
 
@@ -531,6 +543,16 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
         result = nullptr;
       }
       return result;
+    }
+
+    mutable std::optional<BitmapBufferBase<const pixel_t>> _constView;
+
+    const BitmapBufferBase<const pixel_t>* asConstView() const 
+    {
+      if (!_constView.has_value()) {
+          _constView.emplace(format, width(), height(), data);
+      }
+      return &*_constView;
     }
 
   protected:
@@ -623,7 +645,7 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
 
     void drawPlainFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, Color565 color);
 
-    void drawMaskFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, const BitmapMask * mask, Color565 color);
+    void drawMaskFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, const StaticMask * mask, Color565 color);
 
     void drawCircle(coord_t x, coord_t y, coord_t radius, LcdColor color);
 
