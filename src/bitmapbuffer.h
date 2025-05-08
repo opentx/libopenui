@@ -65,13 +65,7 @@ class BitmapBufferBase
     }
 
     BitmapBufferBase(const uint8_t * data):
-      format(*(data)),
-      _width(*((uint16_t *)(data + 1))),
-      _height(*((uint16_t *)(data + 3))),
-      xmax(_width),
-      ymax(_height),
-      data((T *)(uint16_t *)(data + 5)),
-      dataEnd((T *)(((uint16_t *)data) + 2) + (_width * _height))
+      BitmapBufferBase(*((uint32_t *)data), *((uint16_t *)(data + 4)), *((uint16_t *)(data + 6)), (T *)(data + 8))
     {
     }
 
@@ -322,7 +316,7 @@ class BitmapBufferBase
       }
 #else
       auto * srcData = getDataEnd() - width();
-      auto * destData = result->data;
+      auto * destData = result->getData();
       for (uint8_t y = 0; y < height(); y++) {
         for (uint8_t x = 0; x < width(); x++) {
           *(destData++) = *(srcData++);
@@ -393,7 +387,7 @@ class BitmapBufferBase
         }
       }
   #else
-      auto * destData = result->data + height();
+      auto * destData = result->getData() + height();
       for (uint8_t y = 0; y < width(); y++) {
         auto * srcData = data + y;
         for (uint8_t x = 0; x < height(); x++) {
@@ -499,7 +493,7 @@ class BitmapMask: public BitmapBufferBase<uint8_t>
   public:
     mutable std::optional<BitmapBufferBase<const uint8_t>> _constView;
 
-    const BitmapBufferBase<const uint8_t>* asConstView() const 
+    const BitmapBufferBase<const uint8_t> * asConstView() const 
     {
       if (!_constView.has_value()) {
           _constView.emplace(format, width(), height(), data);
@@ -547,10 +541,10 @@ class BitmapBuffer: public BitmapBufferBase<pixel_t>
 
     mutable std::optional<BitmapBufferBase<const pixel_t>> _constView;
 
-    const BitmapBufferBase<const pixel_t>* asConstView() const 
+    const BitmapBufferBase<const pixel_t> * asConstView() const 
     {
       if (!_constView.has_value()) {
-          _constView.emplace(format, width(), height(), data);
+        _constView.emplace(format, width(), height(), data);
       }
       return &*_constView;
     }

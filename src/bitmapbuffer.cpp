@@ -742,7 +742,7 @@ void BitmapBuffer::drawBitmapPatternPie(coord_t x, coord_t y, const uint8_t * im
   auto bitmap = (BitmapData *)img;
   coord_t width = bitmap->width();
   coord_t height = bitmap->height();
-  const uint8_t * q = bitmap->data;
+  const uint8_t * q = bitmap->getData();
 
   int w2 = width / 2;
   int h2 = height / 2;

@@ -36,29 +36,6 @@ BitmapData * decodeBitmapData(const uint8_t * data)
   return (BitmapData *)buffer;
 }
 
-void flipBitmapData(BitmapData * bitmap)
-{
-  auto ptr1 = &bitmap->data[0];
-  auto ptr2 = &bitmap->data[bitmap->height() * bitmap->width() - 1];
-  while (ptr2 > ptr1) {
-    std::swap(*ptr1++, *ptr2--);
-  }
-}
-
-void rotateBitmapData(BitmapData * bitmap)
-{
-  auto dataSize = bitmap->width() * bitmap->height();
-  auto * srcData = (uint8_t *)malloc(dataSize);
-  memcpy(srcData, bitmap->data, dataSize);
-  auto * destData = &bitmap->data[0];
-  for (coord_t y = 0; y < bitmap->height(); y++) {
-    for (coord_t x = 0; x < bitmap->width(); x++) {
-      destData[x * bitmap->height() + y] = srcData[y * bitmap->width() + x];
-    }
-  }
-  free(srcData);
-}
-
 /* Font format
  * 'F', 'N', 'T', '1'
  * begin: 4bytes (glyphs index start)
@@ -151,9 +128,9 @@ bool Font::loadFile(const char * path)
 
     auto bitmapData = decodeBitmapData(data);
 #if LCD_ORIENTATION == 180
-    flipBitmapData(bitmapData);
+    bitmapData.flip();
 #elif LCD_ORIENTATION == 270
-    rotateBitmapData(bitmapData);
+    bitmapData.rotate();
 #endif
     ranges.push_back({rangeHeader.begin, rangeHeader.end, bitmapData, specs});
   }

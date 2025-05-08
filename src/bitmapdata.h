@@ -21,24 +21,52 @@
 
 #include <cinttypes>
 
-struct BitmapData
+class BitmapData
 {
-  uint16_t _width;
-  uint16_t _height;
-  uint8_t data[];
+  public:
+    uint16_t width() const
+    {
+      return _width;
+    }
 
-  uint16_t width() const
-  {
-    return _width;
-  }
+    uint16_t height() const
+    {
+      return _height;
+    }
 
-  uint16_t height() const
-  {
-    return _height;
-  }
+    const uint8_t * getData() const
+    {
+      return data;
+    }
 
-  const uint8_t * getData() const
-  {
-    return data;
-  }
+    // TODO duplicated code
+    void flip()
+    {
+      auto ptr1 = &data[0];
+      auto ptr2 = &data[height() * width() - 1];
+      while (ptr2 > ptr1) {
+        std::swap(*ptr1++, *ptr2--);
+      }
+    }
+
+    // TODO duplicated code
+    void rotate()
+    {
+      auto dataSize = width() * height();
+      auto * srcData = (uint8_t *)malloc(dataSize);
+      memcpy(srcData, data, dataSize);
+      auto * destData = &data[0];
+      for (uint16_t y = 0; y < height(); y++) {
+        for (uint16_t x = 0; x < width(); x++) {
+          destData[x * height() + y] = srcData[y * width() + x];
+        }
+      }
+      free(srcData);
+    }
+
+  protected:
+    uint32_t format; // alignment
+    uint16_t _width;
+    uint16_t _height;
+    uint8_t data[];
 };

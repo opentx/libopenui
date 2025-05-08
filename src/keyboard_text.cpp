@@ -25,27 +25,27 @@ using namespace ui;
 TextKeyboard * TextKeyboard::_instance = nullptr;
 
 const uint8_t LBM_KEY_UPPERCASE[] = {
-#include "mask_key_uppercase.lbm"
+#include "bitmaps/mask_key_uppercase.lbm"
 };
 
 const uint8_t LBM_KEY_LOWERCASE[] = {
-#include "mask_key_lowercase.lbm"
+#include "bitmaps/mask_key_lowercase.lbm"
 };
 
 const uint8_t LBM_KEY_BACKSPACE[] = {
-#include "mask_key_backspace.lbm"
+#include "bitmaps/mask_key_backspace.lbm"
 };
 
 const uint8_t LBM_KEY_LETTERS[] = {
-#include "mask_key_letters.lbm"
+#include "bitmaps/mask_key_letters.lbm"
 };
 
 const uint8_t LBM_KEY_NUMBERS[] = {
-#include "mask_key_numbers.lbm"
+#include "bitmaps/mask_key_numbers.lbm"
 };
 
 const uint8_t LBM_KEY_SPACEBAR[] = {
-#include "mask_key_spacebar.lbm"
+#include "bitmaps/mask_key_spacebar.lbm"
 };
 
 const uint8_t * const LBM_SPECIAL_KEYS[] = {

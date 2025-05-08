@@ -6,7 +6,7 @@ from PIL import Image
 
 class RawMixin:
     def encode_byte(self, byte):
-        self.append(byte)
+        self.append_byte(byte)
 
     def encode_end(self):
         pass
@@ -28,7 +28,7 @@ class RleMixin:
 
     def encode_byte(self, byte):
         if self.state == self.RLE_BYTE:
-            self.append(byte)
+            self.append_byte(byte)
             if self.eq_prev_byte(byte):
                 self.state = self.RLE_SEQ
                 self.count = 0
@@ -38,18 +38,18 @@ class RleMixin:
             if self.eq_prev_byte(byte):
                 self.count += 1
                 if self.count == 255:
-                    self.append(self.count)
+                    self.append_byte(self.count)
                     self.prev_byte = None
                     self.state = self.RLE_BYTE
             else:
-                self.append(self.count)
-                self.append(byte)
+                self.append_byte(self.count)
+                self.append_byte(byte)
                 self.prev_byte = byte
                 self.state = self.RLE_BYTE
 
     def encode_end(self):
         if self.state == self.RLE_SEQ:
-            self.append(self.count)
+            self.append_byte(self.count)
 
 
 class ImageEncoder:
@@ -58,15 +58,27 @@ class ImageEncoder:
         self.orientation = orientation
         self.bytes = []
 
-    def append(self, value):
+    def append_byte(self, value):
         self.bytes.append(value)
     
     def extend(self, values):
         self.bytes.extend(values)
 
+    def append_short(self, value):
+        self.append_byte(value % 256)
+        self.append_byte(value // 256)
+
+    def append_word(self, value):
+        self.append_short(value % 65536)
+        self.append_short(value // 65536)
+
+    def append_format(self, value):
+        self.append_word(value)
+
     def append_size(self, width, height):
         if self.size_format == 2:
-            self.extend([width % 256, width // 256, height % 256, height // 256])
+            self.append_short(width)
+            self.append_short(height)
         else:
             self.extend(width, height)
 
@@ -123,7 +135,7 @@ class ImageEncoder:
     def encode_8bits(self, image):
         image = image.convert(mode='L')
         width, height = image.size
-        self.append(0)
+        self.append_format(0)
         self.append_size(width, height)
         if self.orientation == 270:
             for x in range(width):
@@ -140,7 +152,7 @@ class ImageEncoder:
 
     def encode_5_6_5(self, image):
         width, height = image.size
-        self.append(0)
+        self.append_format(0)
         self.append_size(width, height)
         for y in range(height):
             for x in range(width):
@@ -154,7 +166,7 @@ class ImageEncoder:
 
     def encode_4_4_4_4(self, image):
         width, height = image.size
-        self.append(1)
+        self.append_format(1)
         self.append_size(width, height)
         for y in range(height):
             for x in range(width):
