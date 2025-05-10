@@ -54,7 +54,7 @@ class Theme
     virtual void drawChoice(BitmapBuffer * dc, ChoiceBase * choice, const char * str) const = 0;
     virtual void drawSlider(BitmapBuffer * dc, int vmin, int vmax, int value, const rect_t & rect, bool edit, bool focus) const = 0;
     virtual const BitmapBuffer * getIcon(uint8_t index, IconState state) const = 0;
-    virtual const BitmapMask * getIconMask(uint8_t index) const = 0;
+    virtual const Mask * getIconMask(uint8_t index) const = 0;
 
     virtual TextButton * createTextButton(FormGroup * parent, const rect_t & rect, std::string text, std::function<uint8_t(void)> pressHandler = nullptr, WindowFlags windowFlags = OPAQUE | BUTTON_BACKGROUND) const
     {

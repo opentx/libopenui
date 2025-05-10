@@ -26,31 +26,9 @@
 #include "file_reader.h"
 #include "intconversions.h"
 
-BitmapBuffer::BitmapBuffer(uint8_t format, uint16_t width, uint16_t height):
-  BitmapBufferBase<uint16_t>(format, width, height, nullptr),
-  dataAllocated(true)
+void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const Bitmap * bitmap, coord_t srcx, coord_t srcy, coord_t srcw, coord_t srch, float scale)
 {
-  data = (uint16_t *) malloc(align32(width * height * sizeof(uint16_t)));
-  dataEnd = data + (width * height);
-}
-
-BitmapBuffer::BitmapBuffer(uint8_t format, uint16_t width, uint16_t height, uint16_t * data):
-  BitmapBufferBase<uint16_t>(format, width, height, data),
-  dataAllocated(false)
-{
-}
-
-BitmapBuffer::~BitmapBuffer()
-{
-  if (dataAllocated) {
-    free(data);
-  }
-}
-
-template<class T>
-void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx, coord_t srcy, coord_t srcw, coord_t srch, float scale)
-{
-  if (!data || !bmp)
+  if (!data || !bitmap)
     return;
 
   APPLY_OFFSET();
@@ -58,8 +36,8 @@ void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx,
   if (x >= xmax || y >= ymax)
     return;
 
-  coord_t bmpw = bmp->width();
-  coord_t bmph = bmp->height();
+  coord_t bmpw = bitmap->width();
+  coord_t bmph = bitmap->height();
 
   if (srcw == 0)
     srcw = bmpw;
@@ -92,10 +70,10 @@ void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx,
       return;
     }
 
-    if (bmp->getFormat() == BMP_ARGB4444 || format == BMP_ARGB4444)
-      DMACopyAlphaBitmap(data, format == BMP_ARGB4444, _width, _height, x, y, bmp->getData(), bmp->getFormat() == BMP_ARGB4444, bmpw, bmph, srcx, srcy, srcw, srch);
+    if (bitmap->getFormat() == BMP_ARGB4444 || _format == BMP_ARGB4444)
+      DMACopyAlphaBitmap(data, _format == BMP_ARGB4444, _width, _height, x, y, bitmap->getData(), bitmap->getFormat() == BMP_ARGB4444, bmpw, bmph, srcx, srcy, srcw, srch);
     else
-      DMACopyBitmap(data, _width, _height, x, y, bmp->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
+      DMACopyBitmap(data, _width, _height, x, y, bitmap->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
   }
   else {
     if (x < xmin) {
@@ -127,14 +105,14 @@ void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx,
     if (y + scaledh > _height)
       scaledh = _height - y;
 
-    if (format == BMP_ARGB4444)  {
+    if (getFormat() == BMP_ARGB4444)  {
       for (int i = 0; i < scaledh; i++) {
         pixel_t * p = getPixelPtrAbs(x, y + i);
-        const pixel_t * qstart = bmp->getPixelPtrAbs(srcx, srcy + int(i / scale));
+        const pixel_t * qstart = bitmap->getPixelPtrAbs(srcx, srcy + int(i / scale));
         for (int j = 0; j < scaledw; j++) {
           const pixel_t * q = qstart;
-          q = bmp->getNextPixel(q, j / scale);
-          if (bmp->getFormat() == BMP_RGB565) {
+          q = bitmap->getNextPixel(q, j / scale);
+          if (bitmap->getFormat() == BMP_RGB565) {
             RGB_SPLIT(*q, r, g, b);
             drawPixel(p, ARGB_JOIN(0xF, r>>1, g>>2, b>>1));
           }
@@ -148,11 +126,11 @@ void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx,
     else {
       for (int i = 0; i < scaledh; i++) {
         pixel_t * p = getPixelPtrAbs(x, y + i);
-        const pixel_t * qstart = bmp->getPixelPtrAbs(srcx, srcy + int(i / scale));
+        const pixel_t * qstart = bitmap->getPixelPtrAbs(srcx, srcy + int(i / scale));
         for (int j = 0; j < scaledw; j++) {
           const pixel_t * q = qstart;
-          q = bmp->getNextPixel(q, j / scale);
-          if (bmp->getFormat() == BMP_ARGB4444) {
+          q = bitmap->getNextPixel(q, j / scale);
+          if (bitmap->getFormat() == BMP_ARGB4444) {
             ARGB_SPLIT(*q, a, r, g, b);
             drawAlphaPixel(p, a, RGB_JOIN(r<<1, g<<2, b<<1));
           }
@@ -166,12 +144,7 @@ void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const T * bmp, coord_t srcx,
   }
 }
 
-template void BitmapBuffer::drawBitmap(coord_t, coord_t, BitmapBufferBase<const pixel_t> const *, coord_t, coord_t, coord_t, coord_t, float);
-template void BitmapBuffer::drawBitmap(coord_t, coord_t, const BitmapBuffer *, coord_t, coord_t, coord_t, coord_t, float);
-template void BitmapBuffer::drawBitmap(coord_t, coord_t, const RLEBitmap *, coord_t, coord_t, coord_t, coord_t, float);
-
-template<class T>
-void BitmapBuffer::drawScaledBitmap(const T * bitmap, coord_t x, coord_t y, coord_t w, coord_t h)
+void BitmapBuffer::drawScaledBitmap(const Bitmap * bitmap, coord_t x, coord_t y, coord_t w, coord_t h)
 {
   if (bitmap) {
     auto scale = bitmap->getScale(w, h);
@@ -181,11 +154,9 @@ void BitmapBuffer::drawScaledBitmap(const T * bitmap, coord_t x, coord_t y, coor
   }
 }
 
-template void BitmapBuffer::drawScaledBitmap(const BitmapBuffer *, coord_t, coord_t, coord_t, coord_t);
-
 void BitmapBuffer::drawAlphaPixel(pixel_t * p, uint8_t alpha, Color565 color)
 {
-  if (format == BMP_RGB565) {
+  if (_format == BMP_RGB565) {
     if (alpha == ALPHA_MAX) {
       drawPixel(p, color);
     }
@@ -199,7 +170,7 @@ void BitmapBuffer::drawAlphaPixel(pixel_t * p, uint8_t alpha, Color565 color)
       drawPixel(p, RGB_JOIN(r, g, b));
     }
   }
-  else if (format == BMP_ARGB4444) {
+  else if (_format == BMP_ARGB4444) {
     if (alpha == ALPHA_MAX) {
       drawPixel(p, RGB565_TO_ARGB4444(color, 0xFF));
     }
@@ -536,13 +507,13 @@ void BitmapBuffer::fillRectangle(coord_t x, coord_t y, coord_t w, coord_t h, pix
 
 void BitmapBuffer::drawPlainFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, Color565 color)
 {
-  if (format == BMP_RGB565)
+  if (_format == BMP_RGB565)
     fillRectangle(x, y, w, h, color);
   else
     fillRectangle(x, y, w, h, RGB565_TO_ARGB4444(color, 0xFF));
 }
 
-void BitmapBuffer::drawMaskFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, const StaticMask * mask, Color565 color)
+void BitmapBuffer::drawMaskFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, const Mask * mask, Color565 color)
 {
   coord_t maskHeight = mask->height();
   while (h > 0) {
@@ -728,7 +699,7 @@ class Slope
     int value;
 };
 
-void BitmapBuffer::drawBitmapPatternPie(coord_t x, coord_t y, const uint8_t * img, LcdColor color, int startAngle, int endAngle)
+void BitmapBuffer::drawBitmapPatternPie(coord_t x, coord_t y, const Mask * mask, LcdColor color, int startAngle, int endAngle)
 {
   if (endAngle == startAngle) {
     endAngle += 1;
@@ -739,10 +710,9 @@ void BitmapBuffer::drawBitmapPatternPie(coord_t x, coord_t y, const uint8_t * im
 
   auto rgb565 = COLOR_TO_RGB565(color);
 
-  auto bitmap = (BitmapData *)img;
-  coord_t width = bitmap->width();
-  coord_t height = bitmap->height();
-  const uint8_t * q = bitmap->getData();
+  coord_t width = mask->width();
+  coord_t height = mask->height();
+  const uint8_t * q = mask->getData();
 
   int w2 = width / 2;
   int h2 = height / 2;
@@ -799,8 +769,7 @@ void BitmapBuffer::drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadiu
   }
 }
 
-template <class T>
-void BitmapBuffer::drawMask(coord_t x, coord_t y, const T * mask, Color565 color, coord_t srcx, coord_t srcy, coord_t srcw, coord_t srch)
+void BitmapBuffer::drawMask(coord_t x, coord_t y, const Mask * mask, Color565 color, coord_t srcx, coord_t srcy, coord_t srcw, coord_t srch)
 {
   if (!mask)
     return;
@@ -848,14 +817,10 @@ void BitmapBuffer::drawMask(coord_t x, coord_t y, const T * mask, Color565 color
   }
 
   auto rgb565 = COLOR_TO_RGB565(color);
-  DMACopyAlphaMask(data, format == BMP_ARGB4444, _width, _height, x, y, mask->getData(), maskWidth, maskHeight, srcx, srcy, srcw, srch, rgb565);
+  DMACopyAlphaMask(data, _format == BMP_ARGB4444, _width, _height, x, y, mask->getData(), maskWidth, maskHeight, srcx, srcy, srcw, srch, rgb565);
 }
 
-template void BitmapBuffer::drawMask(coord_t, coord_t, const BitmapData *, Color565, coord_t, coord_t, coord_t, coord_t);
-template void BitmapBuffer::drawMask(coord_t, coord_t, const BitmapMask *, Color565, coord_t, coord_t, coord_t, coord_t);
-template void BitmapBuffer::drawMask(coord_t, coord_t, const StaticMask *, Color565, coord_t, coord_t, coord_t, coord_t);
-
-void BitmapBuffer::drawMask(coord_t x, coord_t y, const BitmapMask * mask, const BitmapBuffer * srcBitmap, coord_t offsetX, coord_t offsetY, coord_t width, coord_t height)
+void BitmapBuffer::drawMask(coord_t x, coord_t y, const Mask * mask, const Bitmap * srcBitmap, coord_t offsetX, coord_t offsetY, coord_t width, coord_t height)
 {
   if (!mask || !srcBitmap)
     return;
@@ -897,6 +862,11 @@ void BitmapBuffer::drawMask(coord_t x, coord_t y, const BitmapMask * mask, const
       q = mask->getNextPixel(q);
     }
   }
+}
+
+void BitmapBuffer::drawChar(coord_t x, coord_t y, const FontGlyph & glyph, LcdColor color)
+{
+  drawMask(x, y, glyph.data, color, glyph.offset, 0, glyph.width);
 }
 
 #define INCREMENT_POS(delta)    do { if (flags & VERTICAL) y -= delta; else x += delta; } while(0)
@@ -1108,20 +1078,20 @@ coord_t BitmapBuffer::drawNumber(coord_t x, coord_t y, int32_t val, LcdColor col
 //}
 //
 
-BitmapBuffer * BitmapBuffer::load(const char * filename, int maxSize)
+Bitmap * Bitmap::load(const char * path, int maxSize)
 {
-  auto ext = getFileExtension(filename);
+  auto ext = getFileExtension(path);
   if (ext && !strcmp(ext, ".bmp"))
-    return load_bmp(filename, maxSize);
+    return load_bmp(path, maxSize);
   else
-    return load_stb(filename, maxSize);
+    return load_stb(path, maxSize);
 }
 
-BitmapMask * BitmapMask::load(const char * filename, int maxSize)
+Mask * Mask::load(const char * path, int maxSize)
 {
-  BitmapBuffer * bitmap = BitmapBuffer::load(filename, maxSize);
+  auto bitmap = Bitmap::load(path, maxSize);
   if (bitmap) {
-    BitmapMask * result = BitmapMask::allocate(BMP_RGB565, bitmap->width(), bitmap->height());
+    Mask * result = Mask::allocate(bitmap->width(), bitmap->height());
     if (result) {
       auto * q = result->getData();
       for (const auto * p = bitmap->getData(); p < bitmap->getDataEnd(); p++) {
@@ -1134,10 +1104,49 @@ BitmapMask * BitmapMask::load(const char * filename, int maxSize)
   return nullptr;
 }
 
+Mask * Mask::decodeRle(const uint8_t * data)
+{
+  auto width = *((uint16_t *)data);
+  auto height = *((uint16_t *)(data + 2));
+
+  auto result = Mask::allocate(width, height);
+
+  uint8_t prevByte = 0;
+  bool prevByteValid = false;
+
+  auto d = result->getData();
+  auto destDataEnd = result->getDataEnd();
+
+  while (d < destDataEnd) {
+    uint8_t byte = *data++;
+    *d++ = byte;
+
+    if (prevByteValid && byte == prevByte) {
+      uint8_t count = *data++;
+
+      if (d + count > destDataEnd) {
+        TRACE("RLE decode error: destination overflow!");
+        delete result;
+        return nullptr;
+      }
+
+      memset(d, byte, count);
+      d += count;
+      prevByteValid = false;
+    }
+    else {
+      prevByte = byte;
+      prevByteValid = true;
+    }
+  }
+
+  return result;
+}
+
 BitmapBuffer * BitmapBuffer::loadMaskOnBackground(const char * filename, Color565 foreground, Color565 background, int maxSize)
 {
   BitmapBuffer * result = nullptr;
-  const auto * mask = BitmapMask::load(filename, maxSize);
+  const auto * mask = Mask::load(filename, maxSize);
   if (mask) {
     result = BitmapBuffer::allocate(BMP_RGB565, mask->width(), mask->height());
     if (result) {
@@ -1149,7 +1158,7 @@ BitmapBuffer * BitmapBuffer::loadMaskOnBackground(const char * filename, Color56
   return result;
 }
 
-BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
+Bitmap * Bitmap::load_bmp(const char * filename, int maxSize)
 {
   uint8_t palette[16];
   
@@ -1232,7 +1241,7 @@ BitmapBuffer * BitmapBuffer::load_bmp(const char * filename, int maxSize)
     return nullptr;
   }
 
-  auto bmp = BitmapBuffer::allocate(BMP_RGB565, w, h);
+  auto bmp = Bitmap::allocate(BMP_RGB565, w, h);
   if (!bmp) {
     TRACE("Bitmap::load(%s) failed: malloc error", filename);
     return nullptr;
@@ -1374,7 +1383,7 @@ void * stb_realloc(void *ptr, unsigned int oldsz, unsigned int newsz)
 #define STB_IMAGE_IMPLEMENTATION
 #include "thirdparty/stb/stb_image.h"
 
-BitmapBuffer * BitmapBuffer::load_stb(const char * filename, int maxSize)
+Bitmap * Bitmap::load_stb(const char * filename, int maxSize)
 {
   int w, h, n;
   unsigned char * img;
@@ -1412,7 +1421,7 @@ BitmapBuffer * BitmapBuffer::load_stb(const char * filename, int maxSize)
   }
 
   // convert to RGB565 or ARGB4444 format
-  auto bmp = BitmapBuffer::allocate(n == 4 ? BMP_ARGB4444 : BMP_RGB565, w, h);
+  auto bmp = Bitmap::allocate(n == 4 ? BMP_ARGB4444 : BMP_RGB565, w, h);
   if (!bmp) {
     TRACE("Bitmap::load(%s) malloc failed", filename);
     stbi_image_free(img);

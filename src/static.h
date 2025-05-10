@@ -21,6 +21,7 @@
 
 #include "window.h"
 #include "button.h" // TODO just for BUTTON_BACKGROUND
+#include "font.h"
 
 constexpr coord_t STATIC_TEXT_INTERLINE_HEIGHT = 2;
 
@@ -132,21 +133,14 @@ class StaticBitmap: public Window
     {
     }
 
-    StaticBitmap(Window * parent, const rect_t & rect, const char * filename, bool scale = false):
-      Window(parent, rect),
-      bitmap(BitmapBuffer::load(filename)),
-      scale(scale)
-    {
-    }
-
-    StaticBitmap(Window * parent, const rect_t & rect, const BitmapBuffer * bitmap, bool scale = false):
+    StaticBitmap(Window * parent, const rect_t & rect, const Bitmap * bitmap, bool scale = false):
       Window(parent, rect),
       bitmap(bitmap),
       scale(scale)
     {
     }
 
-    StaticBitmap(Window * parent, const rect_t & rect, const StaticMask * mask, LcdFlags color, bool scale = false):
+    StaticBitmap(Window * parent, const rect_t & rect, const Mask * mask, LcdFlags color, bool scale = false):
       Window(parent, rect),
       mask(mask),
       color(color),
@@ -154,29 +148,29 @@ class StaticBitmap: public Window
     {
     }
 
-    void setBitmap(const char * filename)
-    {
-      setBitmap(BitmapBuffer::load(filename));
-    }
+    // void setBitmap(const char * filename)
+    // {
+    //   setBitmap(BitmapBuffer::load(filename));
+    // }
 
-    void setMaskColor(LcdFlags value)
-    {
-      color = value;
-    }
+    // void setMaskColor(LcdFlags value)
+    // {
+    //   color = value;
+    // }
 
-    void setBitmap(const BitmapBuffer * newBitmap)
-    {
-      delete bitmap;
-      bitmap = newBitmap;
-      invalidate();
-    }
+    // void setBitmap(const BitmapBuffer * newBitmap)
+    // {
+    //   delete bitmap;
+    //   bitmap = newBitmap;
+    //   invalidate();
+    // }
 
-    void setMask(const StaticMask * newMask)
-    {
-      // delete mask; TODO ???
-      mask = newMask;
-      invalidate();
-    }
+    // void setMask(const Mask * newMask)
+    // {
+    //   // delete mask; TODO ???
+    //   mask = newMask;
+    //   invalidate();
+    // }
 
 #if defined(DEBUG_WINDOWS)
     [[nodiscard]] std::string getName() const override
@@ -199,8 +193,8 @@ class StaticBitmap: public Window
     }
 
   protected:
-    const StaticMask * mask = nullptr;
-    const BitmapBuffer * bitmap = nullptr;
+    const Mask * mask = nullptr;
+    const Bitmap * bitmap = nullptr;
     LcdFlags color = 0;
     bool scale = false;
 };

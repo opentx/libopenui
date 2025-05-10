@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <font.h>
 #include "form.h"
 
 namespace ui {

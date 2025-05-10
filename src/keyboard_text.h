@@ -22,8 +22,6 @@
 #include "keyboard_base.h"
 #include "textedit.h"
 
-extern const uint8_t LBM_KEY_SPACEBAR[];
-extern const uint8_t * const LBM_SPECIAL_KEYS[];
 extern const char * const * KEYBOARDS[];
 
 constexpr uint8_t LOWERCASE_OPTION = 1;

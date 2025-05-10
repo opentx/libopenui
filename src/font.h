@@ -22,7 +22,7 @@
 #include <list>
 #include "libopenui_types.h"
 #include "libopenui_config.h"
-#include "bitmapdata.h"
+#include "bitmapbuffer.h"
 #include "unicode.h"
 
 constexpr uint8_t LEN_FONT_NAME = 8;
@@ -39,23 +39,23 @@ inline const char * findNextLine(const char * str)
   }
 }
 
+class FontGlyph
+{
+  public:
+    const Mask * data;
+    unsigned offset;
+    uint8_t width;
+};
+
 class Font
 {
   public:
-
     struct GlyphRange
     {
       uint32_t begin;
       uint32_t end;
-      const BitmapData * data;
+      const Mask * data;
       const uint16_t * specs;
-    };
-
-    struct Glyph
-    {
-      const BitmapData * data;
-      unsigned offset;
-      uint8_t width;
     };
 
     Font() = default;
@@ -95,7 +95,7 @@ class Font
       return name;
     }
 
-    Glyph getGlyph(wchar_t c) const
+    FontGlyph getGlyph(wchar_t c) const
     {
       for (auto & range: ranges) {
         if (range.begin <= uint32_t(c) && uint32_t(c) < range.end) {

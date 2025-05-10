@@ -24,36 +24,19 @@ using namespace ui;
 
 TextKeyboard * TextKeyboard::_instance = nullptr;
 
-const uint8_t LBM_KEY_UPPERCASE[] = {
-#include "bitmaps/mask_key_uppercase.lbm"
-};
+extern const Mask maskKeyUppercase;
+extern const Mask maskKeyLowercase;
+extern const Mask maskKeyBackspace;
+extern const Mask maskKeyLetters;
+extern const Mask maskKeyNumbers;
+extern const Mask maskKeySpacebar;
 
-const uint8_t LBM_KEY_LOWERCASE[] = {
-#include "bitmaps/mask_key_lowercase.lbm"
-};
-
-const uint8_t LBM_KEY_BACKSPACE[] = {
-#include "bitmaps/mask_key_backspace.lbm"
-};
-
-const uint8_t LBM_KEY_LETTERS[] = {
-#include "bitmaps/mask_key_letters.lbm"
-};
-
-const uint8_t LBM_KEY_NUMBERS[] = {
-#include "bitmaps/mask_key_numbers.lbm"
-};
-
-const uint8_t LBM_KEY_SPACEBAR[] = {
-#include "bitmaps/mask_key_spacebar.lbm"
-};
-
-const uint8_t * const LBM_SPECIAL_KEYS[] = {
-  LBM_KEY_BACKSPACE,
-  LBM_KEY_UPPERCASE,
-  LBM_KEY_LOWERCASE,
-  LBM_KEY_LETTERS,
-  LBM_KEY_NUMBERS,
+constexpr const Mask * const MASKS_SPECIAL_KEYS[] = {
+  &maskKeyBackspace,
+  &maskKeyUppercase,
+  &maskKeyLowercase,
+  &maskKeyLetters,
+  &maskKeyNumbers,
 };
 
 const char * const KEYBOARD_QWERTY_LOWERCASE[] = {
@@ -141,12 +124,12 @@ void TextKeyboard::paint(BitmapBuffer * dc)
       }
       else if (uint8_t(*c) <= SPECIAL_KEY_WITH_BITMAP_LAST) {
         // special keys drawn with a bitmap
-        dc->drawMask(x, y, (const BitmapData *)LBM_SPECIAL_KEYS[uint8_t(*c) - 1], DEFAULT_COLOR);
+        dc->drawMask(x, y, MASKS_SPECIAL_KEYS[uint8_t(*c) - 1], DEFAULT_COLOR);
         x += 45;
       }
       else if (*c == SPECIAL_KEY_SPACEBAR) {
         // spacebar
-        dc->drawMask(x, y, (const BitmapData *)LBM_KEY_SPACEBAR, DEFAULT_COLOR);
+        dc->drawMask(x, y, &maskKeySpacebar, DEFAULT_COLOR);
         x += 135;
       }
       else if (*c == SPECIAL_KEY_ENTER) {

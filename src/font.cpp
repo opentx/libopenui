@@ -22,8 +22,8 @@
 #include "bitmapbuffer.h"
 #include "font.h"
 #include "debug.h"
-
-BitmapData * decodeBitmapData(const uint8_t * data)
+/*
+Mask * decodeBitmapData(const uint8_t * data)
 {
   auto bitmap = (const BitmapData *)data;
   size_t fontSize = bitmap->width() * bitmap->height();
@@ -34,7 +34,7 @@ BitmapData * decodeBitmapData(const uint8_t * data)
 
   RLEBitmap::decode(buffer + 4, fontSize, bitmap->getData());
   return (BitmapData *)buffer;
-}
+}*/
 
 /* Font format
  * 'F', 'N', 'T', '1'
@@ -126,13 +126,19 @@ bool Font::loadFile(const char * path)
       return false;
     }
 
-    auto bitmapData = decodeBitmapData(data);
 #if LCD_ORIENTATION == 180
-    bitmapData.flip();
+    auto source = Mask::decodeRle(data);
+    auto mask = Mask::flip(source);
+    delete source;
 #elif LCD_ORIENTATION == 270
-    bitmapData.rotate();
+    auto source = Mask::decodeRle(data);
+    auto mask = Mask::rotate(source);
+    delete source;
+#else
+    auto mask = Mask::decodeRle(data);
 #endif
-    ranges.push_back({rangeHeader.begin, rangeHeader.end, bitmapData, specs});
+    ranges.push_back({rangeHeader.begin, rangeHeader.end, mask, specs});
+    free(data);
   }
 
   // TRACE("Ranges...");

@@ -135,7 +135,6 @@ class ImageEncoder:
     def encode_8bits(self, image):
         image = image.convert(mode='L')
         width, height = image.size
-        self.append_format(0)
         self.append_size(width, height)
         if self.orientation == 270:
             for x in range(width):
