@@ -22,8 +22,6 @@
 #include "keyboard_base.h"
 #include "textedit.h"
 
-extern const uint8_t LBM_KEY_SPACEBAR[];
-extern const uint8_t * const LBM_SPECIAL_KEYS[];
 extern const char * const * KEYBOARDS[];
 
 constexpr uint8_t LOWERCASE_OPTION = 1;
@@ -48,7 +46,7 @@ enum KeyboardLayout
 
 namespace ui {
 
-class TextKeyboard: public Keyboard<TextEdit>
+class TextKeyboard: public Keyboard<FormField>
 {
   public:
     TextKeyboard();
@@ -72,7 +70,7 @@ class TextKeyboard: public Keyboard<TextEdit>
       return _instance;
     }
 
-    static void show(TextEdit * field)
+    static void show(FormField * field)
     {
       if (!_instance) {
         _instance = new TextKeyboard();

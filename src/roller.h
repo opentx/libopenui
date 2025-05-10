@@ -93,7 +93,7 @@ class Roller: public Choice
 
         auto fgColor = DISABLE_COLOR;
         if (value == displayedValue) {
-          fgColor = FOCUS_COLOR | FONT(STD);
+          fgColor = FOCUS_COLOR | FONT(M);
         }
 
         unsigned valueIndex = displayedValue - vmin;
