@@ -124,8 +124,10 @@ bool Font::loadFile(const char * path)
 #else
     auto mask = Mask::decodeRle(data);
 #endif
-    ranges.push_back({rangeHeader.begin, rangeHeader.end, mask, specs});
     free(data);
+    if (mask) {
+      ranges.push_back({rangeHeader.begin, rangeHeader.end, mask, specs});
+    }
   }
 
   // TRACE("Ranges...");

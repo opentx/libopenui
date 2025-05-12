@@ -65,8 +65,9 @@ class Font
       strlcpy(this->name, name, sizeof(this->name));
     }
 
-    Font(const char * name, uint8_t spacing, std::list<GlyphRange> ranges):
+    Font(const char * name, uint8_t spacing, uint8_t spaceWidth, std::list<GlyphRange> ranges):
       spacing(spacing),
+      spaceWidth(spaceWidth),
       ranges(std::move(ranges))
     {
       strlcpy(this->name, name, sizeof(this->name));

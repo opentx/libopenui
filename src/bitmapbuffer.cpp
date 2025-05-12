@@ -1117,6 +1117,8 @@ Mask * Mask::decodeRle(const uint8_t * data)
   auto d = result->getData();
   auto destDataEnd = result->getDataEnd();
 
+  data += 4;
+  
   while (d < destDataEnd) {
     uint8_t byte = *data++;
     *d++ = byte;
