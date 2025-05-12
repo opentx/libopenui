@@ -148,30 +148,6 @@ class StaticBitmap: public Window
     {
     }
 
-    // void setBitmap(const char * filename)
-    // {
-    //   setBitmap(BitmapBuffer::load(filename));
-    // }
-
-    // void setMaskColor(LcdFlags value)
-    // {
-    //   color = value;
-    // }
-
-    // void setBitmap(const BitmapBuffer * newBitmap)
-    // {
-    //   delete bitmap;
-    //   bitmap = newBitmap;
-    //   invalidate();
-    // }
-
-    // void setMask(const Mask * newMask)
-    // {
-    //   // delete mask; TODO ???
-    //   mask = newMask;
-    //   invalidate();
-    // }
-
 #if defined(DEBUG_WINDOWS)
     [[nodiscard]] std::string getName() const override
     {

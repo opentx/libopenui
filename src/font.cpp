@@ -22,19 +22,6 @@
 #include "bitmapbuffer.h"
 #include "font.h"
 #include "debug.h"
-/*
-Mask * decodeBitmapData(const uint8_t * data)
-{
-  auto bitmap = (const BitmapData *)data;
-  size_t fontSize = bitmap->width() * bitmap->height();
-  auto * buffer = (uint8_t *)malloc(fontSize + 4);
-
-  // copy width / height
-  memcpy(buffer, data, 4);
-
-  RLEBitmap::decode(buffer + 4, fontSize, bitmap->getData());
-  return (BitmapData *)buffer;
-}*/
 
 /* Font format
  * 'F', 'N', 'T', '1'
