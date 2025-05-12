@@ -2,6 +2,7 @@
 
 import argparse
 from PIL import Image
+import sys
 
 
 class RawMixin:
@@ -136,16 +137,16 @@ class ImageEncoder:
         image = image.convert(mode='L')
         width, height = image.size
         self.append_size(width, height)
-        if self.orientation == 270:
+        if self.orientation == 180:
+            image = image.transpose(Image.ROTATE_180)
+        elif self.orientation == 270:
+            image = image.transpose(Image.ROTATE_270)
+            image = image.transpose(Image.FLIP_LEFT_RIGHT)
+            width, height = image.size
+        for y in range(height):
             for x in range(width):
-                for y in range(height):
-                    value = 0xFF - self.get_pixel(image, x, y)
-                    self.encode_byte(value)
-        else:
-            for y in range(height):
-                for x in range(width):
-                    value = 0xFF - self.get_pixel(image, x, y)
-                    self.encode_byte(value)
+                value = 0xFF - image.getpixel((x, y))
+                self.encode_byte(value)
         self.encode_end()
         return self.bytes
 
@@ -153,10 +154,15 @@ class ImageEncoder:
         width, height = image.size
         self.append_format(0)
         self.append_size(width, height)
+        if self.orientation == 180:
+            image = image.transpose(Image.ROTATE_180)
+        elif self.orientation == 270:
+            image = image.transpose(Image.ROTATE_270)
+            image = image.transpose(Image.FLIP_LEFT_RIGHT)
+            width, height = image.size
         for y in range(height):
             for x in range(width):
-                pixel = self.get_pixel(image, x, y)
-                # print(pixel)
+                pixel = image.getpixel((x, y))
                 val = ((pixel[0] >> 3) << 11) + ((pixel[1] >> 2) << 5) + ((pixel[2] >> 3) << 0)
                 self.encode_byte(val & 255)
                 self.encode_byte(val >> 8)
@@ -167,9 +173,15 @@ class ImageEncoder:
         width, height = image.size
         self.append_format(1)
         self.append_size(width, height)
+        if self.orientation == 180:
+            image = image.transpose(Image.ROTATE_180)
+        elif self.orientation == 270:
+            image = image.transpose(Image.ROTATE_270)
+            image = image.transpose(Image.FLIP_LEFT_RIGHT)
+            width, height = image.size
         for y in range(height):
             for x in range(width):
-                pixel = self.get_pixel(image, x, y)
+                pixel = image.getpixel((x, y))
                 val = ((pixel[3] // 16) << 12) + ((pixel[0] // 16) << 8) + ((pixel[1] // 16) << 4) + ((pixel[2] // 16) << 0)
                 self.encode_byte(val & 255)
                 self.encode_byte(val >> 8)
@@ -177,10 +189,7 @@ class ImageEncoder:
         return self.bytes
 
     def get_pixel(self, image, x, y):
-        if self.orientation == 180:
-            return image.getpixel((image.width - x - 1, image.height - y - 1))
-        else:
-            return image.getpixel((x, y))
+        return image.getpixel((x, y))
 
     @staticmethod
     def create(size_format=1, orientation=0, encode_mixin=RawMixin):

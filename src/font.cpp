@@ -119,7 +119,7 @@ bool Font::loadFile(const char * path)
     delete source;
 #elif LCD_ORIENTATION == 270
     auto source = Mask::decodeRle(data);
-    auto mask = Mask::rotate(source);
+    auto mask = rotate90(source);
     delete source;
 #else
     auto mask = Mask::decodeRle(data);

@@ -162,6 +162,7 @@ class Raster
       }
   #endif
       auto result = pixel + (count * lineHeight);
+      auto dataEnd = getDataEnd();
       while (result > dataEnd)
         result -= lineHeight - 1;
       return result;
@@ -182,6 +183,7 @@ class Raster
       }
   #endif
       auto result = pixel + (count * lineHeight);
+      auto dataEnd = getDataEnd();
       while (result > dataEnd)
         result -= lineHeight - 1;
       return result;
@@ -309,11 +311,15 @@ C * verticalFlip(const C * source)
   }
   
 #if LCD_ORIENTATION == 270
-  for (uint8_t y = 0; y < source->height(); y++) {
-    for (uint8_t x = 0; x < source->width(); x++) {
-      auto * destData = &result->data[x * height() + y];
-      auto * srcData = &source->getData()[x * height() + height() - 1 - y];
-      *destData = *srcData;
+  auto sourceData = source->getData();
+  auto sourceWidth = source->width();
+  auto sourceHeight = source->height();
+  auto resultData = result->getData();
+  for (uint8_t y = 0; y < sourceHeight; y++) {
+    for (uint8_t x = 0; x < sourceWidth; x++) {
+      auto * p = &sourceData[x * sourceHeight + sourceHeight - 1 - y];
+      auto * q = &resultData[x * sourceHeight + y];
+      *q = *p;
     }
   }
 #else
@@ -381,21 +387,26 @@ static C * horizontalFlip(const C * source)
   }
 
 #if LCD_ORIENTATION == 270
-  for (uint8_t y = 0; y < _height; y++) {
-    for (uint8_t x = 0; x < _width; x++) {
-      auto * destData = &result->data[x * _height + y];
-      auto * srcData = &data[(_width - 1 - x) * _height + y];
-      *destData = *srcData;
+  auto sourceData = source->getData();
+  auto sourceWidth = source->width();
+  auto sourceHeight = source->height();
+  auto resultData = result->getData();
+  for (uint8_t y = 0; y < sourceHeight; y++) {
+    for (uint8_t x = 0; x < sourceWidth; x++) {
+      auto * p = &sourceData[(sourceWidth - 1 - x) * sourceHeight + y];
+      auto * q = &resultData[x * sourceHeight + y];
+      *q = *p;
     }
   }
 #else
-  auto * srcData = source->getData() + source->width();
+  auto sourceWidth = source->width();
+  auto * srcData = source->getData() + sourceWidth;
   auto * destData = result->getData();
   for (uint8_t y = 0; y < source->height(); y++) {
-    for (uint8_t x = 0; x < source->width(); x++) {
+    for (uint8_t x = 0; x < sourceWidth; x++) {
       *(destData++) = *(--srcData);
     }
-    srcData += 2 * source->width();
+    srcData += 2 * sourceWidth;
   }
 #endif
   return result;
@@ -414,7 +425,7 @@ C * rotate90(const C * source)
   auto * destData = result->getData();
   for (uint8_t y = 0; y < source->width(); y++) {
     for (uint8_t x = 0; x < source->height(); x++) {
-      destData[x * width() + y] = srcData[y * height() + x];
+      destData[x * source->width() + y] = srcData[y * source->height() + x];
     }
   }
 #else
