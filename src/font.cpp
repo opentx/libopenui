@@ -113,17 +113,7 @@ bool Font::loadFile(const char * path)
       return false;
     }
 
-#if LCD_ORIENTATION == 180
-    auto source = Mask::decodeRle(data);
-    auto mask = Mask::flip(source);
-    delete source;
-#elif LCD_ORIENTATION == 270
-    auto source = Mask::decodeRle(data);
-    auto mask = rotate90(source);
-    delete source;
-#else
     auto mask = Mask::decodeRle(data);
-#endif
     free(data);
     if (mask) {
       ranges.push_back({rangeHeader.begin, rangeHeader.end, mask, specs});
