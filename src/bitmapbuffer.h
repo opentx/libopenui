@@ -58,6 +58,7 @@ class Raster
       _width(width),
       _height(height),
       data((T *)malloc(align32(width * height * sizeof(T)))),
+      dataEnd(data + (width * height)),
       dataAllocated(true)
     {
     }
@@ -66,6 +67,7 @@ class Raster
       _width(width),
       _height(height),
       data(data),
+      dataEnd(data + (width * height)),
       dataAllocated(false)
     {
     }
@@ -99,6 +101,11 @@ class Raster
       return data;
     }
 
+    [[nodiscard]] inline T * getDataEnd() const
+    {
+      return dataEnd;
+    }
+
     [[nodiscard]] inline bool isValid() const
     {
       return data != nullptr;
@@ -106,12 +113,7 @@ class Raster
 
     [[nodiscard]] uint32_t getDataSize() const
     {
-      return _width * _height * sizeof(T);
-    }
-
-    [[nodiscard]] inline T * getDataEnd() const
-    {
-      return data + (_width * _height);
+      return (const uint8_t *)dataEnd - (const uint8_t *)data;
     }
 
     [[nodiscard]] inline const T * getPixelPtrAbs(coord_t x, coord_t y) const
@@ -162,7 +164,6 @@ class Raster
       }
   #endif
       auto result = pixel + (count * lineHeight);
-      auto dataEnd = getDataEnd();
       while (result > dataEnd)
         result -= lineHeight - 1;
       return result;
@@ -183,7 +184,6 @@ class Raster
       }
   #endif
       auto result = pixel + (count * lineHeight);
-      auto dataEnd = getDataEnd();
       while (result > dataEnd)
         result -= lineHeight - 1;
       return result;
@@ -196,6 +196,7 @@ class Raster
     uint16_t _width;
     uint16_t _height;
     T * data;
+    T * dataEnd;
     bool dataAllocated = false;
 };
 
@@ -465,7 +466,6 @@ class BitmapBuffer: public Bitmap
   public:
     BitmapBuffer(uint8_t format, uint16_t width, uint16_t height, pixel_t * data):
       Bitmap(format, width, height, data),
-      dataEnd(data + (width * height)),
       xmax(width),
       ymax(height)
     {
@@ -473,7 +473,6 @@ class BitmapBuffer: public Bitmap
 
     BitmapBuffer(uint8_t format, uint16_t width, uint16_t height):
       Bitmap(format, width, height),
-      dataEnd(Bitmap::data + (width * height)),
       xmax(width),
       ymax(height)
     {
@@ -690,7 +689,6 @@ class BitmapBuffer: public Bitmap
     void drawScaledBitmap(const Bitmap * bitmap, coord_t x, coord_t y, coord_t w, coord_t h);
 
   protected:
-    DataType * dataEnd;
     coord_t xmin = 0;
     coord_t xmax;
     coord_t ymin = 0;
