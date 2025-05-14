@@ -54,6 +54,15 @@ class Raster
   public:
     using DataType = T;
 
+    Raster(const Raster & other):
+      _width(other._width),
+      _height(other._height),
+      data(other.data),
+      dataEnd(other.dataEnd),
+      dataAllocated(false)
+    {
+    }
+
     Raster(uint16_t width, uint16_t height):
       _width(width),
       _height(height),
