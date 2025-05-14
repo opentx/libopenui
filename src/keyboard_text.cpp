@@ -22,22 +22,7 @@
 
 using namespace ui;
 
-TextKeyboard * TextKeyboard::_instance = nullptr;
-
-extern const Mask maskKeyUppercase;
-extern const Mask maskKeyLowercase;
-extern const Mask maskKeyBackspace;
-extern const Mask maskKeyLetters;
-extern const Mask maskKeyNumbers;
-extern const Mask maskKeySpacebar;
-
-constexpr const Mask * const MASKS_SPECIAL_KEYS[] = {
-  &maskKeyBackspace,
-  &maskKeyUppercase,
-  &maskKeyLowercase,
-  &maskKeyLetters,
-  &maskKeyNumbers,
-};
+TextKeyboardBase * TextKeyboardBase::_instance = nullptr;
 
 const char * const KEYBOARD_QWERTY_LOWERCASE[] = {
   "qwertyuiop",
@@ -98,15 +83,21 @@ const char * const * KEYBOARDS[] = {
   KEYBOARD_NUMBERS,
 };
 
-TextKeyboard::TextKeyboard():
-  Keyboard(TEXT_KEYBOARD_HEIGHT)
-{
-}
+#if defined(LIBOPENUI_USE_DEFAULT_TEXT_KEYBOARD)
+extern const Mask * maskKeyUppercase;
+extern const Mask * maskKeyLowercase;
+extern const Mask * maskKeyBackspace;
+extern const Mask * maskKeyLetters;
+extern const Mask * maskKeyNumbers;
+extern const Mask * maskKeySpacebar;
 
-TextKeyboard::~TextKeyboard()
-{
-  _instance = nullptr;
-}
+const Mask * const MASKS_SPECIAL_KEYS[] = {
+  maskKeyBackspace,
+  maskKeyUppercase,
+  maskKeyLowercase,
+  maskKeyLetters,
+  maskKeyNumbers,
+};
 
 void TextKeyboard::paint(BitmapBuffer * dc)
 {
@@ -129,7 +120,7 @@ void TextKeyboard::paint(BitmapBuffer * dc)
       }
       else if (*c == SPECIAL_KEY_SPACEBAR) {
         // spacebar
-        dc->drawMask(x, y, &maskKeySpacebar, DEFAULT_COLOR);
+        dc->drawMask(x, y, maskKeySpacebar, DEFAULT_COLOR);
         x += 135;
       }
       else if (*c == SPECIAL_KEY_ENTER) {
@@ -214,3 +205,4 @@ bool TextKeyboard::onTouchEnd(coord_t x, coord_t y)
 
   return true;
 }
+#endif

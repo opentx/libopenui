@@ -48,7 +48,7 @@ void TextEdit::setEditMode(bool newEditMode)
 
 #if defined(SOFTWARE_KEYBOARD)
   if (editMode) {
-    TextKeyboard::show(this);
+    TextKeyboardBase::show(this);
   }
 #endif
 
@@ -198,7 +198,7 @@ void TextEdit::onEvent(event_t event)
         changeEnd();
         FormField::onEvent(event);
 #if defined(HARDWARE_TOUCH)
-        TextKeyboard::hide();
+        TextKeyboardBase::hide();
 #endif
         break;
 
@@ -276,7 +276,7 @@ bool TextEdit::onTouchEnd(coord_t x, coord_t y)
   }
 
 #if defined(SOFTWARE_KEYBOARD)
-  TextKeyboard::show(this);
+  TextKeyboardBase::show(this);
 #endif
 
   auto font = getFont(FONT(M));
@@ -300,7 +300,7 @@ bool TextEdit::onTouchEnd(coord_t x, coord_t y)
 void TextEdit::onFocusLost()
 {
 #if defined(SOFTWARE_KEYBOARD)
-  TextKeyboard::hide();
+  TextKeyboardBase::hide();
 #endif
 
   changeEnd();

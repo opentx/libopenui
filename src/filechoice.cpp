@@ -117,7 +117,7 @@ bool FileChoice::openMenu()
     }
   }
 
-  new MessageDialog(this, STR_SDCARD, STR_NO_FILES_ON_SD, &maskIconExclamation);
+  new MessageDialog(this, STR_SDCARD, STR_NO_FILES_ON_SD, maskIconExclamation);
 
   return false;
 }

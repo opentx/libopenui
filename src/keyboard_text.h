@@ -46,12 +46,36 @@ enum KeyboardLayout
 
 namespace ui {
 
-class TextKeyboard: public Keyboard<FormField>
+class TextKeyboardBase: public Keyboard<FormField>
 {
   public:
-    TextKeyboard();
+    TextKeyboardBase():
+      Keyboard(TEXT_KEYBOARD_HEIGHT)
+    {
+    }
 
-    ~TextKeyboard() override;
+    ~TextKeyboardBase() override
+    {
+      _instance = nullptr;
+    }
+
+    static void show(FormField * field)
+    {
+      if (activeKeyboard != _instance) {
+        _instance->layoutIndex = KEYBOARD_LAYOUT_INDEX_START;
+      }
+      _instance->setField(field);
+    }
+
+    static void setInstance(TextKeyboardBase * keyboard)
+    {
+      _instance = keyboard;
+    }
+
+    static TextKeyboardBase * instance()
+    {
+      return _instance;
+    }
 
 #if defined(DEBUG_WINDOWS)
     [[nodiscard]] std::string getName() const override
@@ -60,36 +84,19 @@ class TextKeyboard: public Keyboard<FormField>
     }
 #endif
 
-    static void setInstance(TextKeyboard * keyboard)
-    {
-      _instance = keyboard;
-    }
+  protected:
+    static TextKeyboardBase * _instance;
+    unsigned layoutIndex = KEYBOARD_LAYOUT_INDEX_START;
+};
 
-    static TextKeyboard * instance()
-    {
-      return _instance;
-    }
-
-    static void show(FormField * field)
-    {
-      if (!_instance) {
-        _instance = new TextKeyboard();
-      }
-      if (activeKeyboard != _instance) {
-        _instance->layoutIndex = KEYBOARD_LAYOUT_INDEX_START;
-      }
-      _instance->setField(field);
-    }
-
+class TextKeyboard: public TextKeyboardBase
+{
+  protected:
     void paint(BitmapBuffer * dc) override;
 
 #if defined(HARDWARE_TOUCH)
     bool onTouchEnd(coord_t x, coord_t y) override;
 #endif
-
-  protected:
-    static TextKeyboard * _instance;
-    unsigned layoutIndex = KEYBOARD_LAYOUT_INDEX_START;
 };
 
 }
