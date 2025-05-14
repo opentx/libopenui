@@ -544,7 +544,7 @@ coord_t Window::adjustHeight()
 void Window::moveWindowsTop(coord_t y, coord_t delta) // NOLINT(misc-no-recursion)
 {
   if (delta != 0) {
-    if (getWindowFlags() & FORWARD_SCROLL) {
+    if (parent && (getWindowFlags() & FORWARD_SCROLL)) {
       parent->moveWindowsTop(bottom(), delta);
     }
 
