@@ -20,6 +20,7 @@
 #pragma once
 
 #include <list>
+#include <algorithm>
 #include "libopenui_types.h"
 #include "libopenui_config.h"
 #include "bitmapbuffer.h"
@@ -110,6 +111,23 @@ class Font
         }
       }
       return {};
+    }
+
+    bool hasGlyphs(const char * s) const
+    {
+      auto curr = s;
+      while (true) {
+        auto c = getNextUnicodeChar(curr);
+        if (!c) {
+          return true;
+        }
+        if (c != '\n' && c != ' ') {
+          auto glyph = getGlyph(c);
+          if (glyph.width == 0) {
+            return false;
+          }
+        }
+      }
     }
 
     uint8_t getGlyphWidth(wchar_t c) const
@@ -203,21 +221,23 @@ class Font
       return result;
     }
 
-    uint8_t isSubsetLoaded(uint8_t index) const
+    uint8_t isSubsetLoaded(const char * value) const
     {
-      return subsetsMask & (1 << index);
+      return std::find_if(subsets.begin(), subsets.end(), [value](const char * s) {
+        return std::strcmp(s, value) == 0;
+      }) != subsets.end();
     }
 
-    void setSubsetLoaded(uint8_t index)
+    void setSubsetLoaded(const char * value)
     {
-      subsetsMask |= 1 << index;
+      subsets.push_back(value);
     }
 
   protected:
     char name[LEN_FONT_NAME + 1];
-    uint8_t subsetsMask = 0;
     uint8_t spacing = 1;
     uint8_t spaceWidth = 4;
+    std::list<const char *> subsets;
     std::list<GlyphRange> ranges;
 };
 
