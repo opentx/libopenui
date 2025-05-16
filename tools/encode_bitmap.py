@@ -2,11 +2,12 @@
 
 import argparse
 from PIL import Image
+import sys
 
 
 class RawMixin:
     def encode_byte(self, byte):
-        self.write(byte)
+        self.append_byte(byte)
 
     def encode_end(self):
         pass
@@ -28,7 +29,7 @@ class RleMixin:
 
     def encode_byte(self, byte):
         if self.state == self.RLE_BYTE:
-            self.write(byte)
+            self.append_byte(byte)
             if self.eq_prev_byte(byte):
                 self.state = self.RLE_SEQ
                 self.count = 0
@@ -38,39 +39,64 @@ class RleMixin:
             if self.eq_prev_byte(byte):
                 self.count += 1
                 if self.count == 255:
-                    self.write(self.count)
+                    self.append_byte(self.count)
                     self.prev_byte = None
                     self.state = self.RLE_BYTE
             else:
-                self.write(self.count)
-                self.write(byte)
+                self.append_byte(self.count)
+                self.append_byte(byte)
                 self.prev_byte = byte
                 self.state = self.RLE_BYTE
 
     def encode_end(self):
         if self.state == self.RLE_SEQ:
-            self.write(self.count)
+            self.append_byte(self.count)
 
 
 class ImageEncoder:
-    def __init__(self, filename, size_format, orientation=0):
-        self.f = open(filename, "w")
+    def __init__(self, size_format, orientation=0):
         self.size_format = size_format
         self.orientation = orientation
+        self.bytes = []
 
-    def write(self, value):
-        self.f.write("0x%02x," % value)
+    def append_byte(self, value):
+        self.bytes.append(value)
+    
+    def extend(self, values):
+        self.bytes.extend(values)
 
-    def write_size(self, width, height):
+    def append_short(self, value):
+        self.append_byte(value % 256)
+        self.append_byte(value // 256)
+
+    def append_word(self, value):
+        self.append_short(value % 65536)
+        self.append_short(value // 65536)
+
+    def append_format(self, value):
+        self.append_word(value)
+
+    def append_size(self, width, height):
         if self.size_format == 2:
-            self.f.write("%d,%d,%d,%d,\n" % (width % 256, width // 256, height % 256, height // 256))
+            self.append_short(width)
+            self.append_short(height)
         else:
-            self.f.write("%d,%d,\n" % (width, height))
+            self.extend(width, height)
+
+    @staticmethod
+    def guess_format(image):
+        if image.mode == "P":
+            print("Indexed bitmap, will use RGBA")
+            return "4/4/4/4"
+        elif image.mode == "RGBA":
+            return "4/4/4/4"
+        else:
+            return "5/6/5"
 
     def encode_1bit(self, image, rows):
         image = image.convert(mode='1')
         width, height = image.size
-        self.write_size(width, height // rows)
+        self.append_size(width, height // rows)
         for y in range(0, height, 8):
             for x in range(width):
                 value = 0
@@ -83,13 +109,13 @@ class ImageEncoder:
                             if image.getpixel((x, y + z)) == 0:
                                 value += 1 << z
                 self.encode_byte(value)
-            self.f.write("\n")
         self.encode_end()
+        return self.bytes
 
     def encode_4bits(self, image):
         image = image.convert(mode='L')
         width, height = image.size
-        self.write_size(width, height)
+        self.append_size(width, height)
         for y in range(0, height, 2):
             for x in range(width):
                 value = 0xFF
@@ -104,62 +130,74 @@ class ImageEncoder:
                     if gray2 & (1 << (4 + i)):
                         value -= 1 << (4 + i)
                 self.encode_byte(value)
-            self.f.write("\n")
         self.encode_end()
+        return self.bytes
 
     def encode_8bits(self, image):
         image = image.convert(mode='L')
         width, height = image.size
-        self.write_size(width, height)
-        if self.orientation == 270:
+        self.append_size(width, height)
+        if self.orientation == 180:
+            image = image.transpose(Image.ROTATE_180)
+        elif self.orientation == 270:
+            image = image.transpose(Image.ROTATE_270)
+            image = image.transpose(Image.FLIP_LEFT_RIGHT)
+            width, height = image.size
+        for y in range(height):
             for x in range(width):
-                for y in range(height):
-                    value = 0xFF - self.get_pixel(image, x, y)
-                    self.encode_byte(value)
-                self.f.write("\n")
-        else:
-            for y in range(height):
-                for x in range(width):
-                    value = 0xFF - self.get_pixel(image, x, y)
-                    self.encode_byte(value)
-                self.f.write("\n")
+                value = 0xFF - image.getpixel((x, y))
+                self.encode_byte(value)
         self.encode_end()
+        return self.bytes
 
     def encode_5_6_5(self, image):
         width, height = image.size
-        self.write_size(width, height)
+        self.append_format(0)
+        self.append_size(width, height)
+        if self.orientation == 180:
+            image = image.transpose(Image.ROTATE_180)
+        elif self.orientation == 270:
+            image = image.transpose(Image.ROTATE_270)
+            image = image.transpose(Image.FLIP_LEFT_RIGHT)
+            width, height = image.size
         for y in range(height):
             for x in range(width):
-                pixel = self.get_pixel(image, x, y)
+                pixel = image.getpixel((x, y))
                 val = ((pixel[0] >> 3) << 11) + ((pixel[1] >> 2) << 5) + ((pixel[2] >> 3) << 0)
                 self.encode_byte(val & 255)
                 self.encode_byte(val >> 8)
         self.encode_end()
+        return self.bytes
 
     def encode_4_4_4_4(self, image):
         width, height = image.size
-        self.write_size(width, height)
+        self.append_format(1)
+        self.append_size(width, height)
+        if self.orientation == 180:
+            image = image.transpose(Image.ROTATE_180)
+        elif self.orientation == 270:
+            image = image.transpose(Image.ROTATE_270)
+            image = image.transpose(Image.FLIP_LEFT_RIGHT)
+            width, height = image.size
         for y in range(height):
             for x in range(width):
-                pixel = self.get_pixel(image, x, y)
+                pixel = image.getpixel((x, y))
                 val = ((pixel[3] // 16) << 12) + ((pixel[0] // 16) << 8) + ((pixel[1] // 16) << 4) + ((pixel[2] // 16) << 0)
                 self.encode_byte(val & 255)
                 self.encode_byte(val >> 8)
         self.encode_end()
+        return self.bytes
 
     def get_pixel(self, image, x, y):
-        if self.orientation == 180:
-            return image.getpixel((image.width - x - 1, image.height - y - 1))
-        else:
-            return image.getpixel((x, y))
+        return image.getpixel((x, y))
 
     @staticmethod
-    def create(filename, size_format=1, orientation=0, encode_mixin=RawMixin):
+    def create(size_format=1, orientation=0, encode_mixin=RawMixin):
         class ResultClass(ImageEncoder, encode_mixin):
             def __init__(self, *args, **kwargs):
                 ImageEncoder.__init__(self, *args, **kwargs)
                 encode_mixin.__init__(self)
-        return ResultClass(filename, size_format, orientation)
+        return ResultClass(size_format, orientation)
 
 
 def main():
@@ -175,19 +213,25 @@ def main():
     args = parser.parse_args()
 
     image = Image.open(args.input)
-    output = args.output
-    encoder = ImageEncoder.create(output, args.size_format, args.orientation, RleMixin if args.rle else RawMixin)
+    encoder = ImageEncoder.create(args.size_format, args.orientation, RleMixin if args.rle else RawMixin)
 
-    if args.format == "1bit":
-        encoder.encode_1bit(image, args.rows)
-    elif args.format == "4bits":
-        encoder.encode_4bits(image)
-    elif args.format == "8bits":
-        encoder.encode_8bits(image)
-    elif args.format == "4/4/4/4":
-        encoder.encode_4_4_4_4(image)
-    elif args.format == "5/6/5":
-        encoder.encode_5_6_5(image)
+    format = args.format
+    if format == "auto":
+        format = encoder.guess_format(image)
+    if format == "1bit":
+        bytes = encoder.encode_1bit(image, args.rows)
+    elif format == "4bits":
+        bytes = encoder.encode_4bits(image)
+    elif format == "8bits":
+        bytes = encoder.encode_8bits(image)
+    elif format == "4/4/4/4":
+        bytes = encoder.encode_4_4_4_4(image)
+    elif format == "5/6/5":
+        bytes = encoder.encode_5_6_5(image)
+
+    with open(args.output, "w") as f:
+        for byte in bytes:
+            f.write("%d," % byte)
 
 
 if __name__ == "__main__":

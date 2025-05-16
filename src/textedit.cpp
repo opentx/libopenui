@@ -48,7 +48,7 @@ void TextEdit::setEditMode(bool newEditMode)
 
 #if defined(SOFTWARE_KEYBOARD)
   if (editMode) {
-    TextKeyboard::show(this);
+    TextKeyboardBase::show(this);
   }
 #endif
 
@@ -105,67 +105,60 @@ void TextEdit::trim()
   }
 }
 
+#if defined(SOFTWARE_KEYBOARD) || defined(SIMULATION)
+void TextEdit::onVirtualKeyEvent(event_t event)
+{
+  auto c = event & MSK_VIRTUAL_KEY;
+  if (c == SPECIAL_KEY_BACKSPACE) {
+    if (cursorPos > 0) {
+      auto pos = getUnicodeStringAtPosition(value, cursorPos - 1);
+      char * tmp = pos;
+      auto len = getUnicodeCharLength(getNextUnicodeChar(tmp));
+      memmove(pos, pos + len, value + length - pos - len);
+      memset(value + length - len, 0, len);
+      --cursorPos;
+      invalidate();
+      changed = true;
+    }
+  }
+  else {
+    auto len = getUnicodeCharLength(c);
+    if (strlen(value) + len <= length) {
+      insertUnicodeChar(value, cursorPos, c, length);
+      cursorPos++;
+      invalidate();
+      changed = true;
+    }
+  }
+}
+#endif
+
 void TextEdit::onEvent(event_t event)
 {
   TRACE_WINDOWS("%s received event 0x%X", getWindowDebugString().c_str(), event);
 
 #if defined(SOFTWARE_KEYBOARD) || defined(SIMULATION)
   if (IS_VIRTUAL_KEY_EVENT(event)) {
-    uint8_t c = event & 0xFF;
-    if (c == SPECIAL_KEY_BACKSPACE) {
-      if (cursorPos > 0) {
-        memmove(value + cursorPos - 1, value + cursorPos, length - cursorPos);
-        value[length - 1] = '\0';
-        --cursorPos;
-        invalidate();
-        changed = true;
-      }
-    }
-#if defined(KEYBOARD_DELETE)
-    else if (c == SPECIAL_KEY_DELETE) {
-      if (cursorPos < length - 1) {
-        memmove(value + cursorPos, value + cursorPos + 1, length - cursorPos - 1);
-        value[length - 1] = '\0';
-        invalidate();
-        changed = true;
-      }
-    }
-#endif
-#if defined(KEYBOARD_HOME)
-    else if (c == SPECIAL_KEY_HOME) {
-      setCursorPos(0);
-    }
-#endif
-#if defined(KEYBOARD_END)
-    else if (c == SPECIAL_KEY_END) {
-      setCursorPos(strlen(value));
-    }
-#endif
-    else if (cursorPos < length) {
-      memmove(value + cursorPos + 1, value + cursorPos, length - cursorPos - 1);
-      value[cursorPos++] = c;
-      invalidate();
-      changed = true;
-    }
+    onVirtualKeyEvent(event);
+    return;
   }
 #endif
 
 #if defined(HARDWARE_KEYS)
   if (editMode) {
-    char previousChar = (cursorPos > 0 ? value[cursorPos - 1] : 0);
-    int c = (cursorPos < length ? value[cursorPos] : 0);
-    int v = c;
+    auto currentChar = getUnicodeCharAtPosition(value, cursorPos);
+    auto nextChar = currentChar;
 
     switch (event) {
       case EVT_ROTARY_RIGHT:
         for (int i = 0; i < ROTARY_ENCODER_SPEED(); i++) {
-          v = getNextChar(v, previousChar);
+          nextChar = getNextAvailableChar(nextChar);
         }
         break;
 
       case EVT_ROTARY_LEFT:
         for (int i = 0; i < ROTARY_ENCODER_SPEED(); i++) {
-          v = getPreviousChar(v);
+          nextChar = getPreviousAvailableChar(nextChar);
         }
         break;
 
@@ -176,18 +169,11 @@ void TextEdit::onEvent(event_t event)
         break;
 
       case EVT_KEY_BREAK(KEY_RIGHT):
-      {
-#if defined(SOFTWARE_KEYBOARD)
-        if (cursorPos < length && value[cursorPos] != '\0') {
-          setCursorPos(cursorPos + 1);
+        if (cursorPos < getUnicodeStringLength(value)) {
+          cursorPos++;
+          invalidate();
         }
-#else
-        if (cursorPos < length - 1 && value[cursorPos + 1] != '\0') {
-          setCursorPos(cursorPos + 1);
-        }
-#endif
         break;
-      }
 
       case EVT_KEY_BREAK(KEY_ENTER):
         if (cursorPos < length - 1) {
@@ -195,11 +181,12 @@ void TextEdit::onEvent(event_t event)
             value[cursorPos] = ' ';
             changed = true;
           }
-          setCursorPos(cursorPos + 1);
+          cursorPos++;
           if (value[cursorPos] == '\0') {
             value[cursorPos] = ' ';
             changed = true;
           }
+          invalidate();
         }
         else {
           changeEnd();
@@ -211,7 +198,7 @@ void TextEdit::onEvent(event_t event)
         changeEnd();
         FormField::onEvent(event);
 #if defined(HARDWARE_TOUCH)
-        TextKeyboard::hide();
+        TextKeyboardBase::hide();
 #endif
         break;
 
@@ -239,12 +226,12 @@ void TextEdit::onEvent(event_t event)
       }
 
       case EVT_KEY_BREAK(KEY_UP):
-        v = toggleCase(v);
+        nextChar = toggleCase(nextChar);
         break;
 
       case EVT_KEY_LONG(KEY_LEFT):
       case EVT_KEY_LONG(KEY_RIGHT):
-        v = toggleCase(v);
+        nextChar = toggleCase(nextChar);
         if (event == EVT_KEY_LONG(KEY_LEFT)) {
           killEvents(KEY_LEFT);
         }
@@ -263,9 +250,9 @@ void TextEdit::onEvent(event_t event)
         break;
     }
 
-    if (cursorPos < length && c != v) {
+    if (cursorPos < length && currentChar != nextChar) {
       // TRACE("value[%d] = %d", cursorPos, v);
-      value[cursorPos] = v;
+      // write(value[cursorPos] = nextChar;
       invalidate();
       changed = true;
     }
@@ -289,17 +276,17 @@ bool TextEdit::onTouchEnd(coord_t x, coord_t y)
   }
 
 #if defined(SOFTWARE_KEYBOARD)
-  TextKeyboard::show(this);
+  TextKeyboardBase::show(this);
 #endif
 
-  auto font = getFont(FONT(STD));
+  auto font = getFont(FONT(M));
 
   coord_t rest = x;
   for (cursorPos = 0; cursorPos < length; cursorPos++) {
     char c = value[cursorPos];
     if (c == '\0')
       break;
-    uint8_t w = font->getChar(c).width + 1;
+    uint8_t w = font->getGlyph(c).width + 1;
     if (rest < w)
       break;
     rest -= w;
@@ -313,7 +300,7 @@ bool TextEdit::onTouchEnd(coord_t x, coord_t y)
 void TextEdit::onFocusLost()
 {
 #if defined(SOFTWARE_KEYBOARD)
-  TextKeyboard::hide();
+  TextKeyboardBase::hide();
 #endif
 
   changeEnd();
