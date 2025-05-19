@@ -112,6 +112,11 @@ class Choice: public ChoiceBase
     bool onTouchEnd(coord_t x, coord_t y) override;
 #endif
 
+    void setGetValueHandler(std::function<int()> handler)
+    {
+      getValue = std::move(handler);
+    }
+
     void setSetValueHandler(std::function<void(int)> handler)
     {
       setValue = std::move(handler);
