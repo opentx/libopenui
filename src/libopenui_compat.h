@@ -20,6 +20,7 @@
 #pragma once
 
 #if defined(__MINGW32__) || !defined(__GNUC__)
+  #undef UNICODE
   #include <windows.h>
   #include <direct.h>
   #include <tchar.h>
