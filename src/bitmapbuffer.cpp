@@ -306,9 +306,9 @@ bool BitmapBuffer::clipLine(coord_t & x1, coord_t & y1, coord_t & x2, coord_t & 
   float p4 = -p3;
 
   float q1 = x1 - xmin;
-  float q2 = xmax - 1 - x1;
+  float q2 = xmax - x1;
   float q3 = y1 - ymin;
-  float q4 = ymax - 1 - y1;
+  float q4 = ymax - y1;
 
   float posarr[5], negarr[5];
   int posind = 1, negind = 1;
