@@ -56,7 +56,7 @@ class NumberEdit: public BaseNumberEdit
       ContextAll = 0xFF,
     };
 
-    void setGetStringValueHandler(std::function<std::string(int)> handler, ValueContext context = ContextAll)
+    void setGetStringValueHandler(std::function<std::string(int value, bool relative)> handler, ValueContext context = ContextAll)
     {
       _getStringValueContext = context;
       _getStringValue = std::move(handler);
@@ -111,7 +111,7 @@ class NumberEdit: public BaseNumberEdit
       if (value == 0 && !zeroText.empty())
         return zeroText;
       else if (_getStringValue && (context & _getStringValueContext))
-        return _getStringValue(value);
+        return _getStringValue(value, context == ContextKeyboard);
       else
         return getDefaultStringValue(value);
     }
@@ -130,7 +130,7 @@ class NumberEdit: public BaseNumberEdit
     std::string suffix;
     std::string zeroText;
     std::function<bool(int)> isValueAvailable;
-    std::function<std::string(int)> _getStringValue;
+    std::function<std::string(int value, bool relative)> _getStringValue;
 #if defined(SOFTWARE_KEYBOARD)
     bool keyboardEnabled = true;
 #endif
