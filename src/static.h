@@ -227,7 +227,7 @@ class DynamicNumber: public Window
 
     void paint(BitmapBuffer * dc) override
     {
-      dc->drawNumber(0, FIELD_PADDING_TOP, value, DEFAULT_COLOR, textFlags, 0, prefix, suffix);
+      dc->drawNumber((textFlags & RIGHT) ? width() : 0, FIELD_PADDING_TOP, value, DEFAULT_COLOR, textFlags, 0, prefix, suffix);
     }
 
     void checkEvents() override
