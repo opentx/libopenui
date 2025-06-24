@@ -781,8 +781,6 @@ class BitmapBuffer: public Bitmap
 
     void drawHorizontalLineAbs(coord_t x, coord_t y, coord_t w, LcdColor color, uint8_t pat = SOLID);
 
-    bool clipLine(coord_t& x1, coord_t& y1, coord_t& x2, coord_t& y2);
-
     void fillRectangle(coord_t x, coord_t y, coord_t w, coord_t h, pixel_t color);
 
     void fillBottomFlatTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t x2, LcdColor color);

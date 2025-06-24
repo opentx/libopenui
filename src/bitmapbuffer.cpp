@@ -277,146 +277,492 @@ void BitmapBuffer::drawVerticalLine(coord_t x, coord_t y, coord_t h, LcdColor co
   }
 }
 
-//
-// Liang-barsky clipping algo
-//
-static float lb_max(float arr[], int n)
-{
-  float m = 0;
-  for (int i = 0; i < n; ++i)
-    if (m < arr[i]) m = arr[i];
-  return m;
-}
-
-// this function gives the minimum
-static float lb_min(float arr[], int n)
-{
-  float m = 1;
-  for (int i = 0; i < n; ++i)
-    if (m > arr[i]) m = arr[i];
-  return m;
-}
-
-bool BitmapBuffer::clipLine(coord_t & x1, coord_t & y1, coord_t & x2, coord_t & y2)
-{
-  // defining variables
-  float p1 = -(x2 - x1);
-  float p2 = -p1;
-  float p3 = -(y2 - y1);
-  float p4 = -p3;
-
-  float q1 = x1 - xmin;
-  float q2 = xmax - x1;
-  float q3 = y1 - ymin;
-  float q4 = ymax - y1;
-
-  float posarr[5], negarr[5];
-  int posind = 1, negind = 1;
-  posarr[0] = 1;
-  negarr[0] = 0;
-
-  if ((p1 == 0 && q1 < 0) || (p2 == 0 && q2 < 0) || (p3 == 0 && q3 < 0) ||
-      (p4 == 0 && q4 < 0)) {
-    return false;
-  }
-
-  if (p1 != 0) {
-    float r1 = q1 / p1;
-    float r2 = q2 / p2;
-    if (p1 < 0) {
-      negarr[negind++] = r1;  // for negative p1, add it to negative array
-      posarr[posind++] = r2;  // and add p2 to positive array
-    } else {
-      negarr[negind++] = r2;
-      posarr[posind++] = r1;
-    }
-  }
-  if (p3 != 0) {
-    float r3 = q3 / p3;
-    float r4 = q4 / p4;
-    if (p3 < 0) {
-      negarr[negind++] = r3;
-      posarr[posind++] = r4;
-    } else {
-      negarr[negind++] = r4;
-      posarr[posind++] = r3;
-    }
-  }
-
-  float xn1, yn1, xn2, yn2;
-  float rn1, rn2;
-  rn1 = lb_max(negarr, negind);  // maximum of negative array
-  rn2 = lb_min(posarr, posind);  // minimum of positive array
-
-  if (rn1 > rn2) {  // reject
-    return false;
-  }
-
-  xn1 = x1 + p2 * rn1;
-  yn1 = y1 + p4 * rn1;  // computing new points
-
-  xn2 = x1 + p2 * rn2;
-  yn2 = y1 + p4 * rn2;
-
-  x1 = coord_t(xn1);
-  y1 = coord_t(yn1);
-  x2 = coord_t(xn2);
-  y2 = coord_t(yn2);
-
-  return true;
-}
-
 void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdColor color, uint8_t pat)
 {
+// ----------------------------------------------------------------------------
+// Bresenham Line Drawing with Built-In Clipping
+//
+// This C++ implementation is based on the algorithm described in the paper:
+//   "Bresenham's Line Generation Algorithm with Built-in Clipping"
+//   by Yevgeny P. Kuzmin
+//
+// It also derives from the Python implementation by Campbell Barton (ideasman42):
+//   https://gitlab.com/ideasman42/bresenham-line-plot-clip-py
+//
+// The original Python version is licensed under the Apache License 2.0,
+// which is compatible with the LGPLv3 license used by the libopenui project.
+//
+// This C++ translation and adaptation for use in libopenui was developed by:
+//   luftruepel, 2025
+//
+// ----------------------------------------------------------------------------
+// Apache License, Version 2.0:
+// ----------------------------------------------------------------------------
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at:
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ----------------------------------------------------------------------------
+
+
   // Offsets
   x1 += offsetX;
   y1 += offsetY;
   x2 += offsetX;
   y2 += offsetY;
 
-  if (!clipLine(x1, y1, x2, y2))
-    return;
-
   auto rgb565 = COLOR_TO_RGB565(color);
   uint8_t alpha = GET_COLOR_ALPHA(color);
 
-  int dx = x2 - x1;      /* the horizontal distance of the line */
-  int dy = y2 - y1;      /* the vertical distance of the line */
-  int dxabs = abs(dx);
-  int dyabs = abs(dy);
-  int sdx = sgn(dx);
-  int sdy = sgn(dy);
-  int x = dyabs >> 1;
-  int y = dxabs >> 1;
-  int px = x1;
-  int py = y1;
+  // ------------------
+  // Case: single point
+  // ------------------
+  if (x1 == x2 && y1 == y2) {
+    drawAlphaPixelAbs(x1, y1, alpha, rgb565);
+    return;   
+  } 
 
-  if (dxabs >= dyabs) {
-    /* the line is more horizontal than vertical */
-    for (int i = 0; i <= dxabs; i++) {
-      if ((1 << (px % 8)) & pat) {
-        drawAlphaPixelAbs(px, py, alpha, rgb565);
-      }
-      y += dyabs;
-      if (y >= dxabs) {
-        y -= dxabs;
-        py += sdy;
-      }
-      px += sdx;
+  // -------------------
+  // Case: vertical line
+  // -------------------
+  if (x1 == x2) {
+    // Case: vertical line completely outside of the clipping area (left or right)
+    if (x1 < xmin || x1 > xmax) {
+      return;
     }
+
+    // Sorting the coordinates to avoid further case differentiation
+    if (y1 > y2) {
+      std::swap(y1, y2);
+    }
+
+    // Case: vertical line completely outside of the clipping area (top or bottom)
+    if (y2 < ymin || y1 > ymax) {
+      return;
+    }
+
+    // If necessary, adjust the y-coordinates to fit within the clipping area
+    y1 = std::max(y1, ymin);
+    y2 = std::min(y2, ymax);
+
+    // Loop through the y-coordinates and draw pixels
+    for (int y = y1; y <= y2; ++y) {
+      if ((1 << (y % 8)) & pat) {
+        drawAlphaPixelAbs(x1, y, alpha, rgb565);
+      }
+    }
+
+    return;
   }
+  
+  // ---------------------
+  // Case: horizontal line
+  // ---------------------
+  if (y1 == y2) {
+    // Case: horizontal line completely outside of the clipping area (top or bottom)
+    if (y1 < ymin || y1 > ymax) {
+      return;
+    }
+
+    // Sorting the coordinates to avoid further case differentiation
+    if (x1 > x2) {
+      std::swap(x1, x2);
+    }
+
+    // Case: horizontal line completely outside of the clipping area (left or right)
+    if (x2 < xmin || x1 > xmax) {
+      return;
+    }
+
+    // If necessary, adjust the x-coordinates to fit within the clipping area
+    x1 = std::max(x1, xmin);
+    x2 = std::min(x2, xmax);
+
+    // Loop through the x-coordinates and draw pixels
+    for (int x = x1; x <= x2; ++x) {
+      if ((1 << (x % 8)) & pat) {
+        drawAlphaPixelAbs(x, y1, alpha, rgb565);
+      }
+    }
+
+    return;
+  }
+
+  // ------------------
+  // Case: general line
+  //   Check whether the line lies outside the clipping area, or if not, transform the coordinates if necessary to simplify the clipping logic
+  // ------------------
+  int sign_x, sign_y;
+
+  // Use local copies of the clipping bounds to avoid modifying the original global values during coordinate transformations
+  int clip_xmin = xmin;
+  int clip_xmax = xmax;
+  int clip_ymin = ymin;
+  int clip_ymax = ymax;
+
+  if (x1 < x2) {
+    // Case: line completely outside the clipping area (left or right)
+    if (x1 > clip_xmax || x2 < clip_xmin) {
+      return;
+    }
+
+    sign_x = 1;
+  } 
   else {
-    /* the line is more vertical than horizontal */
-    for (int i = 0; i <= dyabs; i++) {
-      if ((1 << (py % 8)) & pat) {
-        drawAlphaPixelAbs(px, py, alpha, rgb565);
+    // Case: line completely outside the clipping area (left or right)
+    if (x2 > clip_xmax || x1 < clip_xmin) {
+      return;
+    }
+
+    sign_x = -1;
+
+    // Transformation of the cooordinates. Due to the transformation delta_x and delta_y are allways positive, so the same logic can be used for both cases.
+    x1 = -x1;
+    x2 = -x2;
+    clip_xmin = -clip_xmin;
+    clip_xmax = -clip_xmax;
+    std::swap(clip_xmin, clip_xmax);
+  }
+
+  if (y1 < y2) {
+    // Case: line completely outside of the clipping area (top or bottom)
+    if (y1 > clip_ymax || y2 < clip_ymin) {
+      return;
+    }
+
+    sign_y = 1;
+  } 
+  else {
+    // Case: line completely outside of the clipping area (top or bottom)
+    if (y2 > clip_ymax || y1 < clip_ymin) {
+      return;
+    }
+
+    sign_y = -1;
+
+    // Transformation of the cooordinates. Due to the transformation delta_x and delta_y are allways positive, so the same logic can be used for both cases.
+    y1 = -y1;
+    y2 = -y2;
+    clip_ymin = -clip_ymin;
+    clip_ymax = -clip_ymax;
+    std::swap(clip_ymin, clip_ymax);
+  }
+
+  // Calculation of parameters for Bresenham's line algorithm
+  int delta_x = x2 - x1;
+  int delta_y = y2 - y1;
+  int delta_x_step = 2*delta_x;
+  int delta_y_step = 2*delta_y;
+
+  int x_pos = x1;
+  int y_pos = y1;
+  
+  // --------------
+  // Case: 45° line
+  // --------------
+  if (delta_x == delta_y) {
+    
+    bool set_exit = false;
+
+    // Step 1: Apply clipping to the line starting point (x1, y1)
+
+    // Check if the line intersects the top clipping boundary at y=clip_ymin
+    if (y1 < clip_ymin) {
+      // Determine the x-coordinate where the line (or its infinite extension) intersects y=clip_ymin
+      x_pos += clip_ymin - y1;
+
+      // Case: The computed intersection at y=clip_ymin lies beyond the right clipping boundary at x=clip_xmax, so the line is completely outside the clipping area
+      if (x_pos > clip_xmax) {
+        return;
       }
-      x += dxabs;
-      if (x >= dyabs) {
-        x -= dyabs;
-        px += sdx;
+
+      // Case: The computed intersection at y=clip_ymin lies on the top clipping boundary (clip_xmin=<x=<clip_xmax), so the line enters at the top edge of the clipping area. If the computed intersection at y=clip_ymin lies on the left of the clipping area (x<clip_xmin), then the line does not intersects the top edge of the clipping area, but possibly intersects the left edge of the clipping area, which is checked in the next step.
+      if (x_pos >= clip_xmin) {
+        y_pos = clip_ymin;
+
+        // If the line intersects the top edge of the clipping area, then the line cannot intersect the left edge of the clipping area, so the check in the next step is not necessary
+        set_exit = true;
+      }  
+    }
+   
+    // Check if the line intersects the left clipping boundary at x=clip_xmin
+    if (!set_exit && x1 < clip_xmin) {
+      // Determine the y-coordinate where the line (or its infinite extension) intersects x=clip_xmin
+      y_pos += clip_xmin - x1;
+
+      // Case: The computed intersection at x=clip_xmin lies below the bottom clipping boundary at y=clip_ymax, so the line is completely outside the clipping area. The second condition checks whether the intersection lies exactly on the bottom boundary at y=clip_ymax, but with the residual error in the Bresenham algorithm is large enough to cause a downward step. In this case, the point will not be drawn, and the line is effectively outside the visible area.
+      if (y_pos > clip_ymax) {
+        return;
       }
-      py += sdy;
+
+      x_pos = clip_xmin;
+    }
+
+    // Step 2: Apply clipping to the line end point (x2, y2)
+    int x_pos_end = x2;
+  
+    // Case: The line end point lies below the bottom clipping boundary at y=clip_ymax
+    if (y2 > clip_ymax) {
+      // Determine the y-coordinate where the line intersects y=clip_ymax
+      x_pos_end = x1 + clip_ymax - y1;
+    }
+
+    // Ensure the end point does not exceed the clipping area. The +1 is needed because the line drawing loop below uses an exclusive condition (x_pos != x_pos_end), so we must go one step beyond the actual last drawable x position to include it. This adjustment must be applied before the sign-based coordinate back transformation,since applying +1 afterwards would shift the coordinate in the wrong direction when sign_x == -1.
+    x_pos_end = std::min(x_pos_end, clip_xmax) + 1; 
+
+    // Back transformation of the line coordinates
+    if (sign_y == -1) {
+      y_pos = -y_pos;
+    }
+
+    if (sign_x == -1) {
+      x_pos = -x_pos;
+      x_pos_end = -x_pos_end;
+    }
+
+    // Line drawing
+    while (x_pos != x_pos_end) {
+      if ((1 << (x_pos % 8)) & pat) {
+        drawAlphaPixelAbs(x_pos, y_pos, alpha, rgb565);
+      }
+    
+      y_pos += sign_y;
+      x_pos += sign_x;
+    }
+
+  // -----------------------------------------------
+  // Case: the line is more horizontal than vertical
+  // -----------------------------------------------
+  } 
+  else if (delta_x > delta_y) {
+    int temp;
+    int msd;
+    int rem;
+
+    int error = delta_y_step - delta_x;
+    bool set_exit = false;
+
+    // Step 1: Apply clipping to the line starting point (x1, y1)
+
+    // Check if the line intersects the top clipping boundary at y=clip_ymin
+    if (y1 < clip_ymin) {
+      // Determine the x-coordinate where the line (or its infinite extension) intersects y=clip_ymin, using Bresenham-style error handling
+      temp = (2*(clip_ymin - y1) - 1)*delta_x;
+      msd = temp/delta_y_step;
+      x_pos += msd;
+
+      // Case: The computed intersection at y=clip_ymin lies beyond the right clipping boundary at x=clip_xmax, so the line is completely outside the clipping area
+      if (x_pos > clip_xmax) {
+        return;
+      }
+
+      // Case: The computed intersection at y=clip_ymin lies on the top clipping boundary (clip_xmin=<x=<clip_xmax), so the line enters at the top edge of the clipping area. If the computed intersection at y=clip_ymin lies on the left of the clipping area (x<clip_xmin), then the line does not intersects the top edge of the clipping area, but possibly intersects the left edge of the clipping area, which is checked in the next step.
+      if (x_pos >= clip_xmin) {
+        rem = temp - msd*delta_y_step;
+
+        y_pos = clip_ymin;
+        error -= rem + delta_x;
+
+        if (rem > 0) {
+          x_pos += 1;
+          error += delta_y_step;
+        }
+
+        // If the line intersects the top edge of the clipping area, then the line cannot intersect the left edge of the clipping area, so the check in the next step is not necessary
+        set_exit = true;
+      }  
+    }
+   
+    // Check if the line intersects the left clipping boundary at x=clip_xmin
+    if (!set_exit && x1 < clip_xmin) {
+      // Determine the y-coordinate where the line (or its infinite extension) intersects x=clip_xmin, using Bresenham-style error handling
+      temp = delta_y_step*(clip_xmin - x1);
+      msd = temp/delta_x_step;
+      y_pos += msd;
+      rem = temp % delta_x_step;
+
+      // Case: The computed intersection at x=clip_xmin lies below the bottom clipping boundary at y=clip_ymax, so the line is completely outside the clipping area. The second condition checks whether the intersection lies exactly on the bottom boundary at y=clip_ymax, but with the residual error in the Bresenham algorithm is large enough to cause a downward step. In this case, the point will not be drawn, and the line is effectively outside the visible area.
+      if (y_pos > clip_ymax || (y_pos == clip_ymax && rem >= delta_x)) {
+        return;
+      }
+
+      // The computed intersection at x=clip_xmin lies on the left clipping boundary (clip_ymin=<y=<clip_ymax), so the line enters at the left edge of the clipping area.
+      x_pos = clip_xmin;
+      error += rem;
+
+      if (rem >= delta_x) {
+        y_pos += 1;
+        error -= delta_x_step;
+      }
+    }
+
+    // Step 2: Apply clipping to the line end point (x2, y2)
+    int x_pos_end = x2;
+  
+    // Case: The line end point lies below the bottom clipping boundary at y=clip_ymax
+    if (y2 > clip_ymax) {
+      // Determine the y-coordinate where the line intersects y=clip_ymax, using Bresenham-style error handling
+      temp = delta_x_step*(clip_ymax - y1) + delta_x;
+      msd = temp/delta_y_step;
+      x_pos_end = x1 + msd;
+
+    // Case: The computed intersection at y=clip_ymax lies exactly on the pixel grid (with no residual error remains).
+      if ((temp - msd*delta_y_step) == 0) {
+        x_pos_end -= 1;
+      }
+    }
+
+    // Ensure the end point does not exceed the clipping area. The +1 is needed because the Bresenham loop below uses an exclusive condition (x_pos != x_pos_end), so we must go one step beyond the actual last drawable x position to include it. This adjustment must be applied before the sign-based coordinate back transformation,since applying +1 afterwards would shift the coordinate in the wrong direction when sign_x == -1.
+    x_pos_end = std::min(x_pos_end, clip_xmax) + 1; 
+
+    // Back transformation of the line coordinates
+    if (sign_y == -1) {
+      y_pos = -y_pos;
+    }
+
+    if (sign_x == -1) {
+      x_pos = -x_pos;
+      x_pos_end = -x_pos_end;
+    }
+
+    // Bresenham's line algorithm
+    delta_x_step -= delta_y_step;
+
+    while (x_pos != x_pos_end) {
+      if ((1 << (x_pos % 8)) & pat) {
+        drawAlphaPixelAbs(x_pos, y_pos, alpha, rgb565);
+      }
+    
+      if (error >= 0) {
+        y_pos += sign_y;
+        error -= delta_x_step;
+      } 
+      else {
+        error += delta_y_step;
+      }
+
+      x_pos += sign_x;
+    }
+
+  // --------------------------------------------------------------------------------------------------------------
+  // Case:  the line is more vertical than horizontal (same as previous case, but with swapped x and y coordinates)
+  // --------------------------------------------------------------------------------------------------------------
+  } 
+  else {
+    int temp;
+    int msd;
+    int rem;
+
+    int error = delta_x_step - delta_y;
+    bool set_exit = false;
+
+    // Step 1: Apply clipping to the line starting point (x1, y1)
+
+    // Check if the line intersects the left clipping boundary at x=clip_xmin
+    if (x1 < clip_xmin) {
+      // Determine the y-coordinate where the line (or its infinite extension) intersects x=clip_xmin, using Bresenham-style error handling
+      temp = (2*(clip_xmin - x1) - 1)*delta_y;
+      msd = temp/delta_x_step;
+      y_pos += msd;
+
+      // Case: The computed intersection at x=clip_xmin lies below the bottom clipping boundary at y=clip_ymax, so the line is completely outside the clipping area
+      if (y_pos > clip_ymax) {
+        return;
+      }
+
+      // Case: The computed intersection at x=clip_xmin lies on the left clipping boundary (clip_ymin=<y=<clip_ymax), so the line enters at the left edge of the clipping area. If the computed intersection at x=clip_xmin lies above the clipping area (y<clip_ymin), then the line does not intersects the left edge of the clipping area, but possibly intersects the top edge of the clipping area, which is checked in the next step.
+      if (y_pos >= clip_ymin) {
+        rem = temp - msd*delta_x_step;
+
+        x_pos = clip_xmin;
+        error -= rem + delta_y;
+
+        if (rem > 0) {
+          y_pos += 1;
+          error += delta_x_step;
+        }
+
+        // If the line intersects the left edge of the clipping area, then the line cannot intersect the top edge of the clipping area, so the check in the next step is not necessary
+        set_exit = true;
+      }  
+    }
+   
+    // Check if the line intersects the top clipping boundary at y=clip_ymin
+    if (!set_exit && y1 < clip_ymin) {
+      // Determine the x-coordinate where the line (or its infinite extension) intersects y=clip_ymin, using Bresenham-style error handling
+      temp = delta_x_step*(clip_ymin - y1);
+      msd = temp/delta_y_step;
+      x_pos += msd;
+      rem = temp % delta_y_step;
+
+      // Case: The computed intersection at y=clip_ymin lies on the right of the clipping boundary at x=clip_xmax, so the line is completely outside the clipping area. The second condition checks whether the intersection lies exactly on the right boundary at x=clip_xmax, but with the residual error in the Bresenham algorithm is large enough to cause a rightward step. In this case, the point will not be drawn, and the line is effectively outside the visible area.
+      if (x_pos > clip_xmax || (x_pos == clip_xmax && rem >= delta_y)) {
+        return;
+      }
+
+      // The computed intersection at y=clip_ymin lies on the top clipping boundary (clip_xmin=<x=<clip_xmax), so the line enters at the top edge of the clipping area.
+      y_pos = clip_ymin;
+      error += rem;
+
+      if (rem >= delta_y) {
+        x_pos += 1;
+        error -= delta_y_step;
+      }
+    }
+
+    // Step 2: Apply clipping to the line end point (x2, y2)
+    int y_pos_end = y2;
+  
+    // Case: The line end point lies beyond the right clipping boundary at x=clip_xmax
+    if (x2 > clip_xmax) {
+      // Determine the y-coordinate where the line intersects x=clip_xmax, using Bresenham-style error handling
+      temp = delta_y_step*(clip_xmax - x1) + delta_y;
+      msd = temp/delta_x_step;
+      y_pos_end = y1 + msd;
+
+    // Case: The computed intersection at x=clip_xmax lies exactly on the pixel grid (with no residual error remains).
+      if ((temp - msd*delta_x_step) == 0) {
+        y_pos_end -= 1;
+      }
+    }
+
+    // Ensure the end point does not exceed the clipping area. The +1 is needed because the Bresenham loop below uses an exclusive condition (y_pos != y_pos_end), so we must go one step beyond the actual last drawable y position to include it. This adjustment must be applied before the sign-based coordinate back transformation,since applying +1 afterwards would shift the coordinate in the wrong direction when sign_y == -1.
+    y_pos_end = std::min(y_pos_end, clip_ymax) + 1; 
+
+    // Back transformation of the line coordinates
+    if (sign_x == -1) {
+      x_pos = -x_pos;
+    }
+
+    if (sign_y == -1) {
+      y_pos = -y_pos;
+      y_pos_end = -y_pos_end;
+    }
+
+    // Bresenham's line algorithm
+    delta_y_step -= delta_x_step;
+
+    while (y_pos != y_pos_end) {
+      if ((1 << (y_pos % 8)) & pat) {
+        drawAlphaPixelAbs(x_pos, y_pos, alpha, rgb565);
+      }
+    
+      if (error >= 0) {
+        x_pos += sign_x;
+        error -= delta_y_step;
+      } 
+      else {
+        error += delta_x_step;
+      }
+
+      y_pos += sign_y;
     }
   }
 }
