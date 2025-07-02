@@ -87,6 +87,15 @@ class Choice: public ChoiceBase
 
     Choice(FormGroup * parent, const rect_t & rect, const char * values, int vmin, int vmax, std::function<int()> getValue, std::function<void(int)> setValue = nullptr, WindowFlags windowFlags = 0);
 
+    Choice(FormGroup * parent, const rect_t & rect, std::function<int()> getValue, std::function<void(int)> setValue = nullptr, WindowFlags windowFlags = 0):
+      ChoiceBase(parent, rect, CHOICE_TYPE_DROPOWN, windowFlags),
+      vmin(0),
+      vmax(-1),
+      getValue(std::move(getValue)),
+      setValue(std::move(setValue))
+    {
+    }
+
     void addValue(const char * value);
 
     void addValues(const char * const values[], uint8_t count);

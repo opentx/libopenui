@@ -34,7 +34,6 @@ class MenuWindowContent;
 
 class MenuBody: public Window
 {
-  friend class MenuWindowContent;
   friend class Menu;
 
   class MenuLine
@@ -51,7 +50,7 @@ class MenuBody: public Window
       {
       }
 
-      MenuLine(std::function<void(BitmapBuffer * /*dc*/, coord_t /*x*/, coord_t /*y*/, LcdFlags /*flags*/)> drawLine, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked):
+      MenuLine(std::function<void(BitmapBuffer * /*dc*/, coord_t /*x*/, coord_t /*y*/, LcdColor /*color*/)> drawLine, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked):
         drawLine(std::move(drawLine)),
         onPress(std::move(onPress)),
         onSelect(std::move(onSelect)),
@@ -66,15 +65,16 @@ class MenuBody: public Window
     protected:
       std::string text;
       const Mask * icon;
-      std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, LcdFlags flags)> drawLine;
+      std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, LcdColor color)> drawLine;
       std::function<void()> onPress;
       std::function<void()> onSelect;
       std::function<bool()> isChecked;
   };
 
   public:
-    MenuBody(Window * parent, const rect_t & rect):
-      Window(parent, rect, OPAQUE)
+    MenuBody(Window * parent, const rect_t & rect, bool multiple):
+      Window(parent, rect, OPAQUE),
+      multiple(multiple)
     {
       setPageHeight(MENUS_LINE_HEIGHT);
     }
@@ -106,7 +106,7 @@ class MenuBody: public Window
     bool onTouchEnd(coord_t x, coord_t y) override;
 #endif
 
-    void addLine(const std::string & text, const Mask * icon, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
+    void addLine(const std::string & text, const Mask * icon = nullptr, std::function<void()> onPress = nullptr, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr)
     {
       lines.emplace_back(text, icon, std::move(onPress), std::move(onSelect), std::move(isChecked));
       if (icon)
@@ -114,7 +114,7 @@ class MenuBody: public Window
       invalidate();
     }
 
-    void addCustomLine(std::function<void(BitmapBuffer * /*dc*/, coord_t /*x*/, coord_t /*y*/, LcdFlags /*flags*/)> drawLine, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
+    void addCustomLine(std::function<void(BitmapBuffer * /*dc*/, coord_t /*x*/, coord_t /*y*/, LcdFlags /*flags*/)> drawLine, std::function<void()> onPress, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr)
     {
       lines.emplace_back(std::move(drawLine), std::move(onPress), std::move(onSelect), std::move(isChecked));
       invalidate();
@@ -126,24 +126,46 @@ class MenuBody: public Window
       invalidate();
     }
 
-    void setCancelHandler(std::function<void()> handler)
+    void setCancelHandler(std::function<bool()> handler)
     {
       onCancel = std::move(handler);
     }
 
+    void setDefaultSelection(int index)
+    {
+      defaultSelection = index;
+    }
+
+    int getDefaultSelection()
+    {
+      return defaultSelection;
+    }
+
+    void setAutoClose(bool value)
+    {
+      autoClose = value;
+    }
+
     void paint(BitmapBuffer * dc) override;
 
-  protected:
     std::vector<MenuLine> lines;
+
+  protected:
 #if defined(HARDWARE_TOUCH)
     int selectedIndex = -1;
 #else
     int selectedIndex = 0;
 #endif
-    std::function<void()> onCancel;
+    int defaultSelection = 0;
+    std::function<bool()> onCancel;
     bool displayIcons = false;
+    bool autoClose = true;
+    bool multiple = false;
 
-    inline Menu * getParentMenu();
+    inline Window * getParentMenu()
+    {
+      return getParent()->getParent();
+    }
 };
 
 class MenuWindowContent: public ModalWindowContent
@@ -151,7 +173,7 @@ class MenuWindowContent: public ModalWindowContent
   friend class Menu;
 
   public:
-    explicit MenuWindowContent(Menu * parent, bool footer = false);
+    explicit MenuWindowContent(ModalWindow * parent, const rect_t & rect, bool multiple, bool footer);
 
     void deleteLater(bool detach = true, bool trash = true) override
     {
@@ -175,6 +197,11 @@ class MenuWindowContent: public ModalWindowContent
 
     void paint(BitmapBuffer * dc) override;
 
+    MenuBody * getBody()
+    {
+      return &body;
+    }
+
     FormGroup * getFooter() const
     {
       return footer;
@@ -187,8 +214,6 @@ class MenuWindowContent: public ModalWindowContent
 
 class Menu: public ModalWindow
 {
-  friend class MenuBody;
-
   public:
     explicit Menu(Window * parent, bool multiple = false, bool footer = false);
 
@@ -199,7 +224,7 @@ class Menu: public ModalWindow
     }
 #endif
     
-    void setCancelHandler(std::function<void()> handler)
+    void setCancelHandler(std::function<bool()> handler)
     {
       content->body.setCancelHandler(std::move(handler));
     }
@@ -217,7 +242,7 @@ class Menu: public ModalWindow
       addLine(text, nullptr, std::move(onPress), std::move(onSelect), std::move(isChecked));
     }
 
-    void addCustomLine(std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, LcdFlags flags)> drawLine, std::function<void()> onPress, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr);
+    void addCustomLine(std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, LcdColor color)> drawLine, std::function<void()> onPress, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr);
 
     void removeLines();
 
@@ -245,14 +270,30 @@ class Menu: public ModalWindow
 
   protected:
     MenuWindowContent * content;
-    bool multiple;
     std::function<void()> waitHandler;
     void updatePosition();
 };
 
-Menu * MenuBody::getParentMenu()
+class MultiMenu: public ModalWindow
 {
-  return static_cast<Menu *>(getParent()->getParent());
-}
+  public:
+    explicit MultiMenu(Window * parent):
+      ModalWindow(parent, true)
+    {
+    }
+
+    void addColumn(MenuWindowContent * column)
+    {
+      columns.emplace_back(column);
+    }
+
+    MenuWindowContent * getColumn(uint8_t index)
+    {
+      return columns[index];
+    }
+
+  protected:
+    std::vector<MenuWindowContent *> columns;
+};
 
 }
