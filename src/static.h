@@ -21,6 +21,7 @@
 
 #include "window.h"
 #include "button.h" // TODO just for BUTTON_BACKGROUND
+#include "font.h"
 
 constexpr coord_t STATIC_TEXT_INTERLINE_HEIGHT = 2;
 
@@ -111,7 +112,7 @@ class Subtitle: public StaticText
 {
   public:
     Subtitle(Window * parent, const rect_t & rect, const char * text):
-      StaticText(parent, rect, text, 0, FONT(BOLD))
+      StaticText(parent, rect, text, 0, FONT(M_BOLD))
     {
     }
 
@@ -132,50 +133,19 @@ class StaticBitmap: public Window
     {
     }
 
-    StaticBitmap(Window * parent, const rect_t & rect, const char * filename, bool scale = false):
-      Window(parent, rect),
-      bitmap(BitmapBuffer::load(filename)),
-      scale(scale)
-    {
-    }
-
-    StaticBitmap(Window * parent, const rect_t & rect, const BitmapBuffer * bitmap, bool scale = false):
+    StaticBitmap(Window * parent, const rect_t & rect, const Bitmap * bitmap, bool scale = false):
       Window(parent, rect),
       bitmap(bitmap),
       scale(scale)
     {
     }
 
-    StaticBitmap(Window * parent, const rect_t & rect, const BitmapMask * mask, LcdFlags color, bool scale = false):
+    StaticBitmap(Window * parent, const rect_t & rect, const Mask * mask, LcdFlags color, bool scale = false):
       Window(parent, rect),
       mask(mask),
       color(color),
       scale(scale)
     {
-    }
-
-    void setBitmap(const char * filename)
-    {
-      setBitmap(BitmapBuffer::load(filename));
-    }
-
-    void setMaskColor(LcdFlags value)
-    {
-      color = value;
-    }
-
-    void setBitmap(const BitmapBuffer * newBitmap)
-    {
-      delete bitmap;
-      bitmap = newBitmap;
-      invalidate();
-    }
-
-    void setMask(const BitmapMask * newMask)
-    {
-      delete mask;
-      mask = newMask;
-      invalidate();
     }
 
 #if defined(DEBUG_WINDOWS)
@@ -199,8 +169,8 @@ class StaticBitmap: public Window
     }
 
   protected:
-    const BitmapMask * mask = nullptr;
-    const BitmapBuffer * bitmap = nullptr;
+    const Mask * mask = nullptr;
+    const Bitmap * bitmap = nullptr;
     LcdFlags color = 0;
     bool scale = false;
 };
