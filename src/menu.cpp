@@ -53,13 +53,13 @@ void MenuBody::onEvent(event_t event)
 
   if (event == EVT_ROTARY_RIGHT) {
     if (!lines.empty()) {
-      select(int(selectedIndex < 0 ? defaultSelection : (selectedIndex >= lines.size() - 1 ? 0 : selectedIndex + 1)));
+      select(int(selectedIndex < 0 ? defaultSelection : (selectedIndex >= int(lines.size() - 1) ? 0 : selectedIndex + 1)));
       onKeyPress();
     }
   }
   else if (event == EVT_ROTARY_LEFT) {
     if (!lines.empty()) {
-      select(int(selectedIndex < 0 ? defaultSelection : (selectedIndex == 0 ? lines.size() - 1 : selectedIndex - 1)));
+      select(int(selectedIndex < 0 ? defaultSelection : (selectedIndex == 0 ? int(lines.size() - 1) : selectedIndex - 1)));
       onKeyPress();
     }
   }
