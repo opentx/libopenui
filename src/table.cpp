@@ -131,7 +131,7 @@ void Table::Body::onEvent(event_t event)
         }
       }
       else if (!table->getPreviousField() && !lines.empty()) {
-        select(selection >= lines.size() - 1 ? 0 : selection + 1, true);
+        select(selection >= int(lines.size() - 1) ? 0 : selection + 1, true);
       }
     }
   }
