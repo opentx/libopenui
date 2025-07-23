@@ -158,7 +158,6 @@ void Choice::openMenu()
   });
 
   setEditMode(true);
-  invalidate();
 }
 
 #if defined(HARDWARE_TOUCH)

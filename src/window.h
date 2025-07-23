@@ -151,6 +151,11 @@ class Window
       textFlags = flags;
     }
 
+    void clearCloseHandler()
+    {
+      closeHandler = nullptr;
+    }
+
     void setCloseHandler(std::function<void()> handler)
     {
       closeHandler = std::move(handler);

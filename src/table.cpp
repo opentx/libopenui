@@ -118,45 +118,37 @@ void Table::Body::onEvent(event_t event)
   if (event == EVT_ROTARY_RIGHT) {
     onKeyPress();
     auto table = static_cast<Table *>(parent);
-    if (table->getWindowFlags() & FORWARD_SCROLL) {
-      auto lineIndex = selection + 1;
-      if (lineIndex < int(lines.size())) {
-        select(lineIndex, true);
-      }
-      else {
-        auto next = table->getNextField();
-        if (next) {
-          next->setFocus(SET_FOCUS_FORWARD, this);
-          if (!hasFocus()) {
-            select(-1, false);
-          }
-        }
-      }
+    auto lineIndex = selection + 1;
+    if (lineIndex < int(lines.size())) {
+      select(lineIndex, true);
     }
     else {
-      if (!lines.empty()) {
-        select((selection + 1) % lines.size(), true);
+      auto next = table->getNextField();
+      if (next) {
+        next->setFocus(SET_FOCUS_FORWARD, this);
+        if (!hasFocus()) {
+          select(-1, false);
+        }
+      }
+      else if (!table->getPreviousField() && !lines.empty()) {
+        select(selection >= int(lines.size() - 1) ? 0 : selection + 1, true);
       }
     }
   }
   else if (event == EVT_ROTARY_LEFT) {
     onKeyPress();
     auto table = static_cast<Table *>(parent);
-    if (table->getWindowFlags() & FORWARD_SCROLL) {
-      auto lineIndex = selection - 1;
-      if (lineIndex >= 0) {
-        select(lineIndex, true);
-      }
-      else {
-        auto previous = table->getPreviousField();
-        if (previous) {
-          select(-1, false);
-          previous->setFocus(SET_FOCUS_BACKWARD);
-        }
-      }
+    auto lineIndex = selection - 1;
+    if (lineIndex >= 0) {
+      select(lineIndex, true);
     }
     else {
-      if (!lines.empty()) {
+      auto previous = table->getPreviousField();
+      if (previous) {
+        select(-1, false);
+        previous->setFocus(SET_FOCUS_BACKWARD);
+      }
+      else if (!table->getNextField() && !lines.empty()) {
         select(selection <= 0 ? lines.size() - 1 : selection - 1, true);
       }
     }

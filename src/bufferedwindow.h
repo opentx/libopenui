@@ -80,7 +80,7 @@ class TransparentBufferedWindow: public BufferedWindow<T>
 class TransparentBitmapBackground: public TransparentBufferedWindow<Window>
 {
   public:
-    TransparentBitmapBackground(Window * parent, const rect_t & rect, const BitmapBuffer * bitmap):
+    TransparentBitmapBackground(Window * parent, const rect_t & rect, const Bitmap * bitmap):
       TransparentBufferedWindow<Window>(parent, rect, OPAQUE),
       background(bitmap)
     {
@@ -94,7 +94,7 @@ class TransparentBitmapBackground: public TransparentBufferedWindow<Window>
 #endif
 
   protected:
-    const BitmapBuffer * background;
+    const Bitmap * background;
 
     void paintUpdate(BitmapBuffer * dc) override
     {

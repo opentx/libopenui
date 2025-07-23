@@ -26,9 +26,9 @@ void MenuToolbarButton::paint(BitmapBuffer * dc)
 {
   if (checked()) {
     dc->drawPlainFilledRectangle(MENUS_TOOLBAR_BUTTON_PADDING, MENUS_TOOLBAR_BUTTON_PADDING, MENUS_TOOLBAR_BUTTON_WIDTH - 2 * MENUS_TOOLBAR_BUTTON_PADDING, MENUS_TOOLBAR_BUTTON_WIDTH - 2 * MENUS_TOOLBAR_BUTTON_PADDING, FOCUS_BGCOLOR);
-    dc->drawSizedText(rect.w / 2, (rect.h - getFontHeight(FONT(STD))) / 2 + 1, &picto, 1, FOCUS_COLOR, CENTERED);
+    dc->drawSizedText(rect.w / 2, (rect.h - getFontHeight(FONT(M))) / 2 + 1, &picto, 1, FOCUS_COLOR, CENTERED);
   }
   else {
-    dc->drawSizedText(rect.w / 2, (rect.h - getFontHeight(FONT(STD))) / 2 + 1, &picto, 1, DEFAULT_COLOR, CENTERED);
+    dc->drawSizedText(rect.w / 2, (rect.h - getFontHeight(FONT(M))) / 2 + 1, &picto, 1, DEFAULT_COLOR, CENTERED);
   }
 }
