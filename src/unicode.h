@@ -120,26 +120,27 @@ inline uint8_t getUnicodeCharLength(uint32_t c)
     return 4;
 }
 
-inline void writeUnicodeChar(char * s, uint32_t c)
+inline char * writeUnicodeChar(char * s, uint32_t c)
 {
   if (c < 0x80) {
-    *s = c;
+    *s++ = c;
   }
   else if (c <= 0b11111111111) {
     *s++ = 0xC0 | ((c >> 6) & 0b11111);
-    *s = 0b10000000 | (c & 0b111111);
+    *s++ = 0b10000000 | (c & 0b111111);
   }
   else if (c <= 0b1111111111111111) {
     *s++ = 0xE0 | ((c >> 12) & 0b1111);
     *s++ = 0b10000000 | ((c >> 6) & 0b111111);
-    *s = 0b10000000 | (c & 0b111111);
+    *s++ = 0b10000000 | (c & 0b111111);
   }
   else {
     *s++ = 0xF0 | ((c >> 18) & 0b111);
     *s++ = 0b10000000 | ((c >> 12) & 0b111111);
     *s++ = 0b10000000 | ((c >> 6) & 0b111111);
-    *s = 0b10000000 | (c & 0b111111);
+    *s++ = 0b10000000 | (c & 0b111111);
   }
+  return s;
 }
 
 inline void insertUnicodeChar(char * s, uint8_t position, uint32_t c, uint8_t maxLength)
