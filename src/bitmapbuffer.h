@@ -232,6 +232,7 @@ class Mask: public Raster<uint8_t>
 
     static Mask * allocate(const Mask * from, uint16_t width, uint16_t height)
     {
+      UNUSED(from);
       return allocate(width, height);
     }
 
