@@ -82,6 +82,7 @@ class Table: public FormField
         explicit DynamicStringCell(std::function<std::string()> getText):
           getText(std::move(getText))
         {
+          value = this->getText();
         }
 
         [[nodiscard]] bool needsInvalidate() override
