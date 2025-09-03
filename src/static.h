@@ -179,7 +179,7 @@ class DynamicText: public StaticText
 {
   public:
     DynamicText(Window * parent, const rect_t & rect, std::function<std::string()> textHandler, LcdFlags textFlags = 0):
-      StaticText(parent, rect, "", 0, textFlags),
+      StaticText(parent, rect, textHandler(), 0, textFlags),
       textHandler(std::move(textHandler))
     {
     }
