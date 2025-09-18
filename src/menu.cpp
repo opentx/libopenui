@@ -69,7 +69,7 @@ void MenuBody::onEvent(event_t event)
       if (selectedIndex < 0) {
         select(defaultSelection);
       }
-      else if (multiple) {
+      else if (flags & MENU_MULTIPLE) {
         lines[selectedIndex].onPress();
         getParentMenu()->invalidate();
       }
@@ -103,7 +103,7 @@ bool MenuBody::onTouchEnd(coord_t /*x*/, coord_t y)
   int index = y / MENUS_LINE_HEIGHT;
   if (index < (int)lines.size()) {
     onKeyPress();
-    if (multiple) {
+    if (flags & MENU_MULTIPLE) {
       if (selectedIndex == index && lines[index].onPress)
         lines[index].onPress();
       else
@@ -162,8 +162,13 @@ void MenuBody::paint(BitmapBuffer * dc)
       }
     }
 
-    if (multiple && line.isChecked) {
-      theme->drawCheckBox(dc, line.isChecked(), IS_TRANSLATION_RIGHT_TO_LEFT() ? MENUS_HORIZONTAL_PADDING : width() - MENUS_HORIZONTAL_PADDING - CHECKBOX_WIDTH, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - CHECKBOX_WIDTH) / 2, 0);
+    if ((flags & MENU_MULTIPLE) && line.isChecked) {
+      if (flags & MENU_RADIO_BUTTONS) {
+        theme->drawRadioButton(dc, line.isChecked(), IS_TRANSLATION_RIGHT_TO_LEFT() ? MENUS_HORIZONTAL_PADDING : width() - MENUS_HORIZONTAL_PADDING - CHECKBOX_WIDTH, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - CHECKBOX_WIDTH) / 2, 0);
+      }
+      else {
+        theme->drawCheckBox(dc, line.isChecked(), IS_TRANSLATION_RIGHT_TO_LEFT() ? MENUS_HORIZONTAL_PADDING : width() - MENUS_HORIZONTAL_PADDING - CHECKBOX_WIDTH, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - CHECKBOX_WIDTH) / 2, 0);
+      }
     }
 
     if (i > 0) {
@@ -172,9 +177,9 @@ void MenuBody::paint(BitmapBuffer * dc)
   }
 }
 
-MenuWindowContent::MenuWindowContent(ModalWindow * parent, const rect_t & rect, bool multiple, bool footer):
+MenuWindowContent::MenuWindowContent(ModalWindow * parent, const rect_t & rect, uint8_t flags, bool footer):
   ModalWindowContent(parent, rect),
-  body(this, {0, 0, MIN_MENUS_WIDTH, 0}, multiple)
+  body(this, {0, 0, MIN_MENUS_WIDTH, 0}, flags)
 {
   body.setFocus(SET_FOCUS_DEFAULT);
   if (footer) {
@@ -213,9 +218,9 @@ void MenuWindowContent::paint(BitmapBuffer * dc)
   }
 }
 
-Menu::Menu(Window * parent, bool multiple, bool footer):
+Menu::Menu(Window * parent, uint8_t flags, bool footer):
   ModalWindow(parent, true),
-  content(createMenuWindow(this, multiple, footer))
+  content(createMenuWindow(this, flags, footer))
 {
 }
 
@@ -271,7 +276,7 @@ void Menu::onEvent(event_t event)
   if (event == EVT_KEY_BREAK(KEY_EXIT)) {
     deleteLater();
   }
-  else if (event == EVT_KEY_BREAK(KEY_ENTER) && content->body.autoClose && !content->body.multiple) {
+  else if (event == EVT_KEY_BREAK(KEY_ENTER) && content->body.autoClose && !(content->body.flags & MENU_MULTIPLE)) {
     deleteLater();
   }
 }

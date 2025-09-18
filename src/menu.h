@@ -27,6 +27,9 @@
 
 constexpr coord_t MENUS_HORIZONTAL_PADDING = 10;
 
+constexpr uint8_t MENU_MULTIPLE = (1 << 0);
+constexpr uint8_t MENU_RADIO_BUTTONS = (1 << 1);
+
 namespace ui {
 
 class Menu;
@@ -72,9 +75,9 @@ class MenuBody: public Window
   };
 
   public:
-    MenuBody(Window * parent, const rect_t & rect, bool multiple):
+    MenuBody(Window * parent, const rect_t & rect, uint8_t flags):
       Window(parent, rect, OPAQUE),
-      multiple(multiple)
+      flags(flags)
     {
       setPageHeight(MENUS_LINE_HEIGHT);
     }
@@ -160,7 +163,7 @@ class MenuBody: public Window
     std::function<bool()> onCancel;
     bool displayIcons = false;
     bool autoClose = true;
-    bool multiple = false;
+    uint8_t flags = 0;
 
     inline Window * getParentMenu()
     {
@@ -173,7 +176,7 @@ class MenuWindowContent: public ModalWindowContent
   friend class Menu;
 
   public:
-    explicit MenuWindowContent(ModalWindow * parent, const rect_t & rect, bool multiple, bool footer);
+    explicit MenuWindowContent(ModalWindow * parent, const rect_t & rect, uint8_t flags, bool footer);
 
     void deleteLater(bool detach = true, bool trash = true) override
     {
@@ -215,7 +218,7 @@ class MenuWindowContent: public ModalWindowContent
 class Menu: public ModalWindow
 {
   public:
-    explicit Menu(Window * parent, bool multiple = false, bool footer = false);
+    explicit Menu(Window * parent, uint8_t flags = 0, bool footer = false);
 
 #if defined(DEBUG_WINDOWS)
     [[nodiscard]] std::string getName() const override
