@@ -115,7 +115,7 @@ void Table::Body::onEvent(event_t event)
         onPress();
     }
   }
-  if (event == EVT_ROTARY_RIGHT) {
+  else if (event == EVT_ROTARY_RIGHT) {
     onKeyPress();
     auto table = static_cast<Table *>(parent);
     auto lineIndex = selection + 1;
