@@ -25,10 +25,11 @@ namespace ui {
 
 class ExpansionPanel;
 
-class ExpansionPanelHeader: virtual public FormGroup
+template<class T = FormGroup>
+class ExpansionPanelHeader: public T
 {
   public:
-    explicit ExpansionPanelHeader(ExpansionPanel * parent);
+    using T::T;
 
 #if defined(DEBUG_WINDOWS)
     [[nodiscard]] std::string getName() const override
@@ -48,7 +49,7 @@ class ExpansionPanelHeader: virtual public FormGroup
 
 class ExpansionPanel: public FormGroup
 {
-  friend class ExpansionPanelHeader;
+  // friend class ExpansionPanelHeader;
 
   public:
     ExpansionPanel(Window * parent, const rect_t & rect):
@@ -122,7 +123,7 @@ class ExpansionPanel: public FormGroup
 
     bool setFocus(uint8_t flag = SET_FOCUS_DEFAULT, Window * from = nullptr) override; // NOLINT(google-default-arguments)
 
-    ExpansionPanelHeader * getHeader()
+    FormGroup * getHeader()
     {
       return header;
     }
@@ -134,9 +135,66 @@ class ExpansionPanel: public FormGroup
 
   protected:
     bool _isOpen = false;
-    ExpansionPanelHeader * header = nullptr;
+    FormGroup * header = nullptr;
     FormGroup * body = nullptr;
     std::function<void(bool)> openHandler;
 };
+
+
+template<class T>
+bool ExpansionPanelHeader<T>::setFocus(uint8_t flag, Window * from) // NOLINT(google-default-arguments)
+{
+  auto panel = static_cast<ExpansionPanel *>(T::parent);
+
+  if (T::enabled || panel->isOpen()) {
+    return FormGroup::setFocus(flag, from);
+  }
+  else {
+    if (flag == SET_FOCUS_BACKWARD) {
+      auto previous = panel->getPreviousField();
+      return previous ? previous->setFocus(SET_FOCUS_BACKWARD, this) : false;
+    }
+    else {
+      auto next = panel->getNextField();
+      return next ? next->setFocus(SET_FOCUS_FORWARD, this) : false;
+    }
+  }
+}
+
+template<class T>
+void ExpansionPanelHeader<T>::onEvent(event_t event)
+{
+  auto panel = static_cast<ExpansionPanel *>(T::parent);
+
+  if (event == EVT_KEY_BREAK(KEY_ENTER)) {
+    panel->toggle();
+  }
+  else if (event == EVT_ROTARY_RIGHT && !panel->isOpen()) {
+    auto next = panel->getNextField();
+    if (next)
+      next->setFocus(SET_FOCUS_FORWARD, this);
+  }
+  else if (event == EVT_ROTARY_LEFT) {
+    auto previous = panel->getPreviousField();
+    if (previous) {
+      previous->setFocus(SET_FOCUS_BACKWARD, this);
+    }
+  }
+  else {
+    FormGroup::onEvent(event);
+  }
+}
+
+#if defined(HARDWARE_TOUCH)
+template<class T>
+bool ExpansionPanelHeader<T>::onTouchEnd(coord_t, coord_t)
+{
+  if (T::enabled) {
+    static_cast<ExpansionPanel *>(T::parent)->toggle();
+    setFocus(SET_FOCUS_DEFAULT);
+  }
+  return true;
+}
+#endif
 
 }
