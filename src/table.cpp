@@ -86,9 +86,9 @@ void Table::Body::paint(BitmapBuffer * dc)
         }
         x += columnWidth;
       }
-      y += line->lineHeight;
-      lineIndex += 1;
     }
+    lineIndex += 1;
+    y += line->lineHeight;
   }
 }
 
