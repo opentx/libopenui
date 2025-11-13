@@ -109,6 +109,9 @@ class BaseNumberEdit: public FormField
     void setEditMode(bool newEditMode) override
     {
       if (editMode != newEditMode) {
+        if (newEditMode) {
+          setStep(pow(10, FLAGS_TO_DECIMALS(textFlags)));
+        }
         FormField::setEditMode(newEditMode);
         if (!instantChange) {
           if (newEditMode) {
