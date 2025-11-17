@@ -482,9 +482,9 @@ bool Window::onTouchSlide(coord_t x, coord_t y, coord_t startX, coord_t startY, 
     }
   }
 
-  if (!scrollEnabled) {
-    return false;
-  }
+  // if (!scrollEnabled) {
+  //   return false;
+  // }
 
   if (slidingWindow && slidingWindow != this) {
     return false;
