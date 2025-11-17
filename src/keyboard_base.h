@@ -67,7 +67,7 @@ class Keyboard: public KeyboardBase
         fieldContainerOriginalHeight = fieldContainer->height();
         fieldContainer->setHeight(fieldContainer->height() - height());
         fieldContainer->scrollTo(newField);
-        fieldContainer->disableScroll();
+        // fieldContainer->disableScroll();
         invalidate();
         field = newField;
       }
@@ -78,7 +78,7 @@ class Keyboard: public KeyboardBase
       detach();
       if (fieldContainer) {
         fieldContainer->setHeight(fieldContainerOriginalHeight);
-        fieldContainer->enableScroll();
+        // fieldContainer->enableScroll();
         fieldContainer = nullptr;
       }
       if (field) {

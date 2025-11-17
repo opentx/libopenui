@@ -371,15 +371,15 @@ class Window
       return scrollPositionY;
     }
 
-    void enableScroll(bool value = true)
-    {
-      scrollEnabled = value;
-    }
+    // void enableScroll(bool value = true)
+    // {
+    //   scrollEnabled = value;
+    // }
 
-    void disableScroll()
-    {
-      enableScroll(false);
-    }
+    // void disableScroll()
+    // {
+    //   enableScroll(false);
+    // }
 
     virtual void setScrollPositionX(coord_t value);
 
@@ -472,7 +472,7 @@ class Window
     bool _deleted = false;
     uint8_t refCount = 0;
     
-    bool scrollEnabled = true;
+    // bool scrollEnabled = true;
 
     static Window * focusWindow;
     static Window * slidingWindow;
