@@ -28,6 +28,7 @@ class BufferedWindow: public T
 {
   public:
     using T::T;
+    using T::invalidate;
 
     ~BufferedWindow() override
     {
