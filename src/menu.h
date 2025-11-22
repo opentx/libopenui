@@ -53,7 +53,7 @@ class MenuBody: public Window
       {
       }
 
-      MenuLine(std::function<void(BitmapBuffer * /*dc*/, coord_t /*x*/, coord_t /*y*/, LcdColor /*color*/)> drawLine, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked):
+      MenuLine(std::function<void(BitmapBuffer * /*dc*/, coord_t /*x*/, coord_t /*y*/, coord_t /*w*/, LcdColor /*color*/)> drawLine, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked):
         drawLine(std::move(drawLine)),
         onPress(std::move(onPress)),
         onSelect(std::move(onSelect)),
@@ -68,7 +68,7 @@ class MenuBody: public Window
     protected:
       std::string text;
       const Mask * icon;
-      std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, LcdColor color)> drawLine;
+      std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, coord_t w, LcdColor color)> drawLine;
       std::function<void()> onPress;
       std::function<void()> onSelect;
       std::function<bool()> isChecked;
@@ -117,7 +117,7 @@ class MenuBody: public Window
       invalidate();
     }
 
-    void addCustomLine(std::function<void(BitmapBuffer * /*dc*/, coord_t /*x*/, coord_t /*y*/, LcdFlags /*flags*/)> drawLine, std::function<void()> onPress, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr)
+    void addCustomLine(std::function<void(BitmapBuffer * /*dc*/, coord_t /*x*/, coord_t /*y*/, coord_t /*w*/, LcdFlags /*flags*/)> drawLine, std::function<void()> onPress, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr)
     {
       lines.emplace_back(std::move(drawLine), std::move(onPress), std::move(onSelect), std::move(isChecked));
       invalidate();
@@ -245,7 +245,7 @@ class Menu: public ModalWindow
       addLine(text, nullptr, std::move(onPress), std::move(onSelect), std::move(isChecked));
     }
 
-    void addCustomLine(std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, LcdColor color)> drawLine, std::function<void()> onPress, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr);
+    void addCustomLine(std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, coord_t w, LcdColor color)> drawLine, std::function<void()> onPress, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr);
 
     void removeLines();
 

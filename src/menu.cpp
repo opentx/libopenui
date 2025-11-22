@@ -144,7 +144,7 @@ void MenuBody::paint(BitmapBuffer * dc)
       }
     }
     if (line.drawLine) {
-      line.drawLine(dc, 0, i * MENUS_LINE_HEIGHT, color);
+      line.drawLine(dc, 0, i * MENUS_LINE_HEIGHT, width(), color);
     }
     else {
       const char * text = line.text.data();
@@ -258,7 +258,7 @@ void Menu::addLine(const std::string & text, const Mask * mask, std::function<vo
   updatePosition();
 }
 
-void Menu::addCustomLine(std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, LcdColor color)> drawLine, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
+void Menu::addCustomLine(std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, coord_t w, LcdColor color)> drawLine, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
 {
   content->body.addCustomLine(std::move(drawLine), std::move(onPress), std::move(onSelect), std::move(isChecked));
   updatePosition();
