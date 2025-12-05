@@ -295,6 +295,10 @@ class MultiMenu: public ModalWindow
       return columns[index];
     }
 
+#if defined(HARDWARE_KEYS)
+    void onEvent(event_t event) override;
+#endif
+
   protected:
     std::vector<MenuWindowContent *> columns;
 };

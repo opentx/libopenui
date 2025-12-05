@@ -280,4 +280,11 @@ void Menu::onEvent(event_t event)
     deleteLater();
   }
 }
+
+void MultiMenu::onEvent(event_t event)
+{
+  if (event == EVT_KEY_BREAK(KEY_EXIT)) {
+    deleteLater();
+  }
+}
 #endif
