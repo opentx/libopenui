@@ -1720,8 +1720,10 @@ void * stb_realloc(void *ptr, unsigned int oldsz, unsigned int newsz)
   return res;
 }
 
+#if !defined(_MSC_VER)
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 #undef __I
 #define STBI_ONLY_PNG
 #define STBI_ONLY_JPEG
