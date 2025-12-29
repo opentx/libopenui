@@ -848,15 +848,12 @@ void BitmapBuffer::fillRectangle(coord_t x, coord_t y, coord_t w, coord_t h, pix
   if (!applyClippingRect(x, y, w, h))
     return;
 
-  DMAFillRect(data, _width, _height, x, y, w, h, pixel);
+  DMAFillRect(data, _width, _height, x, y, w, h, _format == BMP_ARGB4444, _format == BMP_ARGB4444 ? RGB565_TO_ARGB4444(pixel, 0xFF) : pixel);
 }
 
 void BitmapBuffer::drawPlainFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, Color565 color)
 {
-  if (_format == BMP_RGB565)
-    fillRectangle(x, y, w, h, color);
-  else
-    fillRectangle(x, y, w, h, RGB565_TO_ARGB4444(color, 0xFF));
+  fillRectangle(x, y, w, h, color);
 }
 
 void BitmapBuffer::drawMaskFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, const Mask * mask, Color565 color)
