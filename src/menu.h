@@ -109,7 +109,13 @@ class MenuBody: public Window
     bool onTouchEnd(coord_t x, coord_t y) override;
 #endif
 
-    void addLine(const std::string & text, const Mask * icon = nullptr, std::function<void()> onPress = nullptr, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr)
+    void addLine(const std::string & text, std::function<void()> onPress = nullptr, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr)
+    {
+      lines.emplace_back(text, nullptr, std::move(onPress), std::move(onSelect), std::move(isChecked));
+      invalidate();
+    }
+
+    void addLine(const std::string & text, const Mask * icon, std::function<void()> onPress = nullptr, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr)
     {
       lines.emplace_back(text, icon, std::move(onPress), std::move(onSelect), std::move(isChecked));
       if (icon)
