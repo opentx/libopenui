@@ -29,9 +29,9 @@ class FileReaderBase
       open(path);
     }
 
-    ~FileReaderBase()
+    virtual ~FileReaderBase()
     {
-      free(file);
+      close();
     }
 
     bool open(const char * path)
@@ -50,6 +50,15 @@ class FileReaderBase
 
       fileSize = f_size(file);
       return true;
+    }
+
+    void close()
+    {
+      if (file) {
+        f_close(file);
+        free(file);
+        file = nullptr;
+      }
     }
 
     size_t size() const
@@ -73,7 +82,7 @@ class FileReader: public FileReaderBase
   public:
     using FileReaderBase::FileReaderBase;
 
-    ~FileReader()
+    ~FileReader() override
     {
       free(data);
     }
@@ -83,8 +92,7 @@ class FileReader: public FileReaderBase
       data = (uint8_t *)malloc(fileSize);
       if (data) {
         auto result = FileReaderBase::read(data, fileSize);
-        free(file);
-        file = nullptr;
+        close();
         return result ? data : nullptr;
       }
       else {
