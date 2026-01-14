@@ -251,7 +251,7 @@ class Menu: public ModalWindow
       addLine(text, nullptr, std::move(onPress), std::move(onSelect), std::move(isChecked));
     }
 
-    void addCustomLine(std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, coord_t w, LcdColor color)> drawLine, std::function<void()> onPress, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr);
+    void addCustomLine(std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, coord_t w, LcdColor color)> drawLine, coord_t lineWidth, std::function<void()> onPress, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr);
 
     void removeLines();
 
@@ -280,6 +280,7 @@ class Menu: public ModalWindow
   protected:
     MenuWindowContent * content;
     std::function<void()> waitHandler;
+    void setLineWidth(coord_t value);
     void updatePosition();
 };
 
