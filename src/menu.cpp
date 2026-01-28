@@ -229,6 +229,7 @@ void Menu::updatePosition()
   auto headerHeight = content->title.empty() ? 0 : POPUP_HEADER_HEIGHT;
   auto footerHeight = content->footer ? POPUP_FOOTER_HEIGHT : 0;
   auto bodyHeight = limit<coord_t>(MENUS_MIN_HEIGHT, content->body.lines.size() * MENUS_LINE_HEIGHT - 1, MENUS_MAX_HEIGHT);
+  content->setLeft((LCD_W - content->width()) / 2);
   content->setHeight(headerHeight + bodyHeight + footerHeight);
   content->setTop((LCD_H - content->height()) / 2 + MENUS_OFFSET_TOP);
   content->body.setTop(headerHeight);
@@ -248,19 +249,22 @@ void Menu::setTitle(std::string text)
 void Menu::addLine(const std::string & text, const Mask * mask, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
 {
   content->body.addLine(text, mask, std::move(onPress), std::move(onSelect), std::move(isChecked));
-  if (content->width() < MAX_MENUS_WIDTH) {
-    auto lineWidth = min(MAX_MENUS_WIDTH, getTextWidth(text.c_str(), 0, MENU_FONT) + 2 * MENUS_HORIZONTAL_PADDING);
-    if (lineWidth > content->width()) {
-      content->setWidth(lineWidth);
-      content->body.setWidth(lineWidth);
-    }
-  }
+  setLineWidth(getTextWidth(text.c_str(), 0, MENU_FONT) + 2 * MENUS_HORIZONTAL_PADDING);
   updatePosition();
 }
 
-void Menu::addCustomLine(std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, coord_t w, LcdColor color)> drawLine, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
+void Menu::setLineWidth(coord_t value)
+{
+  if (content->width() < MAX_MENUS_WIDTH && value > content->width()) {
+    content->setWidth(value);
+    content->body.setWidth(value);
+  }
+}
+
+void Menu::addCustomLine(std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, coord_t w, LcdColor color)> drawLine, coord_t lineWidth, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
 {
   content->body.addCustomLine(std::move(drawLine), std::move(onPress), std::move(onSelect), std::move(isChecked));
+  setLineWidth(lineWidth);
   updatePosition();
 }
 

@@ -111,15 +111,7 @@ bool Window::setFocus(uint8_t flag, Window * from)
 
   if (focusWindow != this) {
     // scroll before calling focusHandler so that the window can adjust the scroll position if needed
-    Window * parent = this->parent;
-    while (parent && parent->getWindowFlags() & FORWARD_SCROLL) {
-      parent = parent->parent;
-    }
-    if (parent) {
-      parent->scrollTo(this);
-      invalidate();
-    }
-
+    setInsideParentScrollingArea(false);
     clearFocus();
     focusWindow = this;
     if (focusHandler) {

@@ -126,7 +126,7 @@ void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const Bitmap * bitmap, coord
     else {
       for (int i = 0; i < scaledh; i++) {
         pixel_t * p = getPixelPtrAbs(x, y + i);
-        const pixel_t * qstart = bitmap->getPixelPtrAbs(srcx, srcy + int(i / scale));
+        const pixel_t * qstart = bitmap->getPixelPtrAbs(srcx, srcy + min<int>(bmph - 1, int(i / scale)));
         for (int j = 0; j < scaledw; j++) {
           const pixel_t * q = qstart;
           q = bitmap->getNextPixel(q, j / scale);

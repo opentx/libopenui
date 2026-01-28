@@ -74,6 +74,11 @@ struct rect_t
     return left() <= other.left() && right() >= other.right() && top() <= other.top() && bottom() >= other.bottom();
   }
 
+  bool operator == (const rect_t & other) const
+  {
+    return memcmp(this, &other, sizeof(rect_t)) == 0;
+  }
+
   rect_t operator & (const rect_t & other) const
   {
     auto leftMax = max<coord_t>(left(), other.left());
