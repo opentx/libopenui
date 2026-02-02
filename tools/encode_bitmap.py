@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
-from PIL import Image
-import sys
+from PIL import Image, ImageOps
 
 
 class RawMixin:
@@ -209,10 +208,13 @@ def main():
     parser.add_argument("--rle", help="Enable RLE compression", action="store_true")
     parser.add_argument("--rows", help="Image rows count (for 1bit format)", type=int, default=1)
     parser.add_argument("--size-format", help="Header image size format (1 or 2 bytes)", type=int, default=1)
+    parser.add_argument("--invert", help="Invert the bitmap (white vs black)", action="store_true")
 
     args = parser.parse_args()
 
     image = Image.open(args.input)
+    if args.invert:
+        image = ImageOps.invert(image.convert("L"))
     encoder = ImageEncoder.create(args.size_format, args.orientation, RleMixin if args.rle else RawMixin)
 
     format = args.format
