@@ -1255,6 +1255,10 @@ coord_t BitmapBuffer::drawSizedText(coord_t x, coord_t y, const char * s, uint8_
       continue;
     }
 
+    if (c == '\r') {
+      continue;
+    }
+
     if (c == '\n') {
       pos = orig_pos;
       if (flags & VERTICAL)
