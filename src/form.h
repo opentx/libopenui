@@ -54,7 +54,7 @@ class FormField: public Window
       return next;
     }
 
-    inline bool isEditMode() const
+    virtual bool isEditMode() const
     {
       return editMode;
     }

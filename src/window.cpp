@@ -111,15 +111,7 @@ bool Window::setFocus(uint8_t flag, Window * from)
 
   if (focusWindow != this) {
     // scroll before calling focusHandler so that the window can adjust the scroll position if needed
-    Window * parent = this->parent;
-    while (parent && parent->getWindowFlags() & FORWARD_SCROLL) {
-      parent = parent->parent;
-    }
-    if (parent) {
-      parent->scrollTo(this);
-      invalidate();
-    }
-
+    setInsideParentScrollingArea(false);
     clearFocus();
     focusWindow = this;
     if (focusHandler) {
@@ -419,7 +411,7 @@ bool Window::onTouchStart(coord_t x, coord_t y)
 
   for (auto it = children.rbegin(); it != children.rend(); ++it) {
     auto child = *it;
-    if (child->rect.contains((point_t){x, y})) {
+    if (child->rect.contains(point_t{x, y})) {
       if (child->onTouchStart(x - child->rect.x + child->scrollPositionX, y - child->rect.y + child->scrollPositionY)) {
         return true;
       }
@@ -435,7 +427,7 @@ bool Window::onTouchLong(coord_t x, coord_t y)
 
   for (auto it = children.rbegin(); it != children.rend(); ++it) {
     auto child = *it;
-    if (child->rect.contains((point_t){x, y})) {
+    if (child->rect.contains(point_t{x, y})) {
       if (child->onTouchLong(x - child->rect.x + child->scrollPositionX, y - child->rect.y + child->scrollPositionY)) {
         return true;
       }
@@ -449,7 +441,7 @@ bool Window::forwardTouchEnd(coord_t x, coord_t y)
 {
   for (auto it = children.rbegin(); it != children.rend(); ++it) {
     auto child = *it;
-    if (child->rect.contains((point_t){x, y})) {
+    if (child->rect.contains(point_t{x, y})) {
       if (child->onTouchEnd(x - child->rect.x + child->scrollPositionX, y - child->rect.y + child->scrollPositionY)) {
         return true;
       }
@@ -474,7 +466,7 @@ bool Window::onTouchSlide(coord_t x, coord_t y, coord_t startX, coord_t startY, 
 
     for (auto it = children.rbegin(); it != children.rend(); ++it) {
       auto child = *it;
-      if (child->rect.contains((point_t){startX, startY})) {
+      if (child->rect.contains(point_t{startX, startY})) {
         if (child->onTouchSlide(x - child->rect.x + child->scrollPositionX, y - child->rect.y + child->scrollPositionY, startX - child->rect.x, startY - child->rect.y, slideX, slideY)) {
           return true;
         }
@@ -482,9 +474,9 @@ bool Window::onTouchSlide(coord_t x, coord_t y, coord_t startX, coord_t startY, 
     }
   }
 
-  if (!scrollEnabled) {
-    return false;
-  }
+  // if (!scrollEnabled) {
+  //   return false;
+  // }
 
   if (slidingWindow && slidingWindow != this) {
     return false;

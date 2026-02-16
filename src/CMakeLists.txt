@@ -13,6 +13,7 @@ endif()
 set(LIBOPENUI_SRC
   libopenui_file.cpp
   bitmapbuffer.cpp
+  font.cpp
   window.cpp
   layer.cpp
   form.cpp

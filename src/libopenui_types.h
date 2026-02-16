@@ -74,6 +74,11 @@ struct rect_t
     return left() <= other.left() && right() >= other.right() && top() <= other.top() && bottom() >= other.bottom();
   }
 
+  bool operator == (const rect_t & other) const
+  {
+    return memcmp(this, &other, sizeof(rect_t)) == 0;
+  }
+
   rect_t operator & (const rect_t & other) const
   {
     auto leftMax = max<coord_t>(left(), other.left());
@@ -104,4 +109,3 @@ typedef uint16_t event_t;
 typedef uint16_t Color565;
 typedef uint32_t LcdColor;
 typedef uint32_t WindowFlags;
-typedef uint8_t charSuite[2];

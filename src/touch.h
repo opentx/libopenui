@@ -68,11 +68,6 @@ struct TouchState
     }
   }
 
-  void killEvents()
-  {
-    event = state = TE_NONE;
-  }
-
   unsigned char popEvent()
   {
     auto result = event;

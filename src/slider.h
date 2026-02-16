@@ -60,6 +60,26 @@ class Slider: public FormField
       invalidate();
     }
 
+    void setDefault(int value)
+    {
+      vdefault = value;
+    }
+
+    int getMin() const
+    {
+      return vmin;
+    }
+
+    int getMax() const
+    {
+      return vmax;
+    }
+
+    int getDefault() const
+    {
+      return vdefault;
+    }
+
     void paint(BitmapBuffer * dc) override;
 
 #if defined(HARDWARE_KEYS)
@@ -78,6 +98,7 @@ class Slider: public FormField
     int value(coord_t x) const;
     int vmin;
     int vmax;
+    int vdefault;
     bool sliding = false;
     std::function<int()> getValue;
     std::function<void(int)> _setValue;

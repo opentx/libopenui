@@ -27,17 +27,20 @@ using namespace ui;
 void MenuBody::select(int index)
 {
   selectedIndex = index;
-  if (innerHeight > height()) {
-    if (scrollPositionY + height() < MENUS_LINE_HEIGHT * (index + 1)) {
-      setScrollPositionY(MENUS_LINE_HEIGHT * (index + 1) - height());
-    }
-    else if (scrollPositionY > MENUS_LINE_HEIGHT * index) {
-      setScrollPositionY(MENUS_LINE_HEIGHT * index);
-    }
-  }
 
-  if (lines[index].onSelect) {
-    lines[index].onSelect();
+  if (index >= 0) {
+    if (innerHeight > height()) {
+      if (scrollPositionY + height() < MENUS_LINE_HEIGHT * (index + 1)) {
+        setScrollPositionY(MENUS_LINE_HEIGHT * (index + 1) - height());
+      }
+      else if (scrollPositionY > MENUS_LINE_HEIGHT * index) {
+        setScrollPositionY(MENUS_LINE_HEIGHT * index);
+      }
+    }
+
+    if (lines[index].onSelect) {
+      lines[index].onSelect();
+    }
   }
 
   invalidate();
@@ -50,13 +53,13 @@ void MenuBody::onEvent(event_t event)
 
   if (event == EVT_ROTARY_RIGHT) {
     if (!lines.empty()) {
-      select(int((selectedIndex + 1) % lines.size()));
+      select(int(selectedIndex < 0 ? defaultSelection : (selectedIndex >= int(lines.size() - 1) ? 0 : selectedIndex + 1)));
       onKeyPress();
     }
   }
   else if (event == EVT_ROTARY_LEFT) {
     if (!lines.empty()) {
-      select(int(selectedIndex <= 0 ? lines.size() - 1 : selectedIndex - 1));
+      select(int(selectedIndex < 0 ? defaultSelection : (selectedIndex == 0 ? int(lines.size() - 1) : selectedIndex - 1)));
       onKeyPress();
     }
   }
@@ -64,28 +67,28 @@ void MenuBody::onEvent(event_t event)
     if (!lines.empty()) {
       onKeyPress();
       if (selectedIndex < 0) {
-        select(0);
+        select(defaultSelection);
+      }
+      else if (flags & MENU_MULTIPLE) {
+        lines[selectedIndex].onPress();
+        getParentMenu()->invalidate();
+      }
+      else if (autoClose) {
+        auto menu = getParentMenu();
+        Layer::pop(menu);
+        lines[selectedIndex].onPress();
+        menu->deleteLater(); // called at the end in case onPress changes the closeHandler
       }
       else {
-        auto menu = getParentMenu();
-        if (menu->multiple) {
-          lines[selectedIndex].onPress();
-          menu->invalidate();
-        }
-        else {
-          Layer::pop(menu);
-          lines[selectedIndex].onPress();
-          menu->deleteLater(); // called at the end in case onPress changes the closeHandler
-        }
+        lines[selectedIndex].onPress();
       }
     }
   }
   else if (event == EVT_KEY_BREAK(KEY_EXIT)) {
     onKeyPress();
-    if (onCancel) {
-      onCancel();
+    if (!onCancel || onCancel()) {
+      Window::onEvent(event);
     }
-    Window::onEvent(event);
   }
   else {
     Window::onEvent(event);
@@ -96,21 +99,25 @@ void MenuBody::onEvent(event_t event)
 #if defined(HARDWARE_TOUCH)
 bool MenuBody::onTouchEnd(coord_t /*x*/, coord_t y)
 {
-  Menu * menu = getParentMenu();
+  auto * menu = getParentMenu();
   int index = y / MENUS_LINE_HEIGHT;
   if (index < (int)lines.size()) {
     onKeyPress();
-    if (menu->multiple) {
+    if (flags & MENU_MULTIPLE) {
       if (selectedIndex == index && lines[index].onPress)
         lines[index].onPress();
       else
         select(index);
       menu->invalidate();
     }
-    else {
+    else if (autoClose) {
       Layer::pop(menu);
       lines[index].onPress();
       menu->deleteLater(); // called at the end in case onPress changes the closeHandler
+    }
+    else {
+      selectedIndex = index;
+      lines[index].onPress();
     }
   }
   return true;
@@ -137,7 +144,7 @@ void MenuBody::paint(BitmapBuffer * dc)
       }
     }
     if (line.drawLine) {
-      line.drawLine(dc, 0, i * MENUS_LINE_HEIGHT, color);
+      line.drawLine(dc, 0, i * MENUS_LINE_HEIGHT, width(), color);
     }
     else {
       const char * text = line.text.data();
@@ -155,9 +162,13 @@ void MenuBody::paint(BitmapBuffer * dc)
       }
     }
 
-    Menu * menu = getParentMenu();
-    if (menu->multiple && line.isChecked) {
-      theme->drawCheckBox(dc, line.isChecked(), IS_TRANSLATION_RIGHT_TO_LEFT() ? MENUS_HORIZONTAL_PADDING : width() - MENUS_HORIZONTAL_PADDING - CHECKBOX_WIDTH, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - CHECKBOX_WIDTH) / 2, 0);
+    if ((flags & MENU_MULTIPLE) && line.isChecked) {
+      if (flags & MENU_RADIO_BUTTONS) {
+        theme->drawRadioButton(dc, line.isChecked(), IS_TRANSLATION_RIGHT_TO_LEFT() ? MENUS_HORIZONTAL_PADDING : width() - MENUS_HORIZONTAL_PADDING - CHECKBOX_WIDTH, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - CHECKBOX_WIDTH) / 2, 0);
+      }
+      else {
+        theme->drawCheckBox(dc, line.isChecked(), IS_TRANSLATION_RIGHT_TO_LEFT() ? MENUS_HORIZONTAL_PADDING : width() - MENUS_HORIZONTAL_PADDING - CHECKBOX_WIDTH, i * MENUS_LINE_HEIGHT + (MENUS_LINE_HEIGHT - CHECKBOX_WIDTH) / 2, 0);
+      }
     }
 
     if (i > 0) {
@@ -166,9 +177,9 @@ void MenuBody::paint(BitmapBuffer * dc)
   }
 }
 
-MenuWindowContent::MenuWindowContent(Menu * parent, bool footer):
-  ModalWindowContent(parent, {(LCD_W - MIN_MENUS_WIDTH) / 2, (LCD_H - MIN_MENUS_WIDTH) / 2, MIN_MENUS_WIDTH, 0}),
-  body(this, {0, 0, MIN_MENUS_WIDTH, 0})
+MenuWindowContent::MenuWindowContent(ModalWindow * parent, const rect_t & rect, uint8_t flags, bool footer):
+  ModalWindowContent(parent, rect),
+  body(this, {0, 0, MIN_MENUS_WIDTH, 0}, flags)
 {
   body.setFocus(SET_FOCUS_DEFAULT);
   if (footer) {
@@ -207,10 +218,9 @@ void MenuWindowContent::paint(BitmapBuffer * dc)
   }
 }
 
-Menu::Menu(Window * parent, bool multiple, bool footer):
+Menu::Menu(Window * parent, uint8_t flags, bool footer):
   ModalWindow(parent, true),
-  content(createMenuWindow(this, footer)),
-  multiple(multiple)
+  content(createMenuWindow(this, flags, footer))
 {
 }
 
@@ -219,6 +229,7 @@ void Menu::updatePosition()
   auto headerHeight = content->title.empty() ? 0 : POPUP_HEADER_HEIGHT;
   auto footerHeight = content->footer ? POPUP_FOOTER_HEIGHT : 0;
   auto bodyHeight = limit<coord_t>(MENUS_MIN_HEIGHT, content->body.lines.size() * MENUS_LINE_HEIGHT - 1, MENUS_MAX_HEIGHT);
+  content->setLeft((LCD_W - content->width()) / 2);
   content->setHeight(headerHeight + bodyHeight + footerHeight);
   content->setTop((LCD_H - content->height()) / 2 + MENUS_OFFSET_TOP);
   content->body.setTop(headerHeight);
@@ -235,22 +246,25 @@ void Menu::setTitle(std::string text)
   updatePosition();
 }
 
-void Menu::addLine(const std::string & text, const BitmapMask * mask, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
+void Menu::addLine(const std::string & text, const Mask * mask, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
 {
   content->body.addLine(text, mask, std::move(onPress), std::move(onSelect), std::move(isChecked));
-  if (content->width() < MAX_MENUS_WIDTH) {
-    auto lineWidth = min(MAX_MENUS_WIDTH, getTextWidth(text.c_str(), 0, MENU_FONT) + 2 * MENUS_HORIZONTAL_PADDING);
-    if (lineWidth > content->width()) {
-      content->setWidth(lineWidth);
-      content->body.setWidth(lineWidth);
-    }
-  }
+  setLineWidth(getTextWidth(text.c_str(), 0, MENU_FONT) + 2 * MENUS_HORIZONTAL_PADDING);
   updatePosition();
 }
 
-void Menu::addCustomLine(std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, LcdFlags flags)> drawLine, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
+void Menu::setLineWidth(coord_t value)
+{
+  if (content->width() < MAX_MENUS_WIDTH && value > content->width()) {
+    content->setWidth(value);
+    content->body.setWidth(value);
+  }
+}
+
+void Menu::addCustomLine(std::function<void(BitmapBuffer * dc, coord_t x, coord_t y, coord_t w, LcdColor color)> drawLine, coord_t lineWidth, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
 {
   content->body.addCustomLine(std::move(drawLine), std::move(onPress), std::move(onSelect), std::move(isChecked));
+  setLineWidth(lineWidth);
   updatePosition();
 }
 
@@ -266,7 +280,14 @@ void Menu::onEvent(event_t event)
   if (event == EVT_KEY_BREAK(KEY_EXIT)) {
     deleteLater();
   }
-  else if (event == EVT_KEY_BREAK(KEY_ENTER) && !multiple) {
+  else if (event == EVT_KEY_BREAK(KEY_ENTER) && content->body.autoClose && !(content->body.flags & MENU_MULTIPLE)) {
+    deleteLater();
+  }
+}
+
+void MultiMenu::onEvent(event_t event)
+{
+  if (event == EVT_KEY_BREAK(KEY_EXIT)) {
     deleteLater();
   }
 }
