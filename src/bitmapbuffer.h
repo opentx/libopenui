@@ -436,7 +436,7 @@ C * rotate90(const C * source)
   auto * destData = result->getData();
   for (coord_t y = 0; y < source->width(); y++) {
     for (coord_t x = 0; x < source->height(); x++) {
-      destData[x * source->width() + y] = srcData[y * source->height() + x];
+      destData[x * source->width() + y] = srcData[(y + 1) * source->height() - (x + 1)];
     }
   }
 #else
