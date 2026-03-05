@@ -66,6 +66,11 @@ class BaseNumberEdit: public FormField
       return vdefault;
     }
 
+    void setDefaultStep(int value)
+    {
+      defaultStep = value;
+    }
+
     void setStep(int value)
     {
       step = value;
@@ -110,7 +115,7 @@ class BaseNumberEdit: public FormField
     {
       if (editMode != newEditMode) {
         if (newEditMode) {
-          setStep(pow(10, FLAGS_TO_DECIMALS(textFlags)));
+          setStep(defaultStep >= 0 ? defaultStep : pow(10, FLAGS_TO_DECIMALS(textFlags)));
         }
         FormField::setEditMode(newEditMode);
         if (!instantChange) {
@@ -144,6 +149,7 @@ class BaseNumberEdit: public FormField
     int vmin;
     int vmax;
     int step = 1;
+    int defaultStep = -1;
     int stepMultiplier = 10;
     int currentValue;
     bool instantChange = true;
