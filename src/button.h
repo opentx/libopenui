@@ -64,6 +64,11 @@ class Button: public FormField
       pressHandler = std::move(handler);
     }
 
+    void setPressLongHandler(std::function<uint8_t(void)> handler)
+    {
+      pressLongHandler = std::move(handler);
+    }
+
     void setCheckHandler(std::function<void(void)> handler)
     {
       checkHandler = std::move(handler);
@@ -75,12 +80,14 @@ class Button: public FormField
 
 #if defined(HARDWARE_TOUCH)
     bool onTouchEnd(coord_t x, coord_t y) override;
+    bool onTouchLong(coord_t x, coord_t y) override;
 #endif
 
     void checkEvents() override;
 
   protected:
     std::function<uint8_t(void)> pressHandler;
+    std::function<uint8_t(void)> pressLongHandler;
     std::function<void(void)> checkHandler;
 
     void onPress();
