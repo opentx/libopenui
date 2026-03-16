@@ -47,12 +47,12 @@ void MainWindow::checkEvents()
   auto touchEvent = touchState.popEvent();
 
   if (touchEvent == TE_DOWN) {
-    onTouchStart(touchState.x + scrollPositionX, touchState.y + scrollPositionY);
     slidingWindow = nullptr;
+    onTouchStart(touchState.x + scrollPositionX, touchState.y + scrollPositionY);
   }
   else if (touchEvent == TE_LONG) {
-    onTouchLong(touchState.x + scrollPositionX, touchState.y + scrollPositionY);
     slidingWindow = nullptr;
+    onTouchLong(touchState.x + scrollPositionX, touchState.y + scrollPositionY);
   }
   else if (touchEvent == TE_UP) {
     onTouchEnd(touchState.startX + scrollPositionX, touchState.startY + scrollPositionY);
@@ -62,21 +62,31 @@ void MainWindow::checkEvents()
       onTouchSlide(touchState.x, touchState.y, touchState.startX, touchState.startY, touchState.deltaX, touchState.deltaY);
     }
   }
-  else if (touchEvent == TE_SLIDE_END && slidingWindow) {
-    if (touchState.lastDeltaX > SLIDE_SPEED_REDUCTION)
-      touchState.lastDeltaX -= SLIDE_SPEED_REDUCTION;
-    else if (touchState.lastDeltaX < -SLIDE_SPEED_REDUCTION)
-      touchState.lastDeltaX += SLIDE_SPEED_REDUCTION;
-    else
-      touchState.lastDeltaX = 0;
-    if (touchState.lastDeltaY > SLIDE_SPEED_REDUCTION)
-      touchState.lastDeltaY -= SLIDE_SPEED_REDUCTION;
-    else if (touchState.lastDeltaY < -SLIDE_SPEED_REDUCTION)
-      touchState.lastDeltaY += SLIDE_SPEED_REDUCTION;
-    else
-      touchState.lastDeltaY = 0;
-    if (touchState.lastDeltaX || touchState.lastDeltaY) {
-      onTouchSlide(touchState.x, touchState.y, touchState.startX, touchState.startY, touchState.lastDeltaX, touchState.lastDeltaY);
+  else if (touchEvent == TE_SLIDE_END) {
+    if (slidingWindow) {
+      if (touchState.lastDeltaX > SLIDE_SPEED_REDUCTION)
+        touchState.lastDeltaX -= SLIDE_SPEED_REDUCTION;
+      else if (touchState.lastDeltaX < -SLIDE_SPEED_REDUCTION)
+        touchState.lastDeltaX += SLIDE_SPEED_REDUCTION;
+      else
+        touchState.lastDeltaX = 0;
+      if (touchState.lastDeltaY > SLIDE_SPEED_REDUCTION)
+        touchState.lastDeltaY -= SLIDE_SPEED_REDUCTION;
+      else if (touchState.lastDeltaY < -SLIDE_SPEED_REDUCTION)
+        touchState.lastDeltaY += SLIDE_SPEED_REDUCTION;
+      else
+        touchState.lastDeltaY = 0;
+      if (touchState.lastDeltaX || touchState.lastDeltaY) {
+        onTouchSlide(touchState.x, touchState.y, touchState.startX, touchState.startY, touchState.lastDeltaX, touchState.lastDeltaY);
+      }
+      else {
+        slidingWindow = nullptr;
+        touchState.event = TE_NONE;
+      }
+    }
+    else {
+      touchState.event = TE_NONE;
+      onTouchEnd(touchState.x, touchState.y);
     }
   }
 #endif
