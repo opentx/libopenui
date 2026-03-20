@@ -60,6 +60,11 @@ bool Button::onTouchEnd(coord_t x, coord_t y)
   }
   return true;
 }
+
+bool Button::onTouchLong(coord_t x, coord_t y)
+{
+  return (enabled && pressLongHandler) ? pressLongHandler() : false;
+}
 #endif
 
 void Button::checkEvents()
