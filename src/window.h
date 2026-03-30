@@ -298,6 +298,11 @@ class Window
       return rect;
     }
 
+    [[nodiscard]] rect_t getInnerRect() const
+    {
+      return {0, 0, innerWidth, innerHeight};
+    }
+
     [[nodiscard]] coord_t getInnerWidth() const
     {
       return innerWidth;

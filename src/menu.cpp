@@ -172,7 +172,7 @@ void MenuBody::paint(BitmapBuffer * dc)
     }
 
     if (i > 0) {
-      dc->drawPlainHorizontalLine(0, i * MENUS_LINE_HEIGHT - 1, width(), MENU_LINE_COLOR);
+      dc->drawPlainHorizontalLine(0, i * MENUS_LINE_HEIGHT - 1, width(), MENU_SEPARATOR_LINE_COLOR);
     }
   }
 }
@@ -214,7 +214,7 @@ void MenuWindowContent::paint(BitmapBuffer * dc)
   // the title
   if (!title.empty()) {
     dc->drawText(MIN_MENUS_WIDTH / 2, (POPUP_HEADER_HEIGHT - getFontHeight(MENU_HEADER_FONT)) / 2, title.c_str(), DEFAULT_COLOR, CENTERED | MENU_HEADER_FONT);
-    dc->drawPlainHorizontalLine(0, POPUP_HEADER_HEIGHT - 1, MIN_MENUS_WIDTH, MENU_LINE_COLOR);
+    dc->drawPlainHorizontalLine(0, POPUP_HEADER_HEIGHT - 1, MIN_MENUS_WIDTH, MENU_SEPARATOR_LINE_COLOR);
   }
 }
 
@@ -249,7 +249,7 @@ void Menu::setTitle(std::string text)
 void Menu::addLine(const std::string & text, const Mask * mask, std::function<void()> onPress, std::function<void()> onSelect, std::function<bool()> isChecked)
 {
   content->body.addLine(text, mask, std::move(onPress), std::move(onSelect), std::move(isChecked));
-  setLineWidth(getTextWidth(text.c_str(), 0, MENU_FONT) + 2 * MENUS_HORIZONTAL_PADDING);
+  setLineWidth(getTextWidth(text.c_str(), MENU_FONT) + 2 * MENUS_HORIZONTAL_PADDING);
   updatePosition();
 }
 

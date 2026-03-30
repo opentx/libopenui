@@ -250,7 +250,13 @@ inline coord_t getFontHeight(LcdFlags flags)
 }
 
 template <class T>
-inline coord_t getTextWidth(const T * s, int len = 0, LcdFlags flags = 0)
+inline coord_t getTextWidth(const T * s, int len, LcdFlags flags)
 {
   return getFont(flags)->getTextWidth(s, len);
+}
+
+template <class T>
+inline coord_t getTextWidth(const T * s, LcdFlags flags = 0)
+{
+  return getFont(flags)->getTextWidth(s, 0);
 }
