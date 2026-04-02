@@ -149,6 +149,13 @@ class ImageEncoder:
         self.encode_end()
         return self.bytes
 
+    def encode_color_part(self, value, bits):
+        return value // pow(2, 8 - bits)
+
+    def encode_16bits(self, value):
+        self.encode_byte(value & 255)
+        self.encode_byte(value >> 8)
+
     def encode_5_6_5(self, image):
         width, height = image.size
         self.append_format(0)
@@ -162,9 +169,11 @@ class ImageEncoder:
         for y in range(height):
             for x in range(width):
                 pixel = image.getpixel((x, y))
-                val = ((pixel[0] >> 3) << 11) + ((pixel[1] >> 2) << 5) + ((pixel[2] >> 3) << 0)
-                self.encode_byte(val & 255)
-                self.encode_byte(val >> 8)
+                val = (self.encode_color_part(pixel[0], 5) << 11) + (self.encode_color_part(pixel[1], 6) << 5) + (self.encode_color_part(pixel[2], 5) << 0)
+                if val >= 256 * 256:
+                    print(pixel, val)
+                    exit(-1)
+                self.encode_16bits(val)
         self.encode_end()
         return self.bytes
 
@@ -181,9 +190,8 @@ class ImageEncoder:
         for y in range(height):
             for x in range(width):
                 pixel = image.getpixel((x, y))
-                val = ((pixel[3] // 16) << 12) + ((pixel[0] // 16) << 8) + ((pixel[1] // 16) << 4) + ((pixel[2] // 16) << 0)
-                self.encode_byte(val & 255)
-                self.encode_byte(val >> 8)
+                val = (self.encode_color_part(pixel[3], 4) << 12) + (self.encode_color_part(pixel[0], 4) << 8) + (self.encode_color_part(pixel[1], 4) << 4) + (self.encode_color_part(pixel[2], 4) << 0)
+                self.encode_16bits(val)
         self.encode_end()
         return self.bytes
 
