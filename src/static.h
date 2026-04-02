@@ -33,7 +33,7 @@ class StaticText: public Window
     StaticText(Window * parent, const rect_t & rect, std::string text = "", WindowFlags windowFlags = 0, LcdFlags textFlags = 0) :
       Window(parent, rect, windowFlags, textFlags),
       text(std::move(text)),
-      textColor(DEFAULT_COLOR)
+      textColor(PRIMARY_COLOR)
     {
       if (windowFlags & BUTTON_BACKGROUND) {
         setBackgroundColor(DISABLE_COLOR);
@@ -93,7 +93,7 @@ class StaticText: public Window
   protected:
     std::string text;
     LcdColor bgColor = 0;
-    LcdColor textColor = DEFAULT_COLOR;
+    LcdColor textColor = PRIMARY_COLOR;
     coord_t horizontalPadding = 0;
     coord_t verticalPadding = 0;
 };
@@ -227,7 +227,7 @@ class DynamicNumber: public Window
 
     void paint(BitmapBuffer * dc) override
     {
-      dc->drawNumber((textFlags & RIGHT) ? width() : 0, FIELD_PADDING_TOP, value, DEFAULT_COLOR, textFlags, 0, prefix, suffix);
+      dc->drawNumber((textFlags & RIGHT) ? width() : 0, FIELD_PADDING_TOP, value, PRIMARY_COLOR, textFlags, 0, prefix, suffix);
     }
 
     void checkEvents() override

@@ -78,7 +78,7 @@ void TextButton::paint(BitmapBuffer * dc)
 {
   FormField::paint(dc);
 
-  auto textColor = DEFAULT_COLOR;
+  auto textColor = PRIMARY_COLOR;
 
   if (checked()) {
     if (hasFocus()) {

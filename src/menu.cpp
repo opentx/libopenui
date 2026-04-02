@@ -130,7 +130,7 @@ bool MenuBody::onTouchEnd(coord_t /*x*/, coord_t y)
 
 void MenuBody::paint(BitmapBuffer * dc)
 {
-  dc->clear(MENU_BGCOLOR);
+  dc->clear(SECONDARY_BGCOLOR);
 
   for (unsigned i = 0; i < lines.size(); i++) {
     auto & line = lines[i];
@@ -139,7 +139,7 @@ void MenuBody::paint(BitmapBuffer * dc)
     if (selectedIndex == (int)i) {
       color = EDIT_COLOR;
       iconColor = EDIT_COLOR;
-      if (FOCUS_COLOR != MENU_BGCOLOR) {
+      if (FOCUS_COLOR != SECONDARY_BGCOLOR) {
         dc->drawPlainFilledRectangle(0, i * MENUS_LINE_HEIGHT, width(), MENUS_LINE_HEIGHT, FOCUS_COLOR);
       }
     }
@@ -209,11 +209,11 @@ void MenuWindowContent::onEvent(event_t event)
 void MenuWindowContent::paint(BitmapBuffer * dc)
 {
   // the background
-  dc->clear(MENU_BGCOLOR);
+  dc->clear(SECONDARY_BGCOLOR);
 
   // the title
   if (!title.empty()) {
-    dc->drawText(MIN_MENUS_WIDTH / 2, (POPUP_HEADER_HEIGHT - getFontHeight(MENU_HEADER_FONT)) / 2, title.c_str(), DEFAULT_COLOR, CENTERED | MENU_HEADER_FONT);
+    dc->drawText(MIN_MENUS_WIDTH / 2, (POPUP_HEADER_HEIGHT - getFontHeight(MENU_HEADER_FONT)) / 2, title.c_str(), PRIMARY_COLOR, CENTERED | MENU_HEADER_FONT);
     dc->drawPlainHorizontalLine(0, POPUP_HEADER_HEIGHT - 1, MIN_MENUS_WIDTH, MENU_SEPARATOR_LINE_COLOR);
   }
 }

@@ -42,7 +42,7 @@ void NumberEdit::paint(BitmapBuffer * dc)
   else if (hasFocus())
     textColor = FOCUS_BGCOLOR;
   else if (enabled && (value != 0 || zeroText.empty()))
-    textColor = DEFAULT_COLOR;
+    textColor = PRIMARY_COLOR;
   else
     textColor = DISABLE_COLOR;
 

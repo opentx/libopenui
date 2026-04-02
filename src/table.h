@@ -152,7 +152,7 @@ class Table: public FormField
         std::function<void()> onPress;
         std::function<void()> onSelect;
         LcdFlags font = TABLE_BODY_FONT;
-        LcdColor color = DEFAULT_COLOR;
+        LcdColor color = PRIMARY_COLOR;
     };
 
     class Header: public Line

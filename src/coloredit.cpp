@@ -43,7 +43,7 @@ class ColorBox: public Window
 
     void paint(BitmapBuffer * dc) override
     {
-      dc->drawPlainFilledRectangle(0, 0, width(), height(), DEFAULT_COLOR);
+      dc->drawPlainFilledRectangle(0, 0, width(), height(), PRIMARY_COLOR);
       dc->drawPlainFilledRectangle(1, 1, width() - 2, height() - 2, color);
     }
 

@@ -26,12 +26,12 @@ void Table::Header::paint(BitmapBuffer * dc)
 {
   coord_t x = TABLE_HORIZONTAL_PADDING;
   if (!cells.empty()) {
-    dc->clear(TABLE_HEADER_BGCOLOR);
+    // dc->clear(PAGE_BGCOLOR);
     for (unsigned i = 0; i < cells.size(); i++) {
       auto cell = cells[i];
       auto columnWidth = static_cast<Table *>(parent)->columnsWidth[i];
       if (cell) {
-        cell->paint(dc, rect_t{x, 0, columnWidth, lineHeight}, DEFAULT_COLOR, TABLE_HEADER_FONT);
+        cell->paint(dc, rect_t{x, TABLE_HEADER_PADDING_TOP, columnWidth, lineHeight}, PRIMARY_COLOR, TABLE_HEADER_FONT);
       }
       x += columnWidth;
     }
@@ -68,7 +68,7 @@ void Table::Body::checkEvents()
 void Table::Body::paint(BitmapBuffer * dc)
 {
   int lineIndex = 0;
-  dc->clear(DEFAULT_BGCOLOR);
+  dc->clear(SECONDARY_BGCOLOR);
   coord_t y = 0;
   for (auto line: lines) {
     if (y > scrollPositionY - line->height()) {
@@ -76,7 +76,7 @@ void Table::Body::paint(BitmapBuffer * dc)
         break;
       }
       bool highlight = (lineIndex == selection);
-      dc->drawPlainFilledRectangle(0, line->top(), line->width(), line->height() - TABLE_LINE_BORDER, highlight ? FOCUS_COLOR : TABLE_BGCOLOR);
+      dc->drawPlainFilledRectangle(0, line->top(), line->width(), line->height() - TABLE_LINE_BORDER, highlight ? FOCUS_COLOR : (lineIndex & 1 ? SECONDARY_BGCOLOR : PRIMARY_BGCOLOR));
       coord_t x = TABLE_HORIZONTAL_PADDING;
       for (unsigned i = 0; i < line->cells.size(); i++) {
         auto cell = line->cells[i];

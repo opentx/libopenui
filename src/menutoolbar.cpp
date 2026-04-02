@@ -29,6 +29,6 @@ void MenuToolbarButton::paint(BitmapBuffer * dc)
     dc->drawSizedText(rect.w / 2, (rect.h - getFontHeight(FONT(M))) / 2 + 1, &picto, 1, FOCUS_COLOR, CENTERED);
   }
   else {
-    dc->drawSizedText(rect.w / 2, (rect.h - getFontHeight(FONT(M))) / 2 + 1, &picto, 1, DEFAULT_COLOR, CENTERED);
+    dc->drawSizedText(rect.w / 2, (rect.h - getFontHeight(FONT(M))) / 2 + 1, &picto, 1, PRIMARY_COLOR, CENTERED);
   }
 }
