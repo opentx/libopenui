@@ -68,7 +68,7 @@ void Table::Body::checkEvents()
 void Table::Body::paint(BitmapBuffer * dc)
 {
   int lineIndex = 0;
-  dc->clear(SECONDARY_BGCOLOR);
+  // dc->clear(SECONDARY_BGCOLOR);
   coord_t y = 0;
   for (auto line: lines) {
     if (y > scrollPositionY - line->height()) {
