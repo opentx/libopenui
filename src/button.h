@@ -136,7 +136,7 @@ class TextButton: public Button
 
   protected:
     std::string text;
-    LcdColor textColor = DEFAULT_COLOR;
+    LcdColor textColor = PRIMARY_COLOR;
 };
 
 class IconButton: public Button

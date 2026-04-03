@@ -70,7 +70,7 @@ void TextEdit::paint(BitmapBuffer * dc)
 #else
     char s[] = { value[cursorPos], '\0' };
     dc->drawPlainFilledRectangle(FIELD_PADDING_LEFT + left - 1, FIELD_PADDING_TOP - 1, getTextWidth(s, 1, FONT(M)) + 1, height() - 2, FOCUS_COLOR);
-    dc->drawText(FIELD_PADDING_LEFT + left, FIELD_PADDING_TOP, s, DEFAULT_COLOR);
+    dc->drawText(FIELD_PADDING_LEFT + left, FIELD_PADDING_TOP, s, PRIMARY_COLOR);
 #endif
   }
   else {
@@ -88,7 +88,7 @@ void TextEdit::paint(BitmapBuffer * dc)
         textColor = DISABLE_COLOR;
       }
       else {
-        textColor = DEFAULT_COLOR;
+        textColor = PRIMARY_COLOR;
       }
     }
     dc->drawSizedText(FIELD_PADDING_LEFT, FIELD_PADDING_TOP, displayedValue, length, textColor);

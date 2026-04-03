@@ -115,22 +115,22 @@ void TextKeyboard::paint(BitmapBuffer * dc)
       }
       else if (uint8_t(*c) <= SPECIAL_KEY_WITH_BITMAP_LAST) {
         // special keys drawn with a bitmap
-        dc->drawMask(x, y, MASKS_SPECIAL_KEYS[uint8_t(*c) - 1], DEFAULT_COLOR);
+        dc->drawMask(x, y, MASKS_SPECIAL_KEYS[uint8_t(*c) - 1], PRIMARY_COLOR);
         x += 45;
       }
       else if (*c == SPECIAL_KEY_SPACEBAR) {
         // spacebar
-        dc->drawMask(x, y, maskKeySpacebar, DEFAULT_COLOR);
+        dc->drawMask(x, y, maskKeySpacebar, PRIMARY_COLOR);
         x += 135;
       }
       else if (*c == SPECIAL_KEY_ENTER) {
         // enter
         dc->drawPlainFilledRectangle(x, y - 2, 80, 25, DISABLE_COLOR);
-        dc->drawText(x + 40, y, "ENTER", DEFAULT_COLOR, CENTERED);
+        dc->drawText(x + 40, y, "ENTER", PRIMARY_COLOR, CENTERED);
         x += 80;
       }
       else {
-        dc->drawSizedText(x, y, c, 1, DEFAULT_COLOR);
+        dc->drawSizedText(x, y, c, 1, PRIMARY_COLOR);
         x += 30;
       }
       c++;
