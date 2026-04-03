@@ -48,7 +48,7 @@ void ModalWindow::paint(BitmapBuffer * dc)
 
 void ModalWindowContent::paint(BitmapBuffer * dc)
 {
-  dc->drawPlainFilledRectangle(0, 0, width(), POPUP_HEADER_HEIGHT, FOCUS_BGCOLOR);
+  dc->drawPlainFilledRectangle(0, 0, width(), POPUP_HEADER_HEIGHT, SECONDARY_BGCOLOR);
   dc->drawText(FIELD_PADDING_LEFT, (POPUP_HEADER_HEIGHT - getFontHeight(FONT(M))) / 2, title.c_str(), FOCUS_COLOR);
   dc->drawPlainFilledRectangle(0, POPUP_HEADER_HEIGHT, width(), height() - POPUP_HEADER_HEIGHT, SECONDARY_BGCOLOR);
 }

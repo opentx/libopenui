@@ -134,7 +134,7 @@ void MenuBody::paint(BitmapBuffer * dc)
 
   for (unsigned i = 0; i < lines.size(); i++) {
     auto & line = lines[i];
-    LcdColor color = MENU_COLOR;
+    LcdColor color = PRIMARY_COLOR;
     LcdColor iconColor = GREY(0xA0);
     if (selectedIndex == (int)i) {
       color = EDIT_COLOR;
