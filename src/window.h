@@ -101,7 +101,7 @@ class Window
       return parent;
     }
 
-    [[nodiscard]] bool isChild(Window * window) const
+    [[nodiscard]] bool isChild(const Window * window) const
     {
       return window == this || (parent && parent->isChild(window));
     }
