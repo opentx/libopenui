@@ -292,6 +292,7 @@ class Bitmap: public Raster<pixel_t>
     }
 
     static Bitmap * load_bmp(const char * filename, int maxSize = -1);
+    static Bitmap * load_jpg(const char * filename, int maxSize = -1);
     static Bitmap * load_stb(const char * filename, int maxSize = -1);
 };
 

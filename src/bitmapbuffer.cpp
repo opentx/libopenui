@@ -1431,10 +1431,25 @@ coord_t BitmapBuffer::drawNumber(coord_t x, coord_t y, int32_t val, LcdColor col
 Bitmap * Bitmap::load(const char * path, int maxSize)
 {
   auto ext = getFileExtension(path);
-  if (ext && !strcmp(ext, ".bmp"))
-    return load_bmp(path, maxSize);
-  else
-    return load_stb(path, maxSize);
+  if (ext) {
+    if (!strcmp(ext, ".bmp")) {
+      auto start = ticksNow();
+      auto result = load_bmp(path, maxSize);
+      TRACE("load_jpg(%s) took %ldus", path, (ticksNow() - start) / SYSTEM_TICKS_1US);
+      return result;
+    }
+    else if (!strcmp(ext, ".jpg")) {
+      auto start = ticksNow();
+      auto result = load_jpg(path, maxSize);
+      TRACE("load_jpg(%s) took %ldus", path, (ticksNow() - start) / SYSTEM_TICKS_1US);
+      return result;
+    }
+  }
+
+  auto start = ticksNow();
+  auto result = load_stb(path, maxSize);
+  TRACE("load_stb(%s) took %ldus", path, (ticksNow() - start) / SYSTEM_TICKS_1US);
+  return result;
 }
 
 Mask * Mask::load(const char * path, int maxSize)
@@ -1736,6 +1751,11 @@ void * stb_realloc(void *ptr, unsigned int oldsz, unsigned int newsz)
 #define STBI_NO_LINEAR
 #define STB_IMAGE_IMPLEMENTATION
 #include "thirdparty/stb/stb_image.h"
+
+__weak Bitmap * Bitmap::load_jpg(const char * filename, int maxSize)
+{
+  return load_stb(filename, maxSize);
+}
 
 Bitmap * Bitmap::load_stb(const char * filename, int maxSize)
 {
