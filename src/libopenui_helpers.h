@@ -70,8 +70,7 @@ inline int mod(int k, int n)
 
 inline unsigned align32(unsigned n)
 {
-  unsigned rest = (n & 3u);
-  return rest ? n + 4u - rest : n;
+  return (n + 3u) & ~3u;
 }
 
 template<class T>
