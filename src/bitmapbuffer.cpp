@@ -1435,7 +1435,7 @@ Bitmap * Bitmap::load(const char * path, int maxSize)
     if (!strcmp(ext, ".bmp")) {
       auto start = ticksNow();
       auto result = load_bmp(path, maxSize);
-      TRACE("load_jpg(%s) took %ldus", path, (ticksNow() - start) / SYSTEM_TICKS_1US);
+      TRACE("load_bmp(%s) took %ldus", path, (ticksNow() - start) / SYSTEM_TICKS_1US);
       return result;
     }
     else if (!strcmp(ext, ".jpg")) {
