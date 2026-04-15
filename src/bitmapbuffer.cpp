@@ -1438,7 +1438,7 @@ Bitmap * Bitmap::load(const char * path, int maxSize)
       TRACE("load_bmp(%s) took %ldus", path, (ticksNow() - start) / SYSTEM_TICKS_1US);
       return result;
     }
-#if defined(STM32H7) && !defined(SIMULATION)
+#if defined(LIBOPENUI_EXTERNAL_LOAD_JPG)
     else if (!strcmp(ext, ".jpg")) {
       auto start = ticksNow();
       auto result = load_jpg(path, maxSize);
@@ -1749,7 +1749,7 @@ void * stb_realloc(void *ptr, unsigned int oldsz, unsigned int newsz)
 #undef __I
 
 #define STBI_ONLY_PNG
-#if !defined(STM32H7) || defined(SIMULATION)
+#if !defined(LIBOPENUI_EXTERNAL_LOAD_JPG)
 #define STBI_ONLY_JPEG
 #endif
 #define STBI_NO_STDIO

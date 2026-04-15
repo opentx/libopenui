@@ -293,7 +293,7 @@ class Bitmap: public Raster<pixel_t>
 
     static Bitmap * load_stb(const char * filename, int maxSize = -1);
     static Bitmap * load_bmp(const char * filename, int maxSize = -1);
-#if defined(STM32H7) && !defined(SIMULATION)
+#if defined(LIBOPENUI_EXTERNAL_LOAD_JPG)
     static Bitmap * load_jpg(const char * filename, int maxSize = -1);
 #endif
 };
