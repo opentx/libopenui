@@ -1438,12 +1438,14 @@ Bitmap * Bitmap::load(const char * path, int maxSize)
       TRACE("load_bmp(%s) took %ldus", path, (ticksNow() - start) / SYSTEM_TICKS_1US);
       return result;
     }
+#if defined(STM32H7)
     else if (!strcmp(ext, ".jpg")) {
       auto start = ticksNow();
       auto result = load_jpg(path, maxSize);
       TRACE("load_jpg(%s) took %ldus", path, (ticksNow() - start) / SYSTEM_TICKS_1US);
       return result;
     }
+#endif
   }
 
   auto start = ticksNow();
@@ -1743,19 +1745,19 @@ void * stb_realloc(void *ptr, unsigned int oldsz, unsigned int newsz)
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
+
 #undef __I
+
 #define STBI_ONLY_PNG
+#if !defined(STM32H7)
 #define STBI_ONLY_JPEG
+#endif
 #define STBI_NO_STDIO
 #define STBI_NO_HDR
 #define STBI_NO_LINEAR
 #define STB_IMAGE_IMPLEMENTATION
-#include "thirdparty/stb/stb_image.h"
 
-__weak Bitmap * Bitmap::load_jpg(const char * filename, int maxSize)
-{
-  return load_stb(filename, maxSize);
-}
+#include "thirdparty/stb/stb_image.h"
 
 Bitmap * Bitmap::load_stb(const char * filename, int maxSize)
 {
@@ -1803,6 +1805,7 @@ Bitmap * Bitmap::load_stb(const char * filename, int maxSize)
   }
 
 #if 0
+  // TODO optimize for DMA2D if possible (DMA2D can convert from ARGB8888 to RGB565 or ARGB4444, but not from RGBA8888, so we need to swizzle the input data first)
   DMABitmapConvert(bmp->data, img, w, h, n == 4 ? DMA2D_ARGB4444 : DMA2D_RGB565);
 #elif LCD_ORIENTATION == 270
   const uint8_t * p = img;
@@ -1839,6 +1842,7 @@ Bitmap * Bitmap::load_stb(const char * filename, int maxSize)
     }
   }
   else {
+    // TODO here
     for (int row = 0; row < h; ++row) {
       for (int col = 0; col < w; ++col) {
         *dest = RGB565(p[0], p[1], p[2]);

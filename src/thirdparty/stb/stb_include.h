@@ -45,7 +45,7 @@ char *stb_include_file(char *filename, char *inject, char *path_to_includes, cha
 
 #ifdef STB_INCLUDE_IMPLEMENTATION
 
-#include <stdio.h>
+// #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 

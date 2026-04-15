@@ -292,7 +292,11 @@ class Bitmap: public Raster<pixel_t>
     }
 
     static Bitmap * load_bmp(const char * filename, int maxSize = -1);
+
+#if defined(STM32H7)
     static Bitmap * load_jpg(const char * filename, int maxSize = -1);
+#endif
+
     static Bitmap * load_stb(const char * filename, int maxSize = -1);
 };
 
@@ -751,8 +755,8 @@ class BitmapBuffer: public Bitmap
 
     inline void drawPixel(pixel_t * p, pixel_t value)
     {
-      extern void WAIT_DMA2D();
-      WAIT_DMA2D();
+      // extern void WAIT_DMA2D();
+      // WAIT_DMA2D();
       if (data && data <= p && p < dataEnd) {
         *p = value;
       }

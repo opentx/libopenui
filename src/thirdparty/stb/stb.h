@@ -236,7 +236,7 @@ CREDITS
 #endif
 
 #include <stdlib.h>     // stdlib could have min/max
-#include <stdio.h>      // need FILE
+// #include <stdio.h>      // need FILE
 #include <string.h>     // stb_define_hash needs memcpy/memset
 #include <time.h>       // stb_dirtree
 #ifdef __MINGW32__
