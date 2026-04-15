@@ -100,10 +100,10 @@ void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const Bitmap * bitmap, coord
     auto scaledw = min<int>(xmax - xmin, ceil(scale * srcw));
     auto scaledh = min<int>(ymax - ymin, ceil(scale * srch));
 
-    if (x + scaledw > _width)
-      scaledw = _width - x;
-    if (y + scaledh > _height)
-      scaledh = _height - y;
+    if (x + scaledw > xmax)
+      scaledw = xmax - x;
+    if (y + scaledh > ymax)
+      scaledh = ymax - y;
 
     if (getFormat() == BMP_ARGB4444)  {
       for (int i = 0; i < scaledh; i++) {
@@ -1438,7 +1438,7 @@ Bitmap * Bitmap::load(const char * path, int maxSize)
       TRACE("load_bmp(%s) took %ldus", path, (ticksNow() - start) / SYSTEM_TICKS_1US);
       return result;
     }
-#if defined(STM32H7)
+#if defined(STM32H7) && !defined(SIMULATION)
     else if (!strcmp(ext, ".jpg")) {
       auto start = ticksNow();
       auto result = load_jpg(path, maxSize);
@@ -1749,7 +1749,7 @@ void * stb_realloc(void *ptr, unsigned int oldsz, unsigned int newsz)
 #undef __I
 
 #define STBI_ONLY_PNG
-#if !defined(STM32H7)
+#if !defined(STM32H7) || defined(SIMULATION)
 #define STBI_ONLY_JPEG
 #endif
 #define STBI_NO_STDIO
