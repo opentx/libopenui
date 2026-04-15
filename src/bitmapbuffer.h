@@ -755,8 +755,6 @@ class BitmapBuffer: public Bitmap
 
     inline void drawPixel(pixel_t * p, pixel_t value)
     {
-      // extern void WAIT_DMA2D();
-      // WAIT_DMA2D();
       if (data && data <= p && p < dataEnd) {
         *p = value;
       }
