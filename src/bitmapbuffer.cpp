@@ -100,10 +100,10 @@ void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const Bitmap * bitmap, coord
     auto scaledw = min<int>(xmax - xmin, ceil(scale * srcw));
     auto scaledh = min<int>(ymax - ymin, ceil(scale * srch));
 
-    if (x + scaledw > _width)
-      scaledw = _width - x;
-    if (y + scaledh > _height)
-      scaledh = _height - y;
+    if (x + scaledw > xmax)
+      scaledw = xmax - x;
+    if (y + scaledh > ymax)
+      scaledh = ymax - y;
 
     if (getFormat() == BMP_ARGB4444)  {
       for (int i = 0; i < scaledh; i++) {
@@ -1431,10 +1431,27 @@ coord_t BitmapBuffer::drawNumber(coord_t x, coord_t y, int32_t val, LcdColor col
 Bitmap * Bitmap::load(const char * path, int maxSize)
 {
   auto ext = getFileExtension(path);
-  if (ext && !strcmp(ext, ".bmp"))
-    return load_bmp(path, maxSize);
-  else
-    return load_stb(path, maxSize);
+  if (ext) {
+    if (!strcmp(ext, ".bmp")) {
+      auto start = ticksNow();
+      auto result = load_bmp(path, maxSize);
+      TRACE("load_bmp(%s) took %ldus", path, (ticksNow() - start) / SYSTEM_TICKS_1US);
+      return result;
+    }
+#if defined(LIBOPENUI_EXTERNAL_LOAD_JPG)
+    else if (!strcmp(ext, ".jpg")) {
+      auto start = ticksNow();
+      auto result = load_jpg(path, maxSize);
+      TRACE("load_jpg(%s) took %ldus", path, (ticksNow() - start) / SYSTEM_TICKS_1US);
+      return result;
+    }
+#endif
+  }
+
+  auto start = ticksNow();
+  auto result = load_stb(path, maxSize);
+  TRACE("load_stb(%s) took %ldus", path, (ticksNow() - start) / SYSTEM_TICKS_1US);
+  return result;
 }
 
 Mask * Mask::load(const char * path, int maxSize)
@@ -1728,13 +1745,18 @@ void * stb_realloc(void *ptr, unsigned int oldsz, unsigned int newsz)
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
+
 #undef __I
+
 #define STBI_ONLY_PNG
+#if !defined(LIBOPENUI_EXTERNAL_LOAD_JPG)
 #define STBI_ONLY_JPEG
+#endif
 #define STBI_NO_STDIO
 #define STBI_NO_HDR
 #define STBI_NO_LINEAR
 #define STB_IMAGE_IMPLEMENTATION
+
 #include "thirdparty/stb/stb_image.h"
 
 Bitmap * Bitmap::load_stb(const char * filename, int maxSize)
@@ -1783,6 +1805,7 @@ Bitmap * Bitmap::load_stb(const char * filename, int maxSize)
   }
 
 #if 0
+  // TODO optimize for DMA2D if possible (DMA2D can convert from ARGB8888 to RGB565 or ARGB4444, but not from RGBA8888, so we need to swizzle the input data first)
   DMABitmapConvert(bmp->data, img, w, h, n == 4 ? DMA2D_ARGB4444 : DMA2D_RGB565);
 #elif LCD_ORIENTATION == 270
   const uint8_t * p = img;
@@ -1819,6 +1842,7 @@ Bitmap * Bitmap::load_stb(const char * filename, int maxSize)
     }
   }
   else {
+    // TODO here
     for (int row = 0; row < h; ++row) {
       for (int col = 0; col < w; ++col) {
         *dest = RGB565(p[0], p[1], p[2]);

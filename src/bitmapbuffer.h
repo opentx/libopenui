@@ -291,8 +291,11 @@ class Bitmap: public Raster<pixel_t>
     {
     }
 
-    static Bitmap * load_bmp(const char * filename, int maxSize = -1);
     static Bitmap * load_stb(const char * filename, int maxSize = -1);
+    static Bitmap * load_bmp(const char * filename, int maxSize = -1);
+#if defined(LIBOPENUI_EXTERNAL_LOAD_JPG)
+    static Bitmap * load_jpg(const char * filename, int maxSize = -1);
+#endif
 };
 
 template <class C>
@@ -491,9 +494,9 @@ class BitmapBuffer: public Bitmap
     inline void clearClippingRect()
     {
       xmin = 0;
-      xmax = this->_width;
+      xmax = _width;
       ymin = 0;
-      ymax = this->_height;
+      ymax = _height;
     }
   
     inline void setClippingRect(coord_t xmin, coord_t xmax, coord_t ymin, coord_t ymax)
