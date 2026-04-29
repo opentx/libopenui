@@ -767,8 +767,38 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdC
   }
 }
 
+void BitmapBuffer::fillHorizontalLineWithAlphaOnEnds(coord_t y, float x, float w, LcdColor color)
+{
+  auto xstart = x;
+  auto xend   = x + w;
+
+  auto xi0 = (int)ceilf(xstart);
+  auto xi1 = (int)floorf(xend);
+
+  // left pixel (alpha)
+  if (xi0 > xstart) {
+    uint8_t opacity = int(round((xi0 - xstart) * 15.0));
+    drawAlphaPixel(xi0 - 1, y, opacity, color);
+  }
+
+  // plain line (no alpha)
+  if (xi1 >= xi0) {
+    drawHorizontalLine(xi0, y, xi1 - xi0 + 1, color, SOLID);
+  }
+
+  // right pixel (alpha)
+  if (xend > xi1) {
+    uint8_t opacity = int(round((xend - xi1) * 15.0));
+    drawAlphaPixel(xi1 + 1, y, opacity, color);
+  }
+}
+
 void BitmapBuffer::fillBottomFlatTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t y12, coord_t x2, LcdColor color)
 {
+  if (x1 > x2) {
+    std::swap(x1, x2);
+  }
+
   auto dy = y12 - y0;
   auto slopex = float(x1 - x0) / dy;
   auto slopew = float(x2 - x1) / dy;
@@ -777,7 +807,7 @@ void BitmapBuffer::fillBottomFlatTriangle(coord_t x0, coord_t y0, coord_t x1, co
   float w = 1;
 
   for (int y = y0; y <= y12; y++) {
-    drawHorizontalLine(round(x), y, round(w), color, SOLID);
+    fillHorizontalLineWithAlphaOnEnds(y, x, w, color);
     x += slopex;
     w += slopew;
   }
@@ -785,6 +815,10 @@ void BitmapBuffer::fillBottomFlatTriangle(coord_t x0, coord_t y0, coord_t x1, co
 
 void BitmapBuffer::fillTopFlatTriangle(coord_t x0, coord_t y01, coord_t x1, coord_t x2, coord_t y2, LcdColor color)
 {
+  if (x0 > x1) {
+    std::swap(x0, x1);
+  }
+
   auto dy = y2 - y01;
   auto slopex = float(x0 - x2) / dy;
   auto slopew = float(x1 - x0) / dy;
@@ -793,7 +827,7 @@ void BitmapBuffer::fillTopFlatTriangle(coord_t x0, coord_t y01, coord_t x1, coor
   float w = 1;
 
   for (int y = y2; y >= y01; y--) {
-    drawHorizontalLine(round(x), y, round(w), color, SOLID);
+    fillHorizontalLineWithAlphaOnEnds(y, x, w, color);
     x += slopex;
     w += slopew;
   }
@@ -816,15 +850,12 @@ void BitmapBuffer::drawFilledTriangle(coord_t x0, coord_t y0, coord_t x1, coord_
   }
 
   if (y1 == y2) {
-    // bottom-flat triangle
     fillBottomFlatTriangle(x0, y0, x1, y1, x2, color);
   }
   else if (y0 == y1) {
-    // top-flat triangle
     fillTopFlatTriangle(x0, y0, x1, x2, y2, color);
   }
   else {
-    // general case: split the triangle in a top-flat and bottom-flat triangles
     coord_t x4 = x0 + multDivRoundClosest(x2 - x0, y1 - y0, y2 - y0);
     fillBottomFlatTriangle(x0, y0, x1, y1, x4, color);
     fillTopFlatTriangle(x1, y1 + 1, x4, x2, y2, color);
