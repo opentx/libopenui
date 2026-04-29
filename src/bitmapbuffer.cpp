@@ -775,10 +775,12 @@ void BitmapBuffer::fillHorizontalLineWithAlphaOnEnds(coord_t y, float x, float w
   auto xi0 = (int)ceilf(xstart);
   auto xi1 = (int)floorf(xend);
 
+  auto rgb565 = COLOR_TO_RGB565(color);
+  uint8_t opacity = GET_COLOR_ALPHA(color);
+
   // left pixel (alpha)
   if (xi0 > xstart) {
-    uint8_t opacity = int(round((xi0 - xstart) * 15.0));
-    drawAlphaPixel(xi0 - 1, y, opacity, color);
+    drawAlphaPixel(xi0 - 1, y, int(round((xi0 - xstart) * opacity)), rgb565);
   }
 
   // plain line (no alpha)
@@ -788,8 +790,7 @@ void BitmapBuffer::fillHorizontalLineWithAlphaOnEnds(coord_t y, float x, float w
 
   // right pixel (alpha)
   if (xend > xi1) {
-    uint8_t opacity = int(round((xend - xi1) * 15.0));
-    drawAlphaPixel(xi1 + 1, y, opacity, color);
+    drawAlphaPixel(xi1 + 1, y, int(round((xend - xi1) * opacity)), rgb565);
   }
 }
 
