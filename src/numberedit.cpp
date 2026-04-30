@@ -65,7 +65,9 @@ void NumberEdit::increment(int step)
     do {
       value += step;
       if (value > vmax) {
-        onKeyError();
+        if (!isValueAvailable || isValueAvailable(vmax)) {
+          setValue(vmax);
+        }
         return;
       }
     } while (isValueAvailable && !isValueAvailable(value));
@@ -84,7 +86,9 @@ void NumberEdit::decrement(int step)
     do {
       value -= step;
       if (value < vmin) {
-        onKeyError();
+        if (!isValueAvailable || isValueAvailable(vmin)) {
+          setValue(vmin);
+        }
         return;
       }
     } while (isValueAvailable && !isValueAvailable(value));
