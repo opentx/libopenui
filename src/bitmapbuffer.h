@@ -709,6 +709,8 @@ class BitmapBuffer: public Bitmap
     coord_t offsetX = 0;
     coord_t offsetY = 0;
 
+    void fillHorizontalLineWithAlphaOnEnds(coord_t y, float x, float w, LcdColor color);
+
     inline bool applyClippingRect(coord_t & x, coord_t & y, coord_t & w, coord_t & h) const
     {
       if (h < 0) {
