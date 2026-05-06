@@ -877,7 +877,7 @@ void BitmapBuffer::fillRectangle(coord_t x, coord_t y, coord_t w, coord_t h, pix
   if (!applyClippingRect(x, y, w, h))
     return;
 
-  DMAFillRect(data, _width, _height, x, y, w, h, pixel);
+  DMAFillRect(data, _width, _height, x, y, w, h, format == BMP_ARGB4444, format == BMP_ARGB4444 ? RGB565_TO_ARGB4444(pixel, 0xFF) : pixel);
 }
 
 void BitmapBuffer::drawPlainFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, Color565 color)
