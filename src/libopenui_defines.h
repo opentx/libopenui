@@ -57,7 +57,7 @@ constexpr uint8_t DECIMALS(uint8_t value)
 #define FONT(xx)                       (unsigned(FONT_ ## xx ## _INDEX) << 8u)
 
 #define ARGB_SPLIT(color, a, r, g, b) \
-  uint16_t a = ((color) >> 12) & 0x0F000; \
+  uint16_t a = ((color) >> 12) & 0x0F; \
   uint16_t r = ((color) >> 8) & 0x0F; \
   uint16_t g = ((color) >> 4) & 0x0F; \
   uint16_t b = ((color) & 0x0F)
