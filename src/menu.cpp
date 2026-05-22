@@ -137,8 +137,8 @@ void MenuBody::paint(BitmapBuffer * dc)
     LcdColor color = PRIMARY_COLOR;
     LcdColor iconColor = GREY(0xA0);
     if (selectedIndex == (int)i) {
-      color = HIGHLIGHT_INVERT_COLOR;
-      iconColor = HIGHLIGHT_INVERT_COLOR;
+      color = HIGHLIGHT_CONTRASTING_COLOR;
+      iconColor = HIGHLIGHT_CONTRASTING_COLOR;
       if (HIGHLIGHT_COLOR != SECONDARY_BGCOLOR) {
         dc->drawPlainFilledRectangle(0, i * MENUS_LINE_HEIGHT, width(), MENUS_LINE_HEIGHT, HIGHLIGHT_COLOR);
       }

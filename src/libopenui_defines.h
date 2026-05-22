@@ -57,15 +57,15 @@ constexpr uint8_t DECIMALS(uint8_t value)
 #define FONT(xx)                       (unsigned(FONT_ ## xx ## _INDEX) << 8u)
 
 #define ARGB_SPLIT(color, a, r, g, b) \
-  uint16_t a = ((color) & 0xF000) >> 12; \
-  uint16_t r = ((color) & 0x0F00) >> 8; \
-  uint16_t g = ((color) & 0x00F0) >> 4; \
-  uint16_t b = ((color) & 0x000F)
+  uint16_t a = ((color) >> 12) & 0x0F000; \
+  uint16_t r = ((color) >> 8) & 0x0F; \
+  uint16_t g = ((color) >> 4) & 0x0F; \
+  uint16_t b = ((color) & 0x0F)
 
 #define RGB_SPLIT(color, r, g, b) \
-  uint16_t r = ((color) & 0xF800) >> 11; \
-  uint16_t g = ((color) & 0x07E0) >> 5; \
-  uint16_t b = ((color) & 0x001F)
+  uint16_t r = ((color) >> 11) & 0x1F; \
+  uint16_t g = ((color) >> 5) & 0x3F; \
+  uint16_t b = ((color) & 0x1F)
 
 #define ARGB_JOIN(a, r, g, b) \
   (((a) << 12) + ((r) << 8) + ((g) << 4) + (b))
@@ -76,14 +76,14 @@ constexpr uint8_t DECIMALS(uint8_t value)
 #define GET_RED(color) \
   (((color) & 0xF800) >> 8)
 
-#define RGB565_TO_ARGB4444(color, alpha) \
-  ARGB4444(alpha, GET_RED(color), GET_GREEN(color), GET_BLUE(color))
-
 #define GET_GREEN(color) \
   (((color) & 0x07E0) >> 3)
 
 #define GET_BLUE(color) \
   (((color) & 0x001F) << 3)
+
+#define RGB565_TO_ARGB4444(color, alpha) \
+  ARGB4444(alpha, GET_RED(color), GET_GREEN(color), GET_BLUE(color))
 
 #define ALPHA_MASK 0x0F000000
 

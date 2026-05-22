@@ -82,7 +82,7 @@ void Table::Body::paint(BitmapBuffer * dc)
         auto cell = line->cells[i];
         auto columnWidth = static_cast<Table *>(parent)->columnsWidth[i];
         if (cell) {
-          cell->paint(dc, rect_t{x, line->top(), columnWidth, line->height()}, highlight ? HIGHLIGHT_INVERT_COLOR : line->color, line->font);
+          cell->paint(dc, rect_t{x, line->top(), columnWidth, line->height()}, highlight ? HIGHLIGHT_CONTRASTING_COLOR : line->color, line->font);
         }
         x += columnWidth;
       }
