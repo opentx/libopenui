@@ -89,7 +89,7 @@ void TextButton::paint(BitmapBuffer * dc)
       dc->drawPlainRectangle(0, 0, rect.w, rect.h, DISABLE_COLOR, 1);
       dc->drawPlainFilledRectangle(2, 2, rect.w - 4, rect.h - 4, FOCUS_BGCOLOR);
     }
-    textColor = FOCUS_COLOR;
+    textColor = HIGHLIGHT_COLOR;
   }
   else {
     if (windowFlags & BUTTON_BACKGROUND) {

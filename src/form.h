@@ -93,14 +93,14 @@ class FormField: public Window
       Window::onFocusLost();
     }
 
-    void setHelpText(const char * text)
+    void setHelpText(std::string text)
     {
-      helpText = text;
+      helpText = std::move(text);
     }
 
     const char * getHelpText() const
     {
-      return helpText;
+      return helpText.empty() ? nullptr : helpText.c_str();
     }
 
     inline static void link(FormField * previous, FormField * next)
@@ -118,7 +118,7 @@ class FormField: public Window
   protected:
     FormField * next = nullptr;
     FormField * previous = nullptr;
-    const char * helpText = nullptr;
+    std::string helpText;
     bool editMode = false;
     bool enabled = true;
 };

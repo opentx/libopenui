@@ -38,7 +38,7 @@ void NumberEdit::paint(BitmapBuffer * dc)
 
   LcdFlags textColor;
   if (editMode)
-    textColor = FOCUS_COLOR;
+    textColor = HIGHLIGHT_COLOR;
   else if (hasFocus())
     textColor = FOCUS_BGCOLOR;
   else if (enabled && (value != 0 || zeroText.empty()))
@@ -65,7 +65,9 @@ void NumberEdit::increment(int step)
     do {
       value += step;
       if (value > vmax) {
-        onKeyError();
+        if (!isValueAvailable || isValueAvailable(vmax)) {
+          setValue(vmax);
+        }
         return;
       }
     } while (isValueAvailable && !isValueAvailable(value));
@@ -84,7 +86,9 @@ void NumberEdit::decrement(int step)
     do {
       value -= step;
       if (value < vmin) {
-        onKeyError();
+        if (!isValueAvailable || isValueAvailable(vmin)) {
+          setValue(vmin);
+        }
         return;
       }
     } while (isValueAvailable && !isValueAvailable(value));

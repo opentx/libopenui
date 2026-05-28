@@ -63,13 +63,13 @@ void TextEdit::paint(BitmapBuffer * dc)
   FormField::paint(dc);
 
   if (editMode) {
-    dc->drawSizedText(FIELD_PADDING_LEFT, FIELD_PADDING_TOP, value, length, FOCUS_COLOR);
+    dc->drawSizedText(FIELD_PADDING_LEFT, FIELD_PADDING_TOP, value, length, HIGHLIGHT_COLOR);
     coord_t left = (cursorPos == 0 ? 0 : getTextWidth(value, cursorPos, FONT(M)));
 #if defined(SOFTWARE_KEYBOARD)
-    dc->drawPlainFilledRectangle(left + 2, 2, 2, height() - 4, FOCUS_COLOR);
+    dc->drawPlainFilledRectangle(left + 2, 2, 2, height() - 4, HIGHLIGHT_COLOR);
 #else
     char s[] = { value[cursorPos], '\0' };
-    dc->drawPlainFilledRectangle(FIELD_PADDING_LEFT + left - 1, FIELD_PADDING_TOP - 1, getTextWidth(s, 1, FONT(M)) + 1, height() - 2, FOCUS_COLOR);
+    dc->drawPlainFilledRectangle(FIELD_PADDING_LEFT + left - 1, FIELD_PADDING_TOP - 1, getTextWidth(s, 1, FONT(M)) + 1, height() - 2, HIGHLIGHT_COLOR);
     dc->drawText(FIELD_PADDING_LEFT + left, FIELD_PADDING_TOP, s, PRIMARY_COLOR);
 #endif
   }
