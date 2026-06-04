@@ -1480,9 +1480,16 @@ Bitmap * Bitmap::load(const char * path, int maxSize)
 #endif
   }
 
+#if !defined(SIMULATION)
   auto start = ticksNow();
+#endif
+
   auto result = load_stb(path, maxSize);
+
+#if !defined(SIMULATION)
   TRACE("load_stb(%s) took %ldus", path, (ticksNow() - start) / SYSTEM_TICKS_1US);
+#endif
+
   return result;
 }
 
