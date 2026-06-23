@@ -70,8 +70,12 @@ void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const Bitmap * bitmap, coord
       return;
     }
 
-    if (bitmap->getFormat() == BMP_ARGB4444 || _format == BMP_ARGB4444)
-      DMACopyAlphaBitmap(data, _format == BMP_ARGB4444, _width, _height, x, y, bitmap->getData(), bitmap->getFormat() == BMP_ARGB4444, bmpw, bmph, srcx, srcy, srcw, srch);
+    if (bitmap->getFormat() == BMP_ARGB4444)
+      DMACopyAlphaBitmap(data, DEST_FORMAT_ARGUMENT(_format == BMP_ARGB4444) _width, _height, x, y, bitmap->getData(), true, bmpw, bmph, srcx, srcy, srcw, srch);
+#if defined(DEST_FORMAT_ARGB4444_SUPPORT)
+    else if (_format == BMP_ARGB4444)
+      DMACopyAlphaBitmap(data, true, _width, _height, x, y, bitmap->getData(), bitmap->getFormat() == BMP_ARGB4444, bmpw, bmph, srcx, srcy, srcw, srch);
+#endif
     else
       DMACopyBitmap(data, _width, _height, x, y, bitmap->getData(), bmpw, bmph, srcx, srcy, srcw, srch);
   }
@@ -880,7 +884,7 @@ void BitmapBuffer::fillRectangle(coord_t x, coord_t y, coord_t w, coord_t h, pix
   if (!applyClippingRect(x, y, w, h))
     return;
 
-  DMAFillRect(data, _width, _height, x, y, w, h, pixel);
+  DMAFillRect(data, DEST_FORMAT_ARGUMENT(_format == BMP_ARGB4444) _width, _height, x, y, w, h, pixel);
 }
 
 void BitmapBuffer::drawPlainFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, Color565 color)
@@ -1194,8 +1198,7 @@ void BitmapBuffer::drawMask(coord_t x, coord_t y, const Mask * mask, Color565 co
     return;
   }
 
-  auto rgb565 = COLOR_TO_RGB565(color);
-  DMACopyAlphaMask(data, _format == BMP_ARGB4444, _width, _height, x, y, mask->getData(), maskWidth, maskHeight, srcx, srcy, srcw, srch, rgb565);
+  DMACopyAlphaMask(data, DEST_FORMAT_ARGUMENT(_format == BMP_ARGB4444) _width, _height, x, y, mask->getData(), maskWidth, maskHeight, srcx, srcy, srcw, srch, color);
 }
 
 void BitmapBuffer::drawMask(coord_t x, coord_t y, const Mask * mask, const Bitmap * srcBitmap, coord_t offsetX, coord_t offsetY, coord_t width, coord_t height)

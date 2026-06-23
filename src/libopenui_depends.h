@@ -22,12 +22,18 @@
 #include <inttypes.h>
 #include "libopenui_config.h"
 
+#if defined(DEST_FORMAT_ARGB4444_SUPPORT)
+  #define DEST_FORMAT_ARGUMENT(xxx) xxx,
+#else
+  #define DEST_FORMAT_ARGUMENT(xxx)
+#endif
+
 void lcdNextLayer();
+void DMAFillRect(uint16_t * dest, DEST_FORMAT_ARGUMENT(bool destARGB4444) int destw, int desth, int x, int y, int w, int h, uint16_t color);
 void DMACopyBitmap(uint16_t * dest, int destw, int desth, int x, int y, const uint16_t * src, int srcw, int srch, int srcx, int srcy, int w, int h);
-void DMACopyAlphaBitmap(uint16_t * dest, bool destAlpha, int destw, int desth, int x, int y, const uint16_t * src, bool srcAlpha, int srcw, int srch, int srcx, int srcy, int w, int h);
-void DMACopyAlphaMask(uint16_t * dest, bool destAlpha, int destw, int desth, int x, int y, const uint8_t * src, int srcw, int srch, int srcx, int srcy, int w, int h, uint16_t color);
+void DMACopyAlphaBitmap(uint16_t * dest, DEST_FORMAT_ARGUMENT(bool destARGB4444) int destw, int desth, int x, int y, const uint16_t * src, bool srcAlpha, int srcw, int srch, int srcx, int srcy, int w, int h);
+void DMACopyAlphaMask(uint16_t * dest, DEST_FORMAT_ARGUMENT(bool destARGB4444) int destw, int desth, int x, int y, const uint8_t * src, int srcw, int srch, int srcx, int srcy, int w, int h, uint16_t color);
 void onKeyPress();
 void onKeyError();
 void killEvents(event_t event);
 event_t getWindowEvent();
-

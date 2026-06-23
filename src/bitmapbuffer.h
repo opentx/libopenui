@@ -584,7 +584,7 @@ class BitmapBuffer: public Bitmap
 
     inline void clear(Color565 color = 0 /*black*/)
     {
-      fillRectangle(0, 0, _width - offsetX, _height - offsetY, color);
+      drawPlainFilledRectangle(0, 0, _width - offsetX, _height - offsetY, color);
     }
 
     [[nodiscard]] inline const pixel_t * getPixelPtr(coord_t x, coord_t y) const
