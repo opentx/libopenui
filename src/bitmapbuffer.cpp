@@ -1519,6 +1519,9 @@ Mask * Mask::decodeRle(const uint8_t * data)
   auto height = *((uint16_t *)(data + 2));
 
   auto result = Mask::allocate(width, height);
+  if (!result) {
+    return nullptr;
+  }
 
   uint8_t prevByte = 0;
   bool prevByteValid = false;
