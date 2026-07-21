@@ -206,6 +206,12 @@ class MenuWindowContent: public ModalWindowContent
 
     void paint(BitmapBuffer * dc) override;
 
+    void addLine(const std::string & text, std::function<void()> onPress = nullptr, std::function<void()> onSelect = nullptr, std::function<bool()> isChecked = nullptr)
+    {
+      body.addLine(text, std::move(onPress), std::move(onSelect), std::move(isChecked));
+      body.setInnerHeight(body.lines.size() * MENUS_LINE_HEIGHT - 1);
+    }
+
     MenuBody * getBody()
     {
       return &body;
