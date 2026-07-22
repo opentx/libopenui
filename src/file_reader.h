@@ -123,6 +123,10 @@ class FileBufferedReader: public FileReaderBase
       if (result) {
         dataSize = bufferSize;
         data = (uint8_t *)malloc(bufferSize);
+        if (!data) {
+          close();
+          return false;
+        }
         dataRemaining = fileSize;
         ptr = data;
         dataAvailable = 0;
