@@ -587,6 +587,11 @@ class BitmapBuffer: public Bitmap
       drawPlainFilledRectangle(0, 0, _width - offsetX, _height - offsetY, color);
     }
 
+    inline void clearTransparent()
+    {
+      fillRectangle(0, 0, LCD_W, LCD_H, ARGB4444(0x0F, 0, 0, 0));
+    }
+
     [[nodiscard]] inline const pixel_t * getPixelPtr(coord_t x, coord_t y) const
     {
       APPLY_OFFSET();
