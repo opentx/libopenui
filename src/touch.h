@@ -25,6 +25,7 @@ enum TouchEvent
   TE_DOWN,
   TE_LONG,
   TE_UP,
+  TE_WAITING_UP,
   TE_SLIDE,
   TE_SLIDE_END
 };
@@ -61,7 +62,7 @@ struct TouchState
       state = TE_NONE;
     }
     else {
-      if (value >= TE_SLIDE || value != state) {
+      if (value != TE_WAITING_UP && (value >= TE_SLIDE || value != state)) {
         event = value;
       }
       state = value;
