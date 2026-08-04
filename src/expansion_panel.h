@@ -38,7 +38,9 @@ class ExpansionPanelHeader: public T
     }
 #endif
 
+#if defined(HARDWARE_KEYS)
     void onEvent(event_t event) override;
+#endif
 
 #if defined(HARDWARE_TOUCH)
     bool onTouchEnd(coord_t, coord_t) override;
@@ -161,6 +163,7 @@ bool ExpansionPanelHeader<T>::setFocus(uint8_t flag, Window * from) // NOLINT(go
   }
 }
 
+#if defined(HARDWARE_KEYS)
 template<class T>
 void ExpansionPanelHeader<T>::onEvent(event_t event)
 {
@@ -184,6 +187,7 @@ void ExpansionPanelHeader<T>::onEvent(event_t event)
     FormGroup::onEvent(event);
   }
 }
+#endif
 
 #if defined(HARDWARE_TOUCH)
 template<class T>
