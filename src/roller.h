@@ -55,6 +55,15 @@ class Roller: public Choice
       }
     }
 
+    void setLinesCount(uint8_t count)
+    {
+      if (count != linesCount) {
+        linesCount = count;
+        setHeight(ROLLER_LINE_HEIGHT * linesCount - 1);
+        invalidateScrollPosition();
+      }
+    }
+
     void init(const char * label)
     {
       if (label) {
@@ -62,7 +71,7 @@ class Roller: public Choice
         new FormStaticText(parent, {rect.x, rect.y - ROLLER_LINE_HEIGHT, rect.w, ROLLER_LINE_HEIGHT}, label, 0, CENTERED);
       }
 
-      setHeight(ROLLER_LINE_HEIGHT * 3 - 1);
+      setHeight(ROLLER_LINE_HEIGHT * linesCount - 1);
       setPageHeight(ROLLER_LINE_HEIGHT);
       setInnerHeight(INFINITE_HEIGHT);
       updateScrollPositionFromValue();
@@ -85,7 +94,7 @@ class Roller: public Choice
 
       int index = (scrollPositionY - ROLLER_LINE_HEIGHT + 1)  / ROLLER_LINE_HEIGHT;
       coord_t y = index * ROLLER_LINE_HEIGHT;
-      coord_t yMax = scrollPositionY + 3 * ROLLER_LINE_HEIGHT;
+      coord_t yMax = scrollPositionY + linesCount * ROLLER_LINE_HEIGHT;
       index = mod(index, valuesCount);
 
       while (y < yMax) {
@@ -165,16 +174,19 @@ class Roller: public Choice
 
     void invalidateScrollPosition()
     {
-      lastScrollPositionY = SCROLL_POSITION_INVALIDATED;
+      if (!touchState.isScrolling()) {
+        lastScrollPositionY = SCROLL_POSITION_INVALIDATED;
+      }
     }
 
   protected:
     coord_t lastScrollPositionY = SCROLL_POSITION_INVALIDATED;
     bool lastEditMode = false;
+    uint8_t linesCount = 3;
 
     void updateScrollPositionFromValue()
     {
-      setScrollPositionY(ROLLER_LINE_HEIGHT * (getIndexFromValue(this->getValue()) - 1));
+      setScrollPositionY(ROLLER_LINE_HEIGHT * (getIndexFromValue(this->getValue()) - linesCount / 2));
       lastScrollPositionY = scrollPositionY;
     }
 
@@ -182,7 +194,7 @@ class Roller: public Choice
     {
       lastScrollPositionY = scrollPositionY;
       auto valuesCount = getValuesCount();
-      auto newValue = getValueFromIndex(mod((scrollPositionY / ROLLER_LINE_HEIGHT) + 1, valuesCount));
+      auto newValue = getValueFromIndex(mod((scrollPositionY / ROLLER_LINE_HEIGHT) + linesCount / 2, valuesCount));
       setValue(newValue);
       invalidate();
     }
