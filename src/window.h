@@ -206,21 +206,29 @@ class Window
       invalidate();
     }
 
-    void setWidth(coord_t value)
-    {
-      rect.w = value;
-      invalidate();
-    }
-
-    coord_t getMinWidth() const
-    {
-      return minWidth;
-    }
-
     void setWindowCentered()
     {
       rect.x = (parent->width() - width()) / 2;
       rect.y = (parent->height() - height()) / 2;
+      invalidate();
+    }
+
+    [[nodiscard]] coord_t getMinWidth() const
+    {
+      return minWidth;
+    }
+
+    void setMinWidth(coord_t value)
+    {
+      minWidth = value;
+      if (width() < minWidth) {
+        setWidth(minWidth);
+      }
+    }
+
+    [[nodiscard]] coord_t getMinHeight() const
+    {
+      return minHeight;
     }
 
     void setMinHeight(coord_t value)
@@ -244,11 +252,17 @@ class Window
       }
     }
 
+    void setWidth(coord_t value)
+    {
+      rect.w = value;
+      invalidate();
+    }
+
     void setHeight(coord_t value)
     {
-      rect.h = max(minHeight, value);
+      rect.h = value;
       if (windowFlags & FORWARD_SCROLL) {
-        innerHeight = height();
+        innerHeight = rect.h;
       }
       else {
         adjustScrollPositionY();
@@ -476,8 +490,9 @@ class Window
     std::list<Window *> children;
     rect_t rect;
     coord_t innerWidth;
-    coord_t minHeight = 0;
     coord_t innerHeight;
+    coord_t minWidth = 0;
+    coord_t minHeight = 0;
     coord_t pageWidth = 0;
     coord_t pageHeight = 0;
     coord_t scrollPositionX = 0;
@@ -486,7 +501,6 @@ class Window
     LcdFlags textFlags;
     bool _deleted = false;
     uint8_t refCount = 0;
-    coord_t minWidth = 0;
     
     // bool scrollEnabled = true;
 
