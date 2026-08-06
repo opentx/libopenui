@@ -174,7 +174,7 @@ class Roller: public Choice
 
     void invalidateScrollPosition()
     {
-      if (!touchState.isScrolling()) {
+      if (!isSliding()) {
         lastScrollPositionY = SCROLL_POSITION_INVALIDATED;
       }
     }

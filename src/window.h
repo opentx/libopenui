@@ -461,6 +461,11 @@ class Window
       return _deleted;
     }
 
+    [[nodiscard]] bool isSliding() const
+    {
+      return slidingWindow == this;
+    }
+
   protected:
     Window * parent;
     std::list<Window *> children;
