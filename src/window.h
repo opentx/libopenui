@@ -212,6 +212,11 @@ class Window
       invalidate();
     }
 
+    coord_t getMinWidth() const
+    {
+      return minWidth;
+    }
+
     void setWindowCentered()
     {
       rect.x = (parent->width() - width()) / 2;
@@ -481,6 +486,7 @@ class Window
     LcdFlags textFlags;
     bool _deleted = false;
     uint8_t refCount = 0;
+    coord_t minWidth = 0;
     
     // bool scrollEnabled = true;
 
