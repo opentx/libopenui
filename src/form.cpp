@@ -135,8 +135,7 @@ void FormGroup::addField(FormField * field, bool front)
   else {
     if (windowFlags & FORM_FORWARD_FOCUS) {
       last->setNextField(this);
-      if (previous)
-        link(previous, first);
+      first->setPreviousField(this);
     }
   }
 
