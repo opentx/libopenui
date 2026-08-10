@@ -45,13 +45,7 @@ bool Font::loadFile(const char * path)
     return false;
   }
 
-  struct {
-    char fmt[4];
-    char name[LEN_FONT_NAME + 1];
-    uint8_t rangesCount;
-    uint8_t spacing;
-    uint8_t spaceWidth;
-  } header;
+  FontHeader header;
   UINT read;
   result = f_read(file, (uint8_t *)&header, sizeof(header), &read);
   if (result != FR_OK || read != sizeof(header) || strncmp(header.fmt, "FNT1", sizeof(header.fmt)) != 0) {

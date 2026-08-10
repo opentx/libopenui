@@ -48,6 +48,15 @@ class FontGlyph
     uint8_t width;
 };
 
+struct FontHeader 
+{
+  char fmt[4];
+  char name[LEN_FONT_NAME + 1];
+  uint8_t rangesCount;
+  uint8_t spacing;
+  uint8_t spaceWidth;
+};
+
 class Font
 {
   public:
