@@ -40,16 +40,22 @@ void FormField::onEvent(event_t event)
   TRACE_WINDOWS("%s received event 0x%X", getWindowDebugString("FormField").c_str(), event);
 
   if (event == EVT_ROTARY_RIGHT/*EVT_KEY_BREAK(KEY_DOWN)*/) {
-    if (next && next->setFocus(SET_FOCUS_FORWARD, this)) {
+    if (hasFocus() && next && next->setFocus(SET_FOCUS_FORWARD, this)) {
       onKeyPress();
+    }
+    else if (innerHeight > height() && scrollPositionY < innerHeight - height() / 2) {
+      setScrollPositionY(scrollPositionY + height() / 2);
     }
     else {
       Window::onEvent(event);
     }
   }
   else if (event == EVT_ROTARY_LEFT/*EVT_KEY_BREAK(KEY_UP)*/) {
-    if (previous && previous->setFocus(SET_FOCUS_BACKWARD, this)) {
+    if (hasFocus() && previous && previous->setFocus(SET_FOCUS_BACKWARD, this)) {
       onKeyPress();
+    }
+    else if (scrollPositionY > 0) {
+      setScrollPositionY(scrollPositionY - height() / 2);
     }
     else {
       Window::onEvent(event);
@@ -255,6 +261,16 @@ bool FormGroup::setFocus(uint8_t flag, Window * from)
             return true;
           }
         }
+        /*else if (from == next) {
+          if (last) {
+            return last->setFocus(SET_FOCUS_DEFAULT);
+          }
+          else {
+            clearFocus();
+            focusWindow = this;
+            return true;
+          }
+        }*/
         else if (next) {
           return next->setFocus(SET_FOCUS_FORWARD);
         }
