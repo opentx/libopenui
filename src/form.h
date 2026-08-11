@@ -138,15 +138,7 @@ class FormGroup: public FormField
     }
 #endif
 
-    void clear()
-    {
-      Window::clear();
-      first = nullptr;
-      last = nullptr;
-      if (previous && (windowFlags & FORM_FORWARD_FOCUS)) {
-        previous->setNextField(this);
-      }
-    }
+    void clear();
 
     bool setFocus(uint8_t flag = SET_FOCUS_DEFAULT, Window * from = nullptr) override;
 

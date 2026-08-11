@@ -103,6 +103,15 @@ void FormField::paint(BitmapBuffer * dc)
   }
 }
 
+void FormGroup::clear()
+{
+  TRACE_WINDOWS("%s clear()", getWindowDebugString("FormGroup").c_str());
+
+  Window::clear();
+  first = nullptr;
+  last = nullptr;
+}
+
 void FormGroup::addField(FormField * field, bool front)
 {
   if (field->getWindowFlags() & FORM_DETACHED)
@@ -155,6 +164,7 @@ void FormGroup::removeField(FormField * field)
   if (prev) {
     prev->setNextField(next);
   }
+
   if (next) {
     next->setPreviousField(prev);
   }
@@ -210,7 +220,7 @@ bool FormGroup::setFocus(uint8_t flag, Window * from)
         break;
 
       case SET_FOCUS_FORWARD:
-        if (from && from->isChild(this)) {
+        if (from && from->isChild(last)) {
           if (next == this) {
             return first->setFocus(SET_FOCUS_FORWARD, this);
           }
