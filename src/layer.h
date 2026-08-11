@@ -64,12 +64,15 @@ class Layer
       if (stack.back().main == window) {
         stack.pop_back();
         if (!stack.empty()) {
-          const auto & back = stack.back();
+          auto & back = stack.back();
           if (back.focus) {
-            if (back.focus->decRefcount() == 0 && back.focus->deleted())
+            if (back.focus->decRefcount() == 0 && back.focus->deleted()) {
               Window::trash.push_back(back.focus);
-            else  
+            }
+            else {
               back.focus->setFocus(SET_FOCUS_DEFAULT);
+            }
+            back.focus = nullptr;
           }
         }
 #if defined(DEBUG_WINDOWS)
