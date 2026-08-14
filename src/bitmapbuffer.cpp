@@ -1470,14 +1470,18 @@ Bitmap * Bitmap::load(const char * path, int maxSize)
     if (!strcmp(ext, ".bmp")) {
       auto start = ticksNow();
       auto result = load_bmp(path, maxSize);
+#if !defined(SIMULATION)
       TRACE("load_bmp(%s) took %ldus", path, (ticksNow() - start) / SYSTEM_TICKS_1US);
+#endif
       return result;
     }
 #if defined(LIBOPENUI_EXTERNAL_LOAD_JPG)
     else if (!strcmp(ext, ".jpg")) {
       auto start = ticksNow();
       auto result = load_jpg(path, maxSize);
+#if !defined(SIMULATION)
       TRACE("load_jpg(%s) took %ldus", path, (ticksNow() - start) / SYSTEM_TICKS_1US);
+#endif
       return result;
     }
 #endif
