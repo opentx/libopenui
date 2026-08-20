@@ -239,6 +239,20 @@ class Mask: public Raster<uint8_t>
     static Mask * load(const char * path, int maxSize = -1);
 
     static Mask * decodeRle(const uint8_t * data);
+
+    void clear()
+    {
+      memset(data, 0, getDataSize());
+    }
+
+    void drawFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, uint8_t mask)
+    {
+      for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+          *getPixelPtrAbs(x + j, y + i) = mask;
+        }
+      }
+    }
 };
 
 class Bitmap: public Raster<pixel_t>
