@@ -200,7 +200,7 @@ class Window
 
     virtual bool setFocus(uint8_t flag = SET_FOCUS_DEFAULT, Window * from = nullptr);
 
-    void setRect(rect_t value)
+    void setRect(const rect_t & value)
     {
       rect = value;
       invalidate();

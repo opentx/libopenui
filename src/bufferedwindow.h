@@ -35,6 +35,13 @@ class BufferedWindow: public T
       delete bitmap;
     }
 
+    void setRect(const rect_t & value)
+    {
+      delete this->bitmap;
+      this->bitmap = nullptr;
+      T::setRect(value);
+    }
+
     void invalidate(const rect_t & rect) override
     {
       paintUpdateNeeded = true;
