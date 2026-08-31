@@ -329,16 +329,18 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdC
   // Case: single point
   // ------------------
   if (x1 == x2 && y1 == y2) {
-    drawAlphaPixelAbs(x1, y1, alpha, rgb565);
-    return;   
-  } 
+    if (x1 >= xmin && x1 < xmax && y1 >= ymin && y1 < ymax) {
+      drawAlphaPixelAbs(x1, y1, alpha, rgb565);
+    }
+    return;
+  }
 
   // -------------------
   // Case: vertical line
   // -------------------
   if (x1 == x2) {
     // Case: vertical line completely outside of the clipping area (left or right)
-    if (x1 < xmin || x1 > xmax) {
+    if (x1 < xmin || x1 >= xmax) {
       return;
     }
 
@@ -348,13 +350,13 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdC
     }
 
     // Case: vertical line completely outside of the clipping area (top or bottom)
-    if (y2 < ymin || y1 > ymax) {
+    if (y2 < ymin || y1 >= ymax) {
       return;
     }
 
     // If necessary, adjust the y-coordinates to fit within the clipping area
     y1 = std::max(y1, ymin);
-    y2 = std::min(y2, ymax);
+    y2 = std::min<coord_t>(y2, ymax - 1);
 
     // Loop through the y-coordinates and draw pixels
     for (int y = y1; y <= y2; ++y) {
@@ -371,7 +373,7 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdC
   // ---------------------
   if (y1 == y2) {
     // Case: horizontal line completely outside of the clipping area (top or bottom)
-    if (y1 < ymin || y1 > ymax) {
+    if (y1 < ymin || y1 >= ymax) {
       return;
     }
 
@@ -381,13 +383,13 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdC
     }
 
     // Case: horizontal line completely outside of the clipping area (left or right)
-    if (x2 < xmin || x1 > xmax) {
+    if (x2 < xmin || x1 >= xmax) {
       return;
     }
 
     // If necessary, adjust the x-coordinates to fit within the clipping area
     x1 = std::max(x1, xmin);
-    x2 = std::min(x2, xmax);
+    x2 = std::min<coord_t>(x2, xmax - 1);
 
     // Loop through the x-coordinates and draw pixels
     for (int x = x1; x <= x2; ++x) {
@@ -405,11 +407,12 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdC
   // ------------------
   int sign_x, sign_y;
 
-  // Use local copies of the clipping bounds to avoid modifying the original global values during coordinate transformations
+  // Use local copies of the clipping bounds to avoid modifying the original global values during coordinate transformations.
+  // xmax/ymax are exclusive (== width/height); the algorithm below treats these bounds as the last drawable coordinate.
   int clip_xmin = xmin;
-  int clip_xmax = xmax;
+  int clip_xmax = xmax - 1;
   int clip_ymin = ymin;
-  int clip_ymax = ymax;
+  int clip_ymax = ymax - 1;
 
   if (x1 < x2) {
     // Case: line completely outside the clipping area (left or right)
