@@ -1661,6 +1661,11 @@ Bitmap * Bitmap::load_bmp(const char * filename, int maxSize)
 
   buf = data + hsize;
 
+  if (w == 0 || h == 0 || w > UINT16_MAX || h > UINT16_MAX) {
+    TRACE("Bitmap::load(%s) failed: invalid dimensions %ux%u", filename, w, h);
+    return nullptr;
+  }
+
   if (maxSize >= 0 && int(w * h * 2) > maxSize) {
     TRACE("Bitmap::load(%s) failed: malloc refused", filename);
     return nullptr;
@@ -1847,6 +1852,12 @@ Bitmap * Bitmap::load_stb(const char * filename, int maxSize)
 
     if (maxSize >= 0 && w * h * 2 > maxSize) {
       TRACE("Bitmap::load(%s) malloc not allowed", filename);
+      stbi_image_free(img);
+      return nullptr;
+    }
+
+    if (w <= 0 || h <= 0 || w > UINT16_MAX || h > UINT16_MAX) {
+      TRACE("Bitmap::load(%s) failed: invalid dimensions %dx%d", filename, w, h);
       stbi_image_free(img);
       return nullptr;
     }
