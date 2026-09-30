@@ -1001,97 +1001,80 @@ void BitmapBuffer::drawFilledCircle(coord_t x, coord_t y, coord_t radius, LcdCol
   }
 }
 
-class Slope
+class AngularSector
 {
   public:
-    explicit Slope(int angle)
+    AngularSector(float startAngle, float endAngle)
     {
-      if (angle < 0)
-        angle += 360;
-      if (angle > 360)
-        angle %= 360;
-      auto radians = degrees2radians<float>(angle);
-      if (angle == 0) {
-        left = false;
-        value = 100000;
+      if (endAngle == startAngle) {
+        endAngle += 1;
       }
-      else if (angle == 360) {
-        left = true;
-        value = 100000;
+
+      sweep = fmodf(endAngle - startAngle, 360);
+      if (sweep < 0)
+        sweep += 360;
+
+      angleToVector(startAngle, sx, sy);
+      angleToVector(endAngle, ex, ey);
+    }
+
+    // (px, py) relative to the center, Y upwards
+    bool contains(int px, int py) const
+    {
+      if (sweep == 0 /* full circle */ || (px == 0 && py == 0))
+        return true;
+
+      // Clockwise from `a` to `b` in a Y-up frame <=> cross(a, b) < 0
+      float crossStart = sx * py - sy * px; // cross(start, p)
+      float crossEnd = px * ey - py * ex;   // cross(p, end)
+      if (sweep < 180) {
+        return crossStart <= 0 && crossEnd < 0;
       }
-      else if (angle >= 180) {
-        left = true;
-        value = -(cosf(radians) * 100 / sinf(radians));
+      else if (sweep == 180) {
+        return crossStart < 0 || (crossStart == 0 && sx * px + sy * py > 0);
       }
       else {
-        left = false;
-        value = (cosf(radians) * 100 / sinf(radians));
+        // outside the complementary sector [endAngle, startAngle[
+        float crossComplementStart = ex * py - ey * px; // cross(end, p)
+        float crossComplementEnd = px * sy - py * sx;   // cross(p, start)
+        return !(crossComplementStart <= 0 && crossComplementEnd < 0);
       }
-    }
-
-    Slope(bool left, int value):
-      left(left),
-      value(value)
-    {
-    }
-
-    bool isBetween(const Slope & start, const Slope & end) const
-    {
-      if (left) {
-        if (start.left) {
-          if (end.left)
-            return end.value > start.value ? (value <= end.value && value >= start.value) : (value <= end.value || value >= start.value);
-          else
-            return value >= start.value;
-        }
-        else {
-          if (end.left)
-            return value <= end.value;
-          else
-            return end.value > start.value;
-        }
-      }
-      else {
-        if (start.left) {
-          if (end.left)
-            return start.value > end.value;
-          else
-            return value >= end.value;
-        }
-        else {
-          if (end.left)
-            return value <= start.value;
-          else
-            return end.value < start.value ? (value >= end.value && value <= start.value) : (value <= start.value || value >= end.value);
-        }
-      }
-    }
-
-    Slope & invertVertical()
-    {
-      value = -value;
-      return *this;
-    }
-
-    Slope & invertHorizontal()
-    {
-      left = !left;
-      return *this;
     }
 
   protected:
-    bool left;
-    int value;
+    float sweep;
+    float sx, sy; // start unit vector
+    float ex, ey; // end unit vector
+
+    static void angleToVector(float angle, float & vx, float & vy)
+    {
+      angle = fmodf(angle, 360);
+      if (angle < 0)
+        angle += 360;
+
+      if (angle == 0) {
+        vx = 0; vy = 1;
+      }
+      else if (angle == 90) {
+        vx = 1; vy = 0;
+      }
+      else if (angle == 180) {
+        vx = 0; vy = -1;
+      }
+      else if (angle == 270) {
+        vx = -1; vy = 0;
+      }
+      else {
+        auto radians = degrees2radians<float>(angle);
+        vx = sinf(radians);
+        vy = cosf(radians);
+      }
+    }
 };
 
-void BitmapBuffer::drawBitmapPatternPie(coord_t x, coord_t y, const Mask * mask, LcdColor color, int startAngle, int endAngle)
+void BitmapBuffer::drawBitmapPatternPie(coord_t x, coord_t y, const Mask * mask, LcdColor color, float startAngle, float endAngle)
 {
-  if (endAngle == startAngle) {
-    endAngle += 1;
-  }
-
-  Slope startSlope(startAngle);
-  Slope endSlope(endAngle);
+  AngularSector sector(startAngle, endAngle);
 
   auto rgb565 = COLOR_TO_RGB565(color);
 
@@ -1104,31 +1087,25 @@ void BitmapBuffer::drawBitmapPatternPie(coord_t x, coord_t y, const Mask * mask,
 
   for (int y1 = h2 - 1; y1 >= 0; y1--) {
     for (int x1 = w2 - 1; x1 >= 0; x1--) {
-      Slope slope(false, x1 == 0 ? 99000 : y1 * 100 / x1);
-      if (slope.isBetween(startSlope, endSlope)) {
+      if (sector.contains(x1, y1)) {
         drawAlphaPixel(x + w2 + x1, y + h2 - y1, q[(h2 - y1) * width + w2 + x1] >> 4, rgb565);
       }
-      if (slope.invertVertical().isBetween(startSlope, endSlope)) {
+      if (y1 > 0 && sector.contains(x1, -y1)) {
         drawAlphaPixel(x + w2 + x1, y + h2 + y1, q[(h2 + y1) * width + w2 + x1] >> 4, rgb565);
       }
-      if (slope.invertHorizontal().isBetween(startSlope, endSlope)) {
+      if (x1 > 0 && y1 > 0 && sector.contains(-x1, -y1)) {
         drawAlphaPixel(x + w2 - x1, y + h2 + y1, q[(h2 + y1) * width + w2 - x1] >> 4, rgb565);
       }
-      if (slope.invertVertical().isBetween(startSlope, endSlope)) {
+      if (x1 > 0 && sector.contains(-x1, y1)) {
         drawAlphaPixel(x + w2 - x1, y + h2 - y1, q[(h2 - y1) * width + w2 - x1] >> 4, rgb565);
       }
     }
   }
 }
 
-void BitmapBuffer::drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadius, coord_t externalRadius, LcdColor color, int startAngle, int endAngle)
+void BitmapBuffer::drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadius, coord_t externalRadius, LcdColor color, float startAngle, float endAngle)
 {
-  if (endAngle == startAngle) {
-    endAngle += 1;
-  }
-
-  Slope startSlope(startAngle);
-  Slope endSlope(endAngle);
+  AngularSector sector(startAngle, endAngle);
 
   auto rgb565 = COLOR_TO_RGB565(color);
   APPLY_OFFSET();
@@ -1140,14 +1117,13 @@ void BitmapBuffer::drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadiu
     for (int x1 = 0; x1 <= externalRadius; x1++) {
       auto dist = x1 * x1 + y1 * y1;
       if (dist >= internalDist && dist <= externalDist) {
-        Slope slope(false, x1 == 0 ? 99000 : y1 * 100 / x1);
-        if (slope.isBetween(startSlope, endSlope))
+        if (sector.contains(x1, y1))
           drawPixelAbsWithClipping(x + x1, y - y1, rgb565);
-        if (slope.invertVertical().isBetween(startSlope, endSlope))
+        if (y1 > 0 && sector.contains(x1, -y1))
           drawPixelAbsWithClipping(x + x1, y + y1, rgb565);
-        if (slope.invertHorizontal().isBetween(startSlope, endSlope))
+        if (x1 > 0 && y1 > 0 && sector.contains(-x1, -y1))
           drawPixelAbsWithClipping(x - x1, y + y1, rgb565);
-        if (slope.invertVertical().isBetween(startSlope, endSlope))
+        if (x1 > 0 && sector.contains(-x1, y1))
           drawPixelAbsWithClipping(x - x1, y - y1, rgb565);
       }
     }

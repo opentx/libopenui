@@ -679,11 +679,11 @@ class BitmapBuffer: public Bitmap
 
     void drawPlainFilledCircle(coord_t x, coord_t y, coord_t radius, Color565 color);
 
-    void drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadius, coord_t externalRadius, LcdColor color, int startAngle, int endAngle);
+    void drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadius, coord_t externalRadius, LcdColor color, float startAngle, float endAngle);
 
     void drawBitmapPie(int x0, int y0, const uint16_t * img, int startAngle, int endAngle);
 
-    void drawBitmapPatternPie(coord_t x0, coord_t y0, const Mask * mask, LcdColor color, int startAngle, int endAngle);
+    void drawBitmapPatternPie(coord_t x0, coord_t y0, const Mask * mask, LcdColor color, float startAngle, float endAngle);
 
     static BitmapBuffer * loadMaskOnBackground(const char * filename, Color565 foreground, Color565 background, int maxSize = -1);
 
