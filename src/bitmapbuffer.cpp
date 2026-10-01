@@ -18,6 +18,7 @@
  */
 
 #include <math.h>
+#include <algorithm>
 #include "bitmapbuffer.h"
 #include "libopenui_depends.h"
 #include "libopenui_helpers.h"
@@ -1041,10 +1042,39 @@ class AngularSector
       }
     }
 
+    // Fraction (0..1) of the pixel centered on (px, py) covered by the sector, for anti-aliasing:
+    // cross(start, p) and cross(p, end) are the signed distances (in pixels) to the start and end
+    // rays, as the vectors are unit ones
+    float coverage(float px, float py) const
+    {
+      if (sweep == 0 /* full circle */)
+        return 1;
+
+      float crossStart = sx * py - sy * px;
+      float crossEnd = px * ey - py * ex;
+      if (sweep < 180) {
+        return std::min(edgeCoverage(crossStart), edgeCoverage(crossEnd));
+      }
+      else if (sweep == 180) {
+        return edgeCoverage(crossStart);
+      }
+      else {
+        float crossComplementStart = ex * py - ey * px;
+        float crossComplementEnd = px * sy - py * sx;
+        return 1 - std::min(edgeCoverage(crossComplementStart), edgeCoverage(crossComplementEnd));
+      }
+    }
+
   protected:
     float sweep;
     float sx, sy; // start unit vector
     float ex, ey; // end unit vector
+
+    // Pixel coverage against a straight edge, `distance` being negative inside
+    static float edgeCoverage(float distance)
+    {
+      return std::clamp(0.5f - distance, 0.0f, 1.0f);
+    }
 
     static void angleToVector(float angle, float & vx, float & vy)
     {
@@ -1110,22 +1140,44 @@ void BitmapBuffer::drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadiu
   auto rgb565 = COLOR_TO_RGB565(color);
   APPLY_OFFSET();
 
-  coord_t internalDist = internalRadius * internalRadius;
-  coord_t externalDist = externalRadius * externalRadius;
+  // Anti-aliased edges: the circles are at internalRadius - 0.5 and externalRadius + 0.5, so
+  // that the sector keeps the same size as the aliased version (pixels centers within
+  // [internalRadius, externalRadius]), with a 1 pixel ramp on each side
+  int maxRadius = externalRadius + 1;
+  int minRadius = std::max(0, internalRadius - 1);
+  coord_t minDist = minRadius * minRadius;
+  coord_t maxDist = maxRadius * maxRadius;
 
-  for (int y1 = 0; y1 <= externalRadius; y1++) {
-    for (int x1 = 0; x1 <= externalRadius; x1++) {
+  // The color alpha is ignored (callers may pass a Color565 without alpha), only the coverage is
+  auto drawCoveredPixel = [&](coord_t px, coord_t py, float radialCoverage, int dx, int dy) {
+    float coverage = radialCoverage * sector.coverage(dx, dy);
+    auto alpha = uint8_t(coverage * ALPHA_MAX + 0.5f);
+    if (alpha && applyPixelClippingRect(px, py)) {
+      drawAlphaPixelAbs(px, py, alpha, rgb565);
+    }
+  };
+
+  for (int y1 = 0; y1 <= maxRadius; y1++) {
+    for (int x1 = 0; x1 <= maxRadius; x1++) {
       auto dist = x1 * x1 + y1 * y1;
-      if (dist >= internalDist && dist <= externalDist) {
-        if (sector.contains(x1, y1))
-          drawPixelAbsWithClipping(x + x1, y - y1, rgb565);
-        if (y1 > 0 && sector.contains(x1, -y1))
-          drawPixelAbsWithClipping(x + x1, y + y1, rgb565);
-        if (x1 > 0 && y1 > 0 && sector.contains(-x1, -y1))
-          drawPixelAbsWithClipping(x - x1, y + y1, rgb565);
-        if (x1 > 0 && sector.contains(-x1, y1))
-          drawPixelAbsWithClipping(x - x1, y - y1, rgb565);
+      if (dist < minDist || dist > maxDist)
+        continue;
+
+      float d = sqrtf(dist);
+      float radialCoverage = std::clamp(externalRadius + 1 - d, 0.0f, 1.0f);
+      if (internalRadius > 0) {
+        radialCoverage = std::min(radialCoverage, std::clamp(d - internalRadius + 1, 0.0f, 1.0f));
       }
+      if (radialCoverage <= 0)
+        continue;
+
+      drawCoveredPixel(x + x1, y - y1, radialCoverage, x1, y1);
+      if (y1 > 0)
+        drawCoveredPixel(x + x1, y + y1, radialCoverage, x1, -y1);
+      if (x1 > 0 && y1 > 0)
+        drawCoveredPixel(x - x1, y + y1, radialCoverage, -x1, -y1);
+      if (x1 > 0)
+        drawCoveredPixel(x - x1, y - y1, radialCoverage, -x1, y1);
     }
   }
 }
