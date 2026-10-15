@@ -207,6 +207,38 @@ class ImageEncoder:
         return ResultClass(size_format, orientation)
 
 
+def write_cpp_definition(f, name, format, data):
+    # constexpr definition of <name>Embedded, without the header (needs --size-format 2):
+    # the object is in flash instead of RAM (no constructor called on startup)
+    def write_values(values, value_format):
+        for i in range(0, len(values), 16):
+            f.write("  " + "".join(value_format % value for value in values[i:i + 16]) + "\n")
+
+    if format in ("4/4/4/4", "5/6/5"):
+        bitmap_format = data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24)
+        width = data[4] + (data[5] << 8)
+        height = data[6] + (data[7] << 8)
+        pixels = [data[i] + (data[i + 1] << 8) for i in range(8, len(data), 2)]
+        if len(pixels) != width * height:
+            raise ValueError("%s: %d pixels instead of %d" % (name, len(pixels), width * height))
+        f.write("static const pixel_t %sData[] __ALIGNED(4) = {\n" % name)
+        write_values(pixels, "0x%04X,")
+        f.write("};\n")
+        f.write("constexpr Bitmap %sEmbedded(%d, %d, %d, %sData);\n" % (name, bitmap_format, width, height, name))
+    elif format == "8bits":
+        width = data[0] + (data[1] << 8)
+        height = data[2] + (data[3] << 8)
+        pixels = data[4:]
+        if len(pixels) != width * height:
+            raise ValueError("%s: %d pixels instead of %d" % (name, len(pixels), width * height))
+        f.write("static const uint8_t %sData[] __ALIGNED(4) = {\n" % name)
+        write_values(pixels, "%d,")
+        f.write("};\n")
+        f.write("constexpr Mask %sEmbedded(%d, %d, %sData);\n" % (name, width, height, name))
+    else:
+        raise ValueError("--cpp-name not supported with the %s format" % format)
+
+
 def main():
     parser = argparse.ArgumentParser(description='Bitmaps encoder')
     parser.add_argument('input', action="store", help="Input file name")
@@ -217,6 +249,7 @@ def main():
     parser.add_argument("--rows", help="Image rows count (for 1bit format)", type=int, default=1)
     parser.add_argument("--size-format", help="Header image size format (1 or 2 bytes)", type=int, default=1)
     parser.add_argument("--invert", help="Invert the bitmap (white vs black)", action="store_true")
+    parser.add_argument("--cpp-name", help="Write a C++ constexpr definition (<name>Embedded) instead of the bytes")
 
     args = parser.parse_args()
 
@@ -240,8 +273,11 @@ def main():
         bytes = encoder.encode_5_6_5(image)
 
     with open(args.output, "w") as f:
-        for byte in bytes:
-            f.write("%d," % byte)
+        if args.cpp_name:
+            write_cpp_definition(f, args.cpp_name, format, bytes)
+        else:
+            for byte in bytes:
+                f.write("%d," % byte)
 
 
 if __name__ == "__main__":

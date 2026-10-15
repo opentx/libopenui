@@ -54,38 +54,33 @@ class Raster
   public:
     using DataType = T;
 
-    Raster(const Raster & other):
-      _width(other._width),
-      _height(other._height),
-      data(other.data),
-      dataEnd(other.dataEnd),
-      dataAllocated(false)
-    {
-    }
+    // Raster, Mask and Bitmap are literal types (constexpr constructors, trivial destructor): the embedded bitmaps
+    // are constexpr objects, in flash instead of RAM
 
-    Raster(uint16_t width, uint16_t height):
+    constexpr Raster(const Raster & other) = default;
+
+    constexpr Raster(uint16_t width, uint16_t height, const T * data):
       _width(width),
       _height(height),
-      data((T *)malloc(align32(width * height * sizeof(T)))),
-      dataEnd(data + (width * height)),
-      dataAllocated(true)
+      data(const_cast<T *>(data)),
+      dataEnd(const_cast<T *>(data) + (width * height))
     {
     }
 
-    Raster(uint16_t width, uint16_t height, T * data):
-      _width(width),
-      _height(height),
-      data(data),
-      dataEnd(data + (width * height)),
-      dataAllocated(false)
+    // the allocated objects (allocate()) and their pixels are in the same block, freed by delete
+    static void * operator new(size_t size)
     {
+      return malloc(size);
     }
 
-    ~Raster()
+    static void * operator new(size_t, void * where)
     {
-      if (dataAllocated) {
-        free(data);
-      }
+      return where;
+    }
+
+    static void operator delete(void * ptr)
+    {
+      free(ptr);
     }
 
     [[nodiscard]] inline uint16_t width() const
@@ -206,15 +201,29 @@ class Raster
     uint16_t _height;
     T * data;
     T * dataEnd;
-    bool dataAllocated = false;
+
+    // allocates the object (class C) and its pixels in one block, C(args..., width, height, pixels)
+    template <class C, class... Args>
+    static C * allocateWithPixels(uint16_t width, uint16_t height, Args... args)
+    {
+      auto offset = align32(sizeof(C));
+      auto block = (uint8_t *)malloc(offset + align32(width * height * sizeof(T)));
+      if (!block) {
+        return nullptr;
+      }
+      return new (block) C(args..., width, height, (T *)(block + offset));
+    }
 };
 
 class Mask: public Raster<uint8_t>
 {
-  protected:
-    using Raster::Raster;
-
   public:
+    constexpr Mask(uint16_t width, uint16_t height, const uint8_t * data):
+      Raster(width, height, data)
+    {
+    }
+
+    // data with the header (width and height), not constexpr
     Mask(const uint8_t * data):
       Raster(*((uint16_t *)(data + 0)), *((uint16_t *)(data + 2)), (uint8_t *)(data + 4))
     {
@@ -222,12 +231,7 @@ class Mask: public Raster<uint8_t>
 
     static Mask * allocate(uint16_t width, uint16_t height)
     {
-      auto result = new Mask(width, height);
-      if (result && !result->isValid()) {
-        delete result;
-        result = nullptr;
-      }
-      return result;
+      return allocateWithPixels<Mask>(width, height);
     }
 
     static Mask * allocate(const Mask * from, uint16_t width, uint16_t height)
@@ -258,12 +262,13 @@ class Mask: public Raster<uint8_t>
 class Bitmap: public Raster<pixel_t>
 {
   public:
-    Bitmap(uint8_t format, uint16_t width, uint16_t height, pixel_t * data):
+    constexpr Bitmap(uint8_t format, uint16_t width, uint16_t height, const pixel_t * data):
       Raster(width, height, data),
       _format(format)
     {
     }
 
+    // data with the header (format, width and height), not constexpr
     Bitmap(const uint8_t * data):
       Bitmap(*((uint32_t *)data), *((uint16_t *)(data + 4)), *((uint16_t *)(data + 6)), (pixel_t *)(data + 8))
     {
@@ -271,12 +276,7 @@ class Bitmap: public Raster<pixel_t>
 
     static Bitmap * allocate(uint8_t format, uint16_t width, uint16_t height)
     {
-      auto result = new Bitmap(format, width, height);
-      if (result && !result->isValid()) {
-        delete result;
-        result = nullptr;
-      }
-      return result;
+      return allocateWithPixels<Bitmap>(width, height, format);
     }
 
     static Bitmap * allocate(const Bitmap * from, uint16_t width, uint16_t height)
@@ -298,12 +298,6 @@ class Bitmap: public Raster<pixel_t>
 
   protected:
     uint8_t _format;
-
-    Bitmap(uint8_t format, uint16_t width, uint16_t height):
-      Raster(width, height),
-      _format(format)
-    {
-    }
 
     static Bitmap * load_stb(const char * filename, int maxSize = -1);
     static Bitmap * load_bmp(const char * filename, int maxSize = -1);
@@ -497,13 +491,6 @@ class BitmapBuffer: public Bitmap
       ymax(height)
     {
     }
-
-    BitmapBuffer(uint8_t format, uint16_t width, uint16_t height):
-      Bitmap(format, width, height),
-      xmax(width),
-      ymax(height)
-    {
-    }
   
     inline void clearClippingRect()
     {
@@ -583,12 +570,7 @@ class BitmapBuffer: public Bitmap
 
     static BitmapBuffer * allocate(uint8_t format, uint16_t width, uint16_t height) 
     {
-      auto result = new BitmapBuffer(format, width, height);
-      if (result && !result->isValid()) {
-        delete result;
-        result = nullptr;
-      }
-      return result;
+      return allocateWithPixels<BitmapBuffer>(width, height, format);
     }
 
     static BitmapBuffer * allocate(const Bitmap * from, uint16_t width, uint16_t height) 
