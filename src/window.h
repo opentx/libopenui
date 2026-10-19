@@ -317,6 +317,11 @@ class Window
       return rect;
     }
 
+    [[nodiscard]] rect_t getClientRect() const
+    {
+      return {0, 0, rect.w, rect.h};
+    }
+
     [[nodiscard]] rect_t getInnerRect() const
     {
       return {0, 0, innerWidth, innerHeight};
@@ -438,7 +443,7 @@ class Window
 
     void invalidate()
     {
-      invalidate({0, 0, rect.w, rect.h});
+      invalidate(getClientRect());
     }
 
     void bringToTop()

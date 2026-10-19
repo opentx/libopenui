@@ -82,7 +82,7 @@ class MainWindow: public Window
 
     void invalidate()
     {
-      invalidate({0, 0, rect.w, rect.h});
+      invalidate(getClientRect());
     }
 
     void invalidate(const rect_t & rect) override;

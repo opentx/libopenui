@@ -289,7 +289,7 @@ class Table: public FormField
       columnsCount(columnsCount),
       columnsWidth(columnsCount, width() / columnsCount),
       header(createHeader ? createHeader(this) : new Header(this, {0, 0, width(), 0}, columnsCount)),
-      body(createBody ? createBody(this) : new Body(this, {0, 0, width(), height()}, windowFlags))
+      body(createBody ? createBody(this) : new Body(this, getClientRect(), windowFlags))
     {
     }
 
