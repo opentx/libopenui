@@ -67,23 +67,30 @@ constexpr uint8_t DECIMALS(uint8_t value)
   uint16_t g = ((color) >> 5) & 0x3F; \
   uint16_t b = ((color) & 0x1F)
 
-#define ARGB_JOIN(a, r, g, b) \
-  (((a) << 12) + ((r) << 8) + ((g) << 4) + (b))
+constexpr uint16_t ARGB_JOIN(uint8_t a, uint8_t r, uint8_t g, uint8_t b)
+{
+  return (a << 12) + (r << 8) + (g << 4) + b;
+}
 
-#define RGB_JOIN(r, g, b) \
-  (((r) << 11) + ((g) << 5) + (b))
+constexpr Color565 RGB_JOIN(uint8_t r, uint8_t g, uint8_t b)
+{
+  return (r << 11) + (g << 5) + b;
+}
 
-#define GET_RED(color) \
-  (((color) & 0xF800) >> 8)
+constexpr uint8_t GET_RED(Color565 color)
+{
+  return (color & 0xF800) >> 8;
+}
 
-#define GET_GREEN(color) \
-  (((color) & 0x07E0) >> 3)
+constexpr uint8_t GET_GREEN(Color565 color)
+{
+  return (color & 0x07E0) >> 3;
+}
 
-#define GET_BLUE(color) \
-  (((color) & 0x001F) << 3)
-
-#define RGB565_TO_ARGB4444(color, alpha) \
-  ARGB4444(alpha, GET_RED(color), GET_GREEN(color), GET_BLUE(color))
+constexpr uint8_t GET_BLUE(Color565 color)
+{
+  return (color & 0x001F) << 3;
+}
 
 #define ALPHA_MASK 0x0F000000
 
@@ -100,9 +107,19 @@ constexpr Color565 GREY(uint8_t v)
   return RGB565(v, v, v);
 }
 
-inline uint16_t ARGB4444(uint8_t a, uint8_t r, uint8_t g, uint8_t b)
+constexpr uint16_t ARGB4444(uint8_t a, uint8_t r, uint8_t g, uint8_t b)
 {
-  return (((a) & 0xF0) << 8) + (((r) & 0xF0) << 4) + (((g) & 0xF0) << 0) + (((b) & 0xF0) >> 4);
+  return ((a & 0xF0) << 8) + ((r & 0xF0) << 4) + (g & 0xF0) + ((b & 0xF0) >> 4);
+}
+
+constexpr uint16_t RGB565_TO_ARGB4444(Color565 color, uint8_t alpha)
+{
+  return ARGB4444(alpha, GET_RED(color), GET_GREEN(color), GET_BLUE(color));
+}
+
+constexpr Color565 ARGB4444_TO_RGB565(uint16_t color)
+{
+  return RGB565(((color >> 8) & 0x0F) * 0x11, ((color >> 4) & 0x0F) * 0x11, (color & 0x0F) * 0x11);
 }
 
 inline bool IS_COLOR_OPAQUE(LcdColor color)
