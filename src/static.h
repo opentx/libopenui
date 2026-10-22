@@ -76,8 +76,10 @@ class StaticText: public Window
 
     void setTextColor(LcdColor value)
     {
-      textColor = value;
-      invalidate();
+      if (textColor != value) {
+        textColor = value;
+        invalidate();
+      }
     }
 
     void setPadding(coord_t horizontalPadding, coord_t verticalPadding)
