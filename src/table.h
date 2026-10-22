@@ -129,7 +129,7 @@ class Table: public FormField
     {
       public:
         explicit Line(uint8_t columnsCount):
-          Window(nullptr, {0, 0, 0, 0}, OPAQUE),
+          Window(nullptr, nullRect, OPAQUE),
           cells(columnsCount, nullptr)
         {
         }

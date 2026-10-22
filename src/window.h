@@ -106,6 +106,11 @@ class Window
       return window == this || (parent && parent->isChild(window));
     }
 
+    [[nodiscard]] bool isOnTop() const
+    {
+      return !parent || parent->children.back() == this;
+    }
+
     [[nodiscard]] bool isFullScreenWindow() const
     {
       return width() == LCD_W && height() == LCD_H && innerWidth == LCD_W && innerHeight == LCD_H;
