@@ -381,18 +381,23 @@ C * rotate(const C * source, float radians)
     coord_t dX = rX - x0;
     for (unsigned rY = 0; rY < h; rY++) {
       coord_t dY = rY - y0;
+#if LCD_ORIENTATION == 270
+      // the bitmaps are stored column by column: pixel (x, y) is at data[x * h + y]
+      auto * dest = &destData[rX * h + rY];
+#else
+      auto * dest = &destData[rY * w + rX];
+#endif
       coord_t x = round(dX * cosine + dY * sine + x0);
-      if (x >= 0 && x < w) {
-        coord_t y = round(dY * cosine - dX * sine + y0);
-        if (y >= 0 && y < h) {
-          destData[rY * w + rX] = srcData[y * w + x];
-        }
-        else {
-          destData[rY * w + rX] = 0;
-        }
+      coord_t y = round(dY * cosine - dX * sine + y0);
+      if (x >= 0 && x < w && y >= 0 && y < h) {
+#if LCD_ORIENTATION == 270
+        *dest = srcData[x * h + y];
+#else
+        *dest = srcData[y * w + x];
+#endif
       }
       else {
-        destData[rY * w + rX] = 0;
+        *dest = 0;
       }
     }
   }
