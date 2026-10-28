@@ -30,7 +30,7 @@ namespace ui {
 class Button: public FormField
 {
   public:
-    Button(FormGroup * parent, const rect_t & rect, std::function<uint8_t(void)> pressHandler = nullptr, WindowFlags windowFlags = 0, LcdFlags textFlags = 0):
+    Button(FormGroup * parent, const rect_t & rect, std::function<uint8_t()> pressHandler = nullptr, WindowFlags windowFlags = 0, LcdFlags textFlags = 0):
       FormField(parent, rect, windowFlags, textFlags),
       pressHandler(std::move(pressHandler))
     {
@@ -59,12 +59,12 @@ class Button: public FormField
         return windowFlags & BUTTON_CHECKED;
     }
 
-    void setPressHandler(std::function<uint8_t(void)> handler)
+    void setPressHandler(std::function<uint8_t()> handler)
     {
       pressHandler = std::move(handler);
     }
 
-    void setPressLongHandler(std::function<uint8_t(void)> handler)
+    void setPressLongHandler(std::function<uint8_t()> handler)
     {
       pressLongHandler = std::move(handler);
     }
@@ -86,8 +86,8 @@ class Button: public FormField
     void checkEvents() override;
 
   protected:
-    std::function<uint8_t(void)> pressHandler;
-    std::function<uint8_t(void)> pressLongHandler;
+    std::function<uint8_t()> pressHandler;
+    std::function<uint8_t()> pressLongHandler;
     std::function<void(void)> checkHandler;
 
     void onPress();
@@ -96,7 +96,7 @@ class Button: public FormField
 class TextButton: public Button
 {
   public:
-    TextButton(FormGroup * parent, const rect_t & rect, std::string text, std::function<uint8_t(void)> pressHandler = nullptr, WindowFlags windowFlags = DEFAULT_TEXT_BUTTON_FLAGS, LcdFlags textFlags = 0):
+    TextButton(FormGroup * parent, const rect_t & rect, std::string text, std::function<uint8_t()> pressHandler = nullptr, WindowFlags windowFlags = DEFAULT_TEXT_BUTTON_FLAGS, LcdFlags textFlags = 0):
       Button(parent, rect, std::move(pressHandler), windowFlags, textFlags),
       text(std::move(text))
     {
@@ -142,7 +142,7 @@ class TextButton: public Button
 class IconButton: public Button
 {
   public:
-    IconButton(FormGroup * parent, const rect_t & rect, uint8_t icon, std::function<uint8_t(void)> pressHandler, WindowFlags flags = 0):
+    IconButton(FormGroup * parent, const rect_t & rect, uint8_t icon, std::function<uint8_t()> pressHandler, WindowFlags flags = 0):
       Button(parent, rect, std::move(pressHandler), flags),
       icon(icon)
     {
