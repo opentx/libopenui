@@ -358,6 +358,31 @@ coord_t Window::getSnapStep(coord_t relativeScrollPosition, coord_t pageSize)
 }
 #endif
 
+Window * Window::findAt(coord_t & x, coord_t & y, const std::function<bool(Window *)> & accept)
+{
+  // Same traversal as the touch events
+  for (auto it = children.rbegin(); it != children.rend(); ++it) {
+    auto child = *it;
+    if (!child->deleted() && child->rect.contains(point_t{x, y})) {
+      coord_t childX = x - child->rect.x + child->scrollPositionX;
+      coord_t childY = y - child->rect.y + child->scrollPositionY;
+      auto found = child->findAt(childX, childY, accept);
+      if (!found && accept(child)) {
+        found = child;
+      }
+      if (found) {
+        x = childX;
+        y = childY;
+        return found;
+      }
+      if (child->windowFlags & OPAQUE) {
+        return nullptr;
+      }
+    }
+  }
+  return nullptr;
+}
+
 void Window::checkEvents()
 {
   auto copy = children;

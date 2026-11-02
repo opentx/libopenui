@@ -171,6 +171,11 @@ class Window
       focusHandler = std::move(handler);
     }
 
+    // The topmost window below this one accepted by the predicate at a point
+    // (in the coordinates of this window), with the point converted to its
+    // coordinates: a click without touchscreen (remote control)
+    Window * findAt(coord_t & x, coord_t & y, const std::function<bool(Window *)> & accept);
+
     virtual void deleteLater(bool detach = true, bool trash = true);
 
     void clear();
