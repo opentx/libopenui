@@ -1630,18 +1630,19 @@ Bitmap * Bitmap::load_bmp(const char * filename, int maxSize)
   FileReader fileReader(filename);
   auto dataSize = fileReader.size();
   if (maxSize >= 0 && (int)dataSize > maxSize) {
-    TRACE("Bitmap::load(%s) failed: malloc refused", filename);
+    TRACE_ERROR("Bitmap::load(%s) failed: malloc refused", filename);
     return nullptr;
   }
 
   auto data = fileReader.read();
   if (!data) {
-    TRACE("Bitmap::load(%s) failed: read error", filename);
+    TRACE_ERROR("Bitmap::load(%s) failed: read error", filename);
     return nullptr;
   }
 
   auto buf = data;
   if (dataSize < 18 || buf[0] != 'B' || buf[1] != 'M') {
+    TRACE_ERROR("Bitmap::load(%s) failed: invalid file format", filename);
     return nullptr;
   }
 
@@ -1651,6 +1652,7 @@ Bitmap * Bitmap::load_bmp(const char * filename, int maxSize)
 
   /* invalid extra header size */
   if (ihsize + 14 > hsize) {
+    TRACE_ERROR("Bitmap::load(%s) failed: invalid header size", filename);
     return nullptr;
   }
 
@@ -1661,6 +1663,7 @@ Bitmap * Bitmap::load_bmp(const char * filename, int maxSize)
 
   /* declared file size less than header size */
   if (fsize <= hsize) {
+    TRACE_ERROR("Bitmap::load(%s) failed: invalid file size", filename);
     return nullptr;
   }
 
@@ -1683,10 +1686,12 @@ Bitmap * Bitmap::load_bmp(const char * filename, int maxSize)
       buf += 8;
       break;
     default:
+      TRACE_ERROR("Bitmap::load(%s) failed: unsupported bitmap format (ihsize=%u)", filename, ihsize);
       return nullptr;
   }
 
   if (UINT16LE(buf) != 1) { /* planes */
+    TRACE_ERROR("Bitmap::load(%s) failed: invalid planes", filename);
     return nullptr;
   }
 
@@ -1702,18 +1707,18 @@ Bitmap * Bitmap::load_bmp(const char * filename, int maxSize)
   buf = data + hsize;
 
   if (w == 0 || h == 0 || w > UINT16_MAX || h > UINT16_MAX) {
-    TRACE("Bitmap::load(%s) failed: invalid dimensions %ux%u", filename, w, h);
+    TRACE_ERROR("Bitmap::load(%s) failed: invalid dimensions %ux%u", filename, w, h);
     return nullptr;
   }
 
   if (maxSize >= 0 && int(w * h * 2) > maxSize) {
-    TRACE("Bitmap::load(%s) failed: malloc refused", filename);
+    TRACE_ERROR("Bitmap::load(%s) failed: malloc refused", filename);
     return nullptr;
   }
 
   auto bmp = Bitmap::allocate(BMP_RGB565, w, h);
   if (!bmp) {
-    TRACE("Bitmap::load(%s) failed: malloc error", filename);
+    TRACE_ERROR("Bitmap::load(%s) failed: malloc error", filename);
     return nullptr;
   }
 
@@ -1796,6 +1801,7 @@ Bitmap * Bitmap::load_bmp(const char * filename, int maxSize)
 
     default:
       delete bmp;
+      TRACE_ERROR("Bitmap::load(%s) failed: unsupported bitmap format (depth=%d)", filename, depth);
       return nullptr;
   }
 
@@ -1870,34 +1876,35 @@ Bitmap * Bitmap::load_stb(const char * filename, int maxSize)
     auto dataSize = fileReader.size();
 
     if (dataSize == 0) {
+      TRACE_ERROR("Bitmap::load(%s) failed: empty or missing file", filename);
       return nullptr;
     }
 
     if (maxSize >= 0 && (int)dataSize > maxSize) {
-      TRACE("Bitmap::load(%s) failed: malloc refused", filename);
+      TRACE_ERROR("Bitmap::load(%s) failed: malloc refused", filename);
       return nullptr;
     }
 
     auto data = fileReader.read();
     if (!data) {
-      TRACE("Bitmap::load(%s) failed: read error", filename);
+      TRACE_ERROR("Bitmap::load(%s) failed: read error", filename);
       return nullptr;
     }
 
     img = stbi_load_from_memory(data, dataSize, &w, &h, &n, 4);
     if (!img) {
-      TRACE("Bitmap::load(%s) failed: %s", filename, stbi_failure_reason());
+      TRACE_ERROR("Bitmap::load(%s) failed: %s", filename, stbi_failure_reason());
       return nullptr;
     }
 
     if (maxSize >= 0 && w * h * 2 > maxSize) {
-      TRACE("Bitmap::load(%s) malloc not allowed", filename);
+      TRACE_ERROR("Bitmap::load(%s) malloc not allowed", filename);
       stbi_image_free(img);
       return nullptr;
     }
 
     if (w <= 0 || h <= 0 || w > UINT16_MAX || h > UINT16_MAX) {
-      TRACE("Bitmap::load(%s) failed: invalid dimensions %dx%d", filename, w, h);
+      TRACE_ERROR("Bitmap::load(%s) failed: invalid dimensions %dx%d", filename, w, h);
       stbi_image_free(img);
       return nullptr;
     }
@@ -1906,7 +1913,7 @@ Bitmap * Bitmap::load_stb(const char * filename, int maxSize)
   // convert to RGB565 or ARGB4444 format
   auto bmp = Bitmap::allocate(n == 4 ? BMP_ARGB4444 : BMP_RGB565, w, h);
   if (!bmp) {
-    TRACE("Bitmap::load(%s) malloc failed", filename);
+    TRACE_ERROR("Bitmap::load(%s) malloc failed", filename);
     stbi_image_free(img);
     return nullptr;
   }
