@@ -927,8 +927,20 @@ void BitmapBuffer::drawFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t 
   if (!applyClippingRect(x, y, w, h))
     return;
 
-  for (coord_t i = y; i < y + h; i++) {
-    drawHorizontalLineAbs(x, i, w, color, pat);
+  if (pat == SOLID) {
+    auto rgb565 = COLOR_TO_RGB565(color);
+    uint8_t alpha = GET_COLOR_ALPHA(color);
+    if (alpha == ALPHA_MAX) {
+      DMAFillRect(data, DEST_FORMAT_ARGUMENT(_format == BMP_ARGB4444) _width, _height, x, y, w, h, _format == BMP_RGB565 ? rgb565 : RGB565_TO_ARGB4444(rgb565, 0xFF));
+    }
+    else if (alpha != 0) {
+      DMABlendRect(data, DEST_FORMAT_ARGUMENT(_format == BMP_ARGB4444) _width, _height, x, y, w, h, rgb565, alpha);
+    }
+  }
+  else {
+    for (coord_t i = y; i < y + h; i++) {
+      drawHorizontalLineAbs(x, i, w, color, pat);
+    }
   }
 }
 
