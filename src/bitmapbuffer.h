@@ -487,6 +487,40 @@ C * rotate180(const C * source)
   return result;
 }
 
+// Nearest neighbour resize to width x height
+template <class C>
+C * scale(const C * source, coord_t width, coord_t height)
+{
+  auto w = source->width();
+  auto h = source->height();
+  if (width <= 0 || height <= 0 || w <= 0 || h <= 0) {
+    return nullptr;
+  }
+
+  auto * result = C::allocate(source, width, height);
+  if (!result) {
+    return nullptr;
+  }
+
+  auto * srcData = source->getData();
+  auto * destData = result->getData();
+
+  for (coord_t y = 0; y < height; y++) {
+    coord_t sy = y * h / height;
+    for (coord_t x = 0; x < width; x++) {
+      coord_t sx = x * w / width;
+#if LCD_ORIENTATION == 270
+      // the bitmaps are stored column by column: pixel (x, y) is at data[x * h + y]
+      destData[x * height + y] = srcData[sx * h + sy];
+#else
+      destData[y * width + x] = srcData[sy * w + sx];
+#endif
+    }
+  }
+
+  return result;
+}
+
 class BitmapBuffer: public Bitmap
 {
   public:
