@@ -27,8 +27,10 @@
 #include "file_reader.h"
 #include "intconversions.h"
 
+#if !defined(SIMULATION)
 #pragma GCC push_options
 #pragma GCC optimize("O3")
+#endif
 
 void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const Bitmap * bitmap, coord_t srcx, coord_t srcy, coord_t srcw, coord_t srch, float scale)
 {
@@ -2114,4 +2116,6 @@ Bitmap * Bitmap::load_stb(const char * filename, int maxSize)
   return bmp;
 }
 
+#if !defined(SIMULATION)
 #pragma GCC pop_options
+#endif
