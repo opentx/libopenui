@@ -27,6 +27,9 @@
 #include "file_reader.h"
 #include "intconversions.h"
 
+#pragma GCC push_options
+#pragma GCC optimize("O3")
+
 void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const Bitmap * bitmap, coord_t srcx, coord_t srcy, coord_t srcw, coord_t srch, float scale)
 {
   if (!data || !bitmap)
@@ -1849,6 +1852,7 @@ void * stb_realloc(void *ptr, unsigned int oldsz, unsigned int newsz)
 }
 
 #if !defined(_MSC_VER)
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
@@ -1866,48 +1870,234 @@ void * stb_realloc(void *ptr, unsigned int oldsz, unsigned int newsz)
 
 #include "thirdparty/stb/stb_image.h"
 
+#if !defined(_MSC_VER)
+#pragma GCC diagnostic pop
+#endif
+
+// Files smaller than this are read in one shot in RAM then decoded from memory (fast).
+// Bigger files are decoded while streaming them from the file, so that the compressed
+// data doesn't need to be held in RAM along with the decoded image.
+#if !defined(STB_STREAM_MIN_FILE_SIZE)
+#define STB_STREAM_MIN_FILE_SIZE  (128 * 1024)
+#endif
+
+// fill 'data' with 'size' bytes.  return number of bytes actually read
+static int stb_read(void * user, char * data, int size)
+{
+  auto fp = (FIL *)user;
+  UINT br = 0;
+  if (f_read(fp, data, size, &br) == FR_OK) {
+    return (int)br;
+  }
+  return 0;
+}
+
+// skip the next 'n' bytes, or 'unget' the last -n bytes if negative
+static void stb_skip(void * user, int n)
+{
+  auto fp = (FIL *)user;
+  f_lseek(fp, f_tell(fp) + n);
+}
+
+// returns nonzero if we are at end of file/data
+static int stb_eof(void * user)
+{
+  return f_eof((FIL *)user);
+}
+
+static const stbi_io_callbacks stbCallbacks = {
+  stb_read,
+  stb_skip,
+  stb_eof
+};
+
+// Converts rows of 8-bit RGB (pixelBytes = 3) or RGBA (pixelBytes = 4) pixels to the bitmap
+// format: ARGB4444 if alpha, else RGB565. 'src' points to the first of the 'rows' rows to convert,
+// they are the rows firstRow... of the image.
+static void stbConvertRows(Bitmap * bmp, const uint8_t * src, int pixelBytes, int srcStride, bool alpha, int w, int firstRow, int rows)
+{
+#if LCD_ORIENTATION == 270
+  // The destination is transposed: pixel (col, row) is stored at index col * height + row.
+  // The source is read by rows, the destination written by columns: a plain loop would
+  // write each pixel in a different cache line. We process tiles of TILE x TILE pixels so
+  // that both the source lines and the destination lines are fully used while they are in the cache.
+  constexpr int TILE = 8;
+  const int stride = bmp->height();
+  pixel_t * base = bmp->getPixelPtrAbs(0, 0) + firstRow;
+  for (int row0 = 0; row0 < rows; row0 += TILE) {
+    const int rowEnd = std::min(row0 + TILE, rows);
+    for (int col0 = 0; col0 < w; col0 += TILE) {
+      const int colEnd = std::min(col0 + TILE, w);
+      for (int col = col0; col < colEnd; ++col) {
+        pixel_t * dest = base + col * stride + row0;
+        const uint8_t * p = src + row0 * srcStride + col * pixelBytes;
+        if (alpha) {
+          for (int row = row0; row < rowEnd; ++row) {
+            *dest++ = ARGB4444(p[3], p[0], p[1], p[2]);
+            p += srcStride;
+          }
+        }
+        else {
+          for (int row = row0; row < rowEnd; ++row) {
+            *dest++ = RGB565(p[0], p[1], p[2]);
+            p += srcStride;
+          }
+        }
+      }
+    }
+  }
+#else
+  for (int row = 0; row < rows; ++row) {
+    pixel_t * dest = bmp->getPixelPtrAbs(0, firstRow + row);
+    const uint8_t * p = src + row * srcStride;
+    for (int col = 0; col < w; ++col) {
+      *dest = alpha ? ARGB4444(p[3], p[0], p[1], p[2]) : RGB565(p[0], p[1], p[2]);
+      dest = bmp->getNextPixel(dest);
+      p += pixelBytes;
+    }
+  }
+#endif
+}
+
+// State of a decoding straight to a bitmap (stbi_sink)
+struct StbSink
+{
+  int maxSize;
+  Bitmap * bmp;
+  int comp;
+  int w;
+};
+
+static int stbSinkBegin(void * user, int w, int h, int comp)
+{
+  auto sink = (StbSink *)user;
+
+  if (w <= 0 || h <= 0 || w > UINT16_MAX || h > UINT16_MAX) {
+    TRACE_ERROR("Bitmap::load failed: invalid dimensions %dx%d", w, h);
+    return 0;
+  }
+
+  if (sink->maxSize >= 0 && w * h * 2 > sink->maxSize) {
+    TRACE_ERROR("Bitmap::load malloc not allowed");
+    return 0;
+  }
+
+  sink->bmp = Bitmap::allocate(comp == 4 ? BMP_ARGB4444 : BMP_RGB565, w, h);
+  sink->comp = comp;
+  sink->w = w;
+  return sink->bmp != nullptr;
+}
+
+static void stbSinkRows(void * user, int y, int count, const stbi_uc * data, int stride)
+{
+  auto sink = (StbSink *)user;
+  stbConvertRows(sink->bmp, data, sink->comp, stride, sink->comp == 4, sink->w, y, count);
+}
+
 Bitmap * Bitmap::load_stb(const char * filename, int maxSize)
 {
   int w, h, n;
-  unsigned char * img;
+  size_t dataSize;
+  unsigned char * img = nullptr;
 
   {
-    FileReader fileReader(filename);
-    auto dataSize = fileReader.size();
-
-    if (dataSize == 0) {
+    FILINFO fno;
+    if (f_stat(filename, &fno) != FR_OK || fno.fsize == 0) {
       TRACE_ERROR("Bitmap::load(%s) failed: empty or missing file", filename);
       return nullptr;
     }
+    dataSize = fno.fsize;
 
     if (maxSize >= 0 && (int)dataSize > maxSize) {
       TRACE_ERROR("Bitmap::load(%s) failed: malloc refused", filename);
       return nullptr;
     }
+  }
 
+  // The image is decoded straight to the bitmap by strips of rows (no intermediate RGBA image).
+  // It is not possible for all the PNG (palette, 16 bits, interlaced ...), in this case we
+  // fall back to the regular decoding below.
+  StbSink sinkState = { maxSize, nullptr, 0, 0 };
+  const stbi_sink sink = { &sinkState, stbSinkBegin, stbSinkRows };
+
+  if (dataSize < STB_STREAM_MIN_FILE_SIZE) {
+    FileReader fileReader(filename);
     auto data = fileReader.read();
     if (!data) {
       TRACE_ERROR("Bitmap::load(%s) failed: read error", filename);
       return nullptr;
     }
 
+    if (stbi_sink_from_memory(data, dataSize, &sink, &w, &h, &n)) {
+      return sinkState.bmp;
+    }
+    delete sinkState.bmp;
+    sinkState.bmp = nullptr;
+
     img = stbi_load_from_memory(data, dataSize, &w, &h, &n, 4);
     if (!img) {
       TRACE_ERROR("Bitmap::load(%s) failed: %s", filename, stbi_failure_reason());
       return nullptr;
     }
-
-    if (maxSize >= 0 && w * h * 2 > maxSize) {
-      TRACE_ERROR("Bitmap::load(%s) malloc not allowed", filename);
-      stbi_image_free(img);
+  }
+  else {
+    // FIL is big, don't put it on the stack
+    auto imgFile = (FIL *)malloc(sizeof(FIL));
+    if (!imgFile) {
+      TRACE_ERROR("Bitmap::load(%s) failed: malloc error", filename);
       return nullptr;
     }
 
-    if (w <= 0 || h <= 0 || w > UINT16_MAX || h > UINT16_MAX) {
+    if (f_open(imgFile, filename, FA_OPEN_EXISTING | FA_READ) != FR_OK) {
+      TRACE_ERROR("Bitmap::load(%s) failed: read error", filename);
+      free(imgFile);
+      return nullptr;
+    }
+
+    if (stbi_sink_from_callbacks(&stbCallbacks, imgFile, &sink, &w, &h, &n)) {
+      f_close(imgFile);
+      free(imgFile);
+      return sinkState.bmp;
+    }
+    delete sinkState.bmp;
+    sinkState.bmp = nullptr;
+    f_lseek(imgFile, 0);
+
+    if (!stbi_info_from_callbacks(&stbCallbacks, imgFile, &w, &h, &n)) {
+      TRACE_ERROR("Bitmap::load(%s) failed: %s", filename, stbi_failure_reason());
+    }
+    else if (w <= 0 || h <= 0 || w > UINT16_MAX || h > UINT16_MAX) {
       TRACE_ERROR("Bitmap::load(%s) failed: invalid dimensions %dx%d", filename, w, h);
-      stbi_image_free(img);
+    }
+    else if (maxSize >= 0 && w * h * 2 > maxSize) {
+      TRACE_ERROR("Bitmap::load(%s) malloc not allowed", filename);
+    }
+    else {
+      // stbi_info_from_callbacks() consumed the header, restart from the beginning
+      f_lseek(imgFile, 0);
+      img = stbi_load_from_callbacks(&stbCallbacks, imgFile, &w, &h, &n, 4);
+      if (!img) {
+        TRACE_ERROR("Bitmap::load(%s) failed: %s", filename, stbi_failure_reason());
+      }
+    }
+    f_close(imgFile);
+    free(imgFile);
+
+    if (!img) {
       return nullptr;
     }
+  }
+
+  if (maxSize >= 0 && w * h * 2 > maxSize) {
+    TRACE_ERROR("Bitmap::load(%s) malloc not allowed", filename);
+    stbi_image_free(img);
+    return nullptr;
+  }
+
+  if (w <= 0 || h <= 0 || w > UINT16_MAX || h > UINT16_MAX) {
+    TRACE_ERROR("Bitmap::load(%s) failed: invalid dimensions %dx%d", filename, w, h);
+    stbi_image_free(img);
+    return nullptr;
   }
 
   // convert to RGB565 or ARGB4444 format
@@ -1918,55 +2108,10 @@ Bitmap * Bitmap::load_stb(const char * filename, int maxSize)
     return nullptr;
   }
 
-#if 0
-  // TODO optimize for DMA2D if possible (DMA2D can convert from ARGB8888 to RGB565 or ARGB4444, but not from RGBA8888, so we need to swizzle the input data first)
-  DMABitmapConvert(bmp->data, img, w, h, n == 4 ? DMA2D_ARGB4444 : DMA2D_RGB565);
-#elif LCD_ORIENTATION == 270
-  const uint8_t * p = img;
-  if (n == 4) {
-    for (int row = 0; row < h; ++row) {
-      pixel_t * dest = bmp->getPixelPtrAbs(0, row);
-      for (int col = 0; col < w; ++col) {
-        *dest = ARGB4444(p[3], p[0], p[1], p[2]);
-        dest += bmp->height();
-        p += 4;
-      }
-    }
-  }
-  else {
-    for (int row = 0; row < h; ++row) {
-      pixel_t * dest = bmp->getPixelPtrAbs(0, row);
-      for (int col = 0; col < w; ++col) {
-        *dest = RGB565(p[0], p[1], p[2]);
-        dest += bmp->height();
-        p += 4;
-      }
-    }
-  }
-#else
-  pixel_t * dest = bmp->getPixelPtrAbs(0, 0);
-  const uint8_t * p = img;
-  if (n == 4) {
-    for (int row = 0; row < h; ++row) {
-      for (int col = 0; col < w; ++col) {
-        *dest = ARGB4444(p[3], p[0], p[1], p[2]);
-        dest = bmp->getNextPixel(dest);
-        p += 4;
-      }
-    }
-  }
-  else {
-    // TODO here
-    for (int row = 0; row < h; ++row) {
-      for (int col = 0; col < w; ++col) {
-        *dest = RGB565(p[0], p[1], p[2]);
-        dest = bmp->getNextPixel(dest);
-        p += 4;
-      }
-    }
-  }
-#endif
+  stbConvertRows(bmp, img, 4, w * 4, n == 4, w, 0, h);
 
   stbi_image_free(img);
   return bmp;
 }
+
+#pragma GCC pop_options

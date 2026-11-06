@@ -114,24 +114,30 @@ class FileBufferedReader: public FileReaderBase
     FileBufferedReader(const char * path, size_t bufferSize = 4096):
       FileReaderBase(path)
     {
-      open(path, bufferSize);
+      // the file is already opened by FileReaderBase
+      if (file) {
+        allocBuffer(bufferSize);
+      }
     }
 
     bool open(const char * path, size_t bufferSize = 4096)
     {
+      close();
       bool result = FileReaderBase::open(path);
       if (result) {
-        dataSize = bufferSize;
-        data = (uint8_t *)malloc(bufferSize);
-        if (!data) {
-          close();
-          return false;
-        }
-        dataRemaining = fileSize;
-        ptr = data;
-        dataAvailable = 0;
+        result = allocBuffer(bufferSize);
       }
       return result;
+    }
+
+    bool isOpen() const
+    {
+      return file != nullptr;
+    }
+
+    bool atEnd() const
+    {
+      return dataAvailable == 0 && dataRemaining == 0;
     }
 
     ~FileBufferedReader()
@@ -181,6 +187,21 @@ class FileBufferedReader: public FileReaderBase
     }
 
   protected:
+    bool allocBuffer(size_t bufferSize)
+    {
+      free(data);
+      dataSize = bufferSize;
+      data = (uint8_t *)malloc(bufferSize);
+      if (!data) {
+        close();
+        return false;
+      }
+      dataRemaining = fileSize;
+      ptr = data;
+      dataAvailable = 0;
+      return true;
+    }
+
     uint8_t * data = nullptr;
     size_t dataSize = 0;
     uint8_t * ptr = nullptr;
