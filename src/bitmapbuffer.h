@@ -265,8 +265,8 @@ class BitmapBufferBase
       }
 
 #if LCD_ORIENTATION == 270
-      for (uint8_t y = 0; y < height(); y++) {
-        for (uint8_t x = 0; x < width(); x++) {
+      for (coord_t y = 0; y < height(); y++) {
+        for (coord_t x = 0; x < width(); x++) {
           auto * destData = &result->data[x * height() + y];
           auto * srcData = &data[(width() - 1 - x) * height() + y];
           *destData = *srcData;
@@ -275,8 +275,8 @@ class BitmapBufferBase
 #else
       auto * srcData = data + width();
       auto * destData = result->data;
-      for (uint8_t y = 0; y < height(); y++) {
-        for (uint8_t x = 0; x < width(); x++) {
+      for (coord_t y = 0; y < height(); y++) {
+        for (coord_t x = 0; x < width(); x++) {
           *(destData++) = *(--srcData);
         }
         srcData += 2 * width();
@@ -294,8 +294,8 @@ class BitmapBufferBase
       }
       
 #if LCD_ORIENTATION == 270
-      for (uint8_t y = 0; y < height(); y++) {
-        for (uint8_t x = 0; x < width(); x++) {
+      for (coord_t y = 0; y < height(); y++) {
+        for (coord_t x = 0; x < width(); x++) {
           auto * destData = &result->data[x * height() + y];
           auto * srcData = &data[x * height() + height() - 1 - y];
           *destData = *srcData;
@@ -304,8 +304,8 @@ class BitmapBufferBase
 #else
       auto * srcData = getDataEnd() - width();
       auto * destData = result->data;
-      for (uint8_t y = 0; y < height(); y++) {
-        for (uint8_t x = 0; x < width(); x++) {
+      for (coord_t y = 0; y < height(); y++) {
+        for (coord_t x = 0; x < width(); x++) {
           *(destData++) = *(srcData++);
         }
         srcData -= 2 * width();
@@ -338,18 +338,23 @@ class BitmapBufferBase
         coord_t dX = rX - x0;
         for (unsigned rY = 0; rY < h; rY++) {
           coord_t dY = rY - y0;
+#if LCD_ORIENTATION == 270
+          // the bitmaps are stored column by column: pixel (x, y) is at data[x * h + y]
+          auto * dest = &destData[rX * h + rY];
+#else
+          auto * dest = &destData[rY * w + rX];
+#endif
           coord_t x = round(dX * cosine + dY * sine + x0);
-          if (x >= 0 && x < w) {
-            coord_t y = round(dY * cosine - dX * sine + y0);
-            if (y >= 0 && y < h) {
-              destData[rY * w + rX] = srcData[y * w + x];
-            }
-            else {
-              destData[rY * w + rX] = 0;
-            }
+          coord_t y = round(dY * cosine - dX * sine + y0);
+          if (x >= 0 && x < w && y >= 0 && y < h) {
+#if LCD_ORIENTATION == 270
+            *dest = srcData[x * h + y];
+#else
+            *dest = srcData[y * w + x];
+#endif
           }
           else {
-            destData[rY * w + rX] = 0;
+            *dest = 0;
           }
         }
       }
@@ -368,16 +373,16 @@ class BitmapBufferBase
   #if LCD_ORIENTATION == 270
       auto * srcData = data;
       auto * destData = result->data;
-      for (uint8_t y = 0; y < width(); y++) {
-        for (uint8_t x = 0; x < height(); x++) {
+      for (coord_t y = 0; y < width(); y++) {
+        for (coord_t x = 0; x < height(); x++) {
           destData[x * width() + y] = srcData[(y + 1) * height() - (x + 1)];
         }
       }
   #else
       auto * destData = result->data + height();
-      for (uint8_t y = 0; y < width(); y++) {
+      for (coord_t y = 0; y < width(); y++) {
         auto * srcData = data + y;
-        for (uint8_t x = 0; x < height(); x++) {
+        for (coord_t x = 0; x < height(); x++) {
           destData--;
           *destData = *srcData;
           srcData += width();
