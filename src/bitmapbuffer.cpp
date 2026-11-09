@@ -287,7 +287,50 @@ void BitmapBuffer::drawVerticalLine(coord_t x, coord_t y, coord_t h, LcdColor co
   }
 }
 
-void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdColor color, uint8_t pat)
+// Anti-aliased line (Wu), the offsets are already applied. The end points are pixel centers, so the line is fully
+// opaque there; the coverage of the 2 pixels crossed by the line on each column (row if steep) is split by the
+// fractional part of the intercept.
+void BitmapBuffer::drawAntialiasedLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, Color565 color, uint8_t alpha)
+{
+  const bool steep = abs(y2 - y1) > abs(x2 - x1);
+  if (steep) {
+    std::swap(x1, y1);
+    std::swap(x2, y2);
+  }
+  if (x1 > x2) {
+    std::swap(x1, x2);
+    std::swap(y1, y2);
+  }
+
+  const float gradient = float(y2 - y1) / (x2 - x1);   // x2 > x1: the line is not a point
+
+  // only the part of the line inside the clipping area on the main axis
+  const int from = std::max<int>(x1, steep ? ymin : xmin);
+  const int to = std::min<int>(x2, (steep ? ymax : xmax) - 1);
+
+  auto plot = [&](coord_t major, coord_t minor, float coverage) {
+    auto a = uint8_t(coverage * alpha + 0.5f);
+    if (a) {
+      coord_t px = steep ? minor : major;
+      coord_t py = steep ? major : minor;
+      if (applyPixelClippingRect(px, py)) {
+        drawAlphaPixelAbs(px, py, a, color);
+      }
+    }
+  };
+
+  for (int m = from; m <= to; m++) {
+    float v = y1 + gradient * (m - x1);
+    float fl = floorf(v);
+    float fraction = v - fl;
+    plot(m, coord_t(fl), 1 - fraction);
+    if (fraction > 0) {
+      plot(m, coord_t(fl) + 1, fraction);
+    }
+  }
+}
+
+void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdColor color, uint8_t pat, bool antialias)
 {
 // ----------------------------------------------------------------------------
 // Bresenham Line Drawing with Built-In Clipping
@@ -404,6 +447,12 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdC
       }
     }
 
+    return;
+  }
+
+  // the patterns are not anti-aliased
+  if (antialias && pat == SOLID) {
+    drawAntialiasedLine(x1, y1, x2, y2, rgb565, alpha);
     return;
   }
 
@@ -780,10 +829,18 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdC
   }
 }
 
-void BitmapBuffer::fillHorizontalLineWithAlphaOnEnds(coord_t y, float x, float w, LcdColor color)
+void BitmapBuffer::fillHorizontalLineWithAlphaOnEnds(coord_t y, float x, float w, LcdColor color, bool antialias)
 {
   auto xstart = x;
   auto xend   = x + w;
+
+  if (!antialias) {
+    // the pixels whose center is inside, at least one
+    auto first = (int)lroundf(xstart);
+    auto count = std::max(1, (int)lroundf(xend) - first);
+    drawHorizontalLine(first, y, count, color, SOLID);
+    return;
+  }
 
   auto xi0 = (int)ceilf(xstart);
   auto xi1 = (int)floorf(xend);
@@ -807,7 +864,7 @@ void BitmapBuffer::fillHorizontalLineWithAlphaOnEnds(coord_t y, float x, float w
   }
 }
 
-void BitmapBuffer::fillBottomFlatTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t y12, coord_t x2, LcdColor color)
+void BitmapBuffer::fillBottomFlatTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t y12, coord_t x2, LcdColor color, bool antialias)
 {
   if (x1 > x2) {
     std::swap(x1, x2);
@@ -821,13 +878,13 @@ void BitmapBuffer::fillBottomFlatTriangle(coord_t x0, coord_t y0, coord_t x1, co
   float w = 1;
 
   for (int y = y0; y <= y12; y++) {
-    fillHorizontalLineWithAlphaOnEnds(y, x, w, color);
+    fillHorizontalLineWithAlphaOnEnds(y, x, w, color, antialias);
     x += slopex;
     w += slopew;
   }
 }
 
-void BitmapBuffer::fillTopFlatTriangle(coord_t x0, coord_t y01, coord_t x1, coord_t x2, coord_t y2, LcdColor color)
+void BitmapBuffer::fillTopFlatTriangle(coord_t x0, coord_t y01, coord_t x1, coord_t x2, coord_t y2, LcdColor color, bool antialias)
 {
   if (x0 > x1) {
     std::swap(x0, x1);
@@ -841,13 +898,13 @@ void BitmapBuffer::fillTopFlatTriangle(coord_t x0, coord_t y01, coord_t x1, coor
   float w = 1;
 
   for (int y = y2; y >= y01; y--) {
-    fillHorizontalLineWithAlphaOnEnds(y, x, w, color);
+    fillHorizontalLineWithAlphaOnEnds(y, x, w, color, antialias);
     x += slopex;
     w += slopew;
   }
 }
 
-void BitmapBuffer::drawFilledTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdColor color)
+void BitmapBuffer::drawFilledTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdColor color, bool antialias)
 {
   // Sort the points so that y0 <= y1 <= y2
   if (y1 < y0) {
@@ -864,15 +921,15 @@ void BitmapBuffer::drawFilledTriangle(coord_t x0, coord_t y0, coord_t x1, coord_
   }
 
   if (y1 == y2) {
-    fillBottomFlatTriangle(x0, y0, x1, y1, x2, color);
+    fillBottomFlatTriangle(x0, y0, x1, y1, x2, color, antialias);
   }
   else if (y0 == y1) {
-    fillTopFlatTriangle(x0, y0, x1, x2, y2, color);
+    fillTopFlatTriangle(x0, y0, x1, x2, y2, color, antialias);
   }
   else {
     coord_t x4 = x0 + multDivRoundClosest(x2 - x0, y1 - y0, y2 - y0);
-    fillBottomFlatTriangle(x0, y0, x1, y1, x4, color);
-    fillTopFlatTriangle(x1, y1 + 1, x4, x2, y2, color);
+    fillBottomFlatTriangle(x0, y0, x1, y1, x4, color, antialias);
+    fillTopFlatTriangle(x1, y1 + 1, x4, x2, y2, color, antialias);
   }
 }
 
@@ -949,8 +1006,85 @@ void BitmapBuffer::drawFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t 
   }
 }
 
-void BitmapBuffer::drawCircle(coord_t x, coord_t y, coord_t radius, LcdColor color)
+// Anti-aliased circle (radius >= 1): the pixel coverage is computed from the distance d between the pixel center and
+// the center of the circle.
+// - filled: the disc of radius + 0.5, coverage = radius + 1 - d (the pixels with d <= radius are solid, drawn by
+//   horizontal runs)
+// - outline: a 1 pixel ring centered on radius, coverage = 1 - |d - radius|
+// alpha is the opacity of the color (ALPHA_MAX when opaque)
+void BitmapBuffer::drawAntialiasedCircle(coord_t x, coord_t y, coord_t radius, Color565 color, uint8_t alpha, bool filled)
 {
+  auto plot = [&](coord_t px, coord_t py, float coverage) {
+    auto a = uint8_t(coverage * alpha + 0.5f);
+    if (a) {
+      drawAlphaPixel(px, py, a, color);
+    }
+  };
+
+  // the 4 symmetric pixels (the ones on the axes are drawn once)
+  auto plot4 = [&](int dx, int dy, float coverage) {
+    plot(x + dx, y + dy, coverage);
+    if (dx > 0)
+      plot(x - dx, y + dy, coverage);
+    if (dy > 0)
+      plot(x + dx, y - dy, coverage);
+    if (dx > 0 && dy > 0)
+      plot(x - dx, y - dy, coverage);
+  };
+
+  auto run = [&](coord_t rx, coord_t ry, coord_t w) {
+    if (alpha == ALPHA_MAX) {
+      drawPlainHorizontalLine(rx, ry, w, color);
+    }
+    else {
+      for (coord_t i = 0; i < w; i++) {
+        plot(rx + i, ry, 1);
+      }
+    }
+  };
+
+  const float r = radius;
+  if (filled) {
+    for (int dy = 0; dy <= radius; dy++) {
+      int solid = int(sqrtf(float(radius * radius - dy * dy)));   // |dx| <= solid: d <= radius
+      run(x - solid, y + dy, 2 * solid + 1);
+      if (dy > 0) {
+        run(x - solid, y - dy, 2 * solid + 1);
+      }
+      for (int dx = solid + 1; ; dx++) {
+        float coverage = r + 1 - sqrtf(float(dx * dx + dy * dy));
+        if (coverage <= 0)
+          break;
+        plot4(dx, dy, coverage);
+      }
+    }
+  }
+  else {
+    const float inner = std::max(0.0f, r - 1);
+    const float outer = r + 1;
+    for (int dy = 0; dy <= radius + 1; dy++) {
+      float innerSquare = inner * inner - float(dy * dy);
+      int dx = innerSquare > 0 ? int(sqrtf(innerSquare)) : 0;
+      for (; ; dx++) {
+        float d = sqrtf(float(dx * dx + dy * dy));
+        if (d >= outer)
+          break;
+        float coverage = 1 - fabsf(d - r);
+        if (coverage > 0) {
+          plot4(dx, dy, coverage);
+        }
+      }
+    }
+  }
+}
+
+void BitmapBuffer::drawCircle(coord_t x, coord_t y, coord_t radius, LcdColor color, bool antialias)
+{
+  if (antialias && radius > 0) {
+    drawAntialiasedCircle(x, y, radius, COLOR_TO_RGB565(color), GET_COLOR_ALPHA(color), false);
+    return;
+  }
+
   int x1 = radius;
   int y1 = 0;
   int decisionOver2 = 1 - x1;
@@ -977,8 +1111,13 @@ void BitmapBuffer::drawCircle(coord_t x, coord_t y, coord_t radius, LcdColor col
   }
 }
 
-void BitmapBuffer::drawPlainFilledCircle(coord_t x, coord_t y, coord_t radius, Color565 color)
+void BitmapBuffer::drawPlainFilledCircle(coord_t x, coord_t y, coord_t radius, Color565 color, bool antialias)
 {
+  if (antialias && radius > 0) {
+    drawAntialiasedCircle(x, y, radius, color, ALPHA_MAX, true);
+    return;
+  }
+
   coord_t imax = (radius * 707) / 1000 + 1;
   coord_t sqmax = radius * radius + radius / 2;
   coord_t x1 = radius;
@@ -998,8 +1137,14 @@ void BitmapBuffer::drawPlainFilledCircle(coord_t x, coord_t y, coord_t radius, C
   }
 }
 
-void BitmapBuffer::drawFilledCircle(coord_t x, coord_t y, coord_t radius, LcdColor color, uint8_t pat)
+void BitmapBuffer::drawFilledCircle(coord_t x, coord_t y, coord_t radius, LcdColor color, uint8_t pat, bool antialias)
 {
+  // the patterns are not anti-aliased
+  if (antialias && pat == SOLID && radius > 0) {
+    drawAntialiasedCircle(x, y, radius, COLOR_TO_RGB565(color), GET_COLOR_ALPHA(color), true);
+    return;
+  }
+
   coord_t imax = ((coord_t)((coord_t)radius * 707)) / 1000 + 1;
   coord_t sqmax = (coord_t)radius * (coord_t)radius + (coord_t)radius / 2;
   coord_t x1 = radius;
@@ -1150,7 +1295,7 @@ void BitmapBuffer::drawBitmapPatternPie(coord_t x, coord_t y, const Mask * mask,
   }
 }
 
-void BitmapBuffer::drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadius, coord_t externalRadius, LcdColor color, float startAngle, float endAngle)
+void BitmapBuffer::drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadius, coord_t externalRadius, LcdColor color, float startAngle, float endAngle, bool antialias)
 {
   AngularSector sector(startAngle, endAngle);
 
@@ -1167,7 +1312,8 @@ void BitmapBuffer::drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadiu
 
   // The color alpha is ignored (callers may pass a Color565 without alpha), only the coverage is
   auto drawCoveredPixel = [&](coord_t px, coord_t py, float radialCoverage, int dx, int dy) {
-    float coverage = radialCoverage * sector.coverage(dx, dy);
+    // without anti-aliasing: the pixels whose center is inside the annulus and the sector
+    float coverage = antialias ? radialCoverage * sector.coverage(dx, dy) : (sector.contains(dx, dy) ? radialCoverage : 0.0f);
     auto alpha = uint8_t(coverage * ALPHA_MAX + 0.5f);
     if (alpha && applyPixelClippingRect(px, py)) {
       drawAlphaPixelAbs(px, py, alpha, rgb565);
@@ -1181,9 +1327,15 @@ void BitmapBuffer::drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadiu
         continue;
 
       float d = sqrtf(dist);
-      float radialCoverage = std::clamp(externalRadius + 1 - d, 0.0f, 1.0f);
-      if (internalRadius > 0) {
-        radialCoverage = std::min(radialCoverage, std::clamp(d - internalRadius + 1, 0.0f, 1.0f));
+      float radialCoverage;
+      if (antialias) {
+        radialCoverage = std::clamp(externalRadius + 1 - d, 0.0f, 1.0f);
+        if (internalRadius > 0) {
+          radialCoverage = std::min(radialCoverage, std::clamp(d - internalRadius + 1, 0.0f, 1.0f));
+        }
+      }
+      else {
+        radialCoverage = (d >= internalRadius && d <= externalRadius) ? 1.0f : 0.0f;
       }
       if (radialCoverage <= 0)
         continue;

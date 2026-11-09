@@ -309,6 +309,38 @@ C * allocateLike(const C * source, uint16_t width, uint16_t height)
   }
 }
 
+// Bilinear interpolation of 4 pixels: p00 (x0, y0), p10 (x1, y0), p01 (x0, y1), p11 (x1, y1), fx and fy in [0, 256]
+// are the distances from (x0, y0). Each channel is interpolated separately, in the format of the source.
+template <class C>
+typename C::DataType bilinear(const C * source, typename C::DataType p00, typename C::DataType p10, typename C::DataType p01, typename C::DataType p11, int fx, int fy)
+{
+  const int w00 = (256 - fx) * (256 - fy);
+  const int w10 = fx * (256 - fy);
+  const int w01 = (256 - fx) * fy;
+  const int w11 = fx * fy;   // the sum of the weights is 65536
+  auto mix = [&](int c00, int c10, int c01, int c11) -> int {
+    return (c00 * w00 + c10 * w10 + c01 * w01 + c11 * w11 + 32768) >> 16;
+  };
+
+  if constexpr (std::is_same_v<C, Mask>) {
+    UNUSED(source);
+    return mix(p00, p10, p01, p11);
+  }
+  else if (source->getFormat() == BMP_ARGB4444) {
+    auto channel = [&](int shift) {
+      return mix((p00 >> shift) & 0xF, (p10 >> shift) & 0xF, (p01 >> shift) & 0xF, (p11 >> shift) & 0xF);
+    };
+    return (channel(12) << 12) | (channel(8) << 8) | (channel(4) << 4) | channel(0);
+  }
+  else {
+    // RGB565
+    auto channel = [&](int shift, int mask) {
+      return mix((p00 >> shift) & mask, (p10 >> shift) & mask, (p01 >> shift) & mask, (p11 >> shift) & mask);
+    };
+    return (channel(11, 0x1F) << 11) | (channel(5, 0x3F) << 5) | channel(0, 0x1F);
+  }
+}
+
 template <class C>
 C * invert(const C * source)
 {
@@ -360,8 +392,10 @@ C * verticalFlip(const C * source)
   return result;
 }
 
+// Rotation around the center, the corners left empty are transparent / black.
+// antialias: bilinear interpolation of the pixels instead of the nearest one
 template <class C>
-C * rotate(const C * source, float radians)
+C * rotate(const C * source, float radians, bool antialias = true)
 {
   float sine = sinf(radians);
   float cosine = cosf(radians);
@@ -390,6 +424,28 @@ C * rotate(const C * source, float radians)
 #else
       auto * dest = &destData[rY * w + rX];
 #endif
+      if (antialias) {
+        float fSrcX = dX * cosine + dY * sine + x0;
+        float fSrcY = dY * cosine - dX * sine + y0;
+        // same area as the nearest pixel version: the rounded coordinates are inside the source
+        if (fSrcX >= -0.5f && fSrcX < w - 0.5f && fSrcY >= -0.5f && fSrcY < h - 0.5f) {
+          float flX = floorf(fSrcX);
+          float flY = floorf(fSrcY);
+          int fx = int((fSrcX - flX) * 256);
+          int fy = int((fSrcY - flY) * 256);
+          coord_t xa = max<coord_t>(0, coord_t(flX)), xb = min<coord_t>(w - 1, coord_t(flX) + 1);
+          coord_t ya = max<coord_t>(0, coord_t(flY)), yb = min<coord_t>(h - 1, coord_t(flY) + 1);
+#if LCD_ORIENTATION == 270
+          *dest = bilinear<C>(source, srcData[xa * h + ya], srcData[xb * h + ya], srcData[xa * h + yb], srcData[xb * h + yb], fx, fy);
+#else
+          *dest = bilinear<C>(source, srcData[ya * w + xa], srcData[ya * w + xb], srcData[yb * w + xa], srcData[yb * w + xb], fx, fy);
+#endif
+        }
+        else {
+          *dest = 0;
+        }
+        continue;
+      }
       coord_t x = round(dX * cosine + dY * sine + x0);
       coord_t y = round(dY * cosine - dX * sine + y0);
       if (x >= 0 && x < w && y >= 0 && y < h) {
@@ -490,9 +546,9 @@ C * rotate180(const C * source)
   return result;
 }
 
-// Nearest neighbour resize to width x height
+// Resize to width x height, bilinear interpolation (antialias) or nearest neighbour
 template <class C>
-C * scale(const C * source, coord_t width, coord_t height)
+C * scale(const C * source, coord_t width, coord_t height, bool antialias = true)
 {
   auto w = source->width();
   auto h = source->height();
@@ -508,18 +564,81 @@ C * scale(const C * source, coord_t width, coord_t height)
   auto * srcData = source->getData();
   auto * destData = result->getData();
 
-  for (coord_t y = 0; y < height; y++) {
-    coord_t sy = y * h / height;
-    for (coord_t x = 0; x < width; x++) {
-      coord_t sx = x * w / width;
+  if (antialias) {
+    // the center of the destination pixel (x + 0.5) is projected on the source
+    const float ratioX = float(w) / width;
+    const float ratioY = float(h) / height;
+    for (coord_t y = 0; y < height; y++) {
+      float fSrcY = (y + 0.5f) * ratioY - 0.5f;
+      float flY = floorf(fSrcY);
+      int fy = int((fSrcY - flY) * 256);
+      coord_t ya = max<coord_t>(0, coord_t(flY)), yb = min<coord_t>(h - 1, coord_t(flY) + 1);
+      for (coord_t x = 0; x < width; x++) {
+        float fSrcX = (x + 0.5f) * ratioX - 0.5f;
+        float flX = floorf(fSrcX);
+        int fx = int((fSrcX - flX) * 256);
+        coord_t xa = max<coord_t>(0, coord_t(flX)), xb = min<coord_t>(w - 1, coord_t(flX) + 1);
 #if LCD_ORIENTATION == 270
-      // the bitmaps are stored column by column: pixel (x, y) is at data[x * h + y]
-      destData[x * height + y] = srcData[sx * h + sy];
+        // the destination is written column by column
+        destData[x * height + y] = bilinear<C>(source, srcData[xa * h + ya], srcData[xb * h + ya], srcData[xa * h + yb], srcData[xb * h + yb], fx, fy);
 #else
-      destData[y * width + x] = srcData[sy * w + sx];
+        destData[y * width + x] = bilinear<C>(source, srcData[ya * w + xa], srcData[ya * w + xb], srcData[yb * w + xa], srcData[yb * w + xb], fx, fy);
 #endif
+      }
+    }
+    return result;
+  }
+
+  // The source index of a destination index i is i * srcSize / dstSize, computed without any
+  // division in the loops: the integer part and the remainder are incremented step by step.
+  const coord_t stepX = w / width, remX = w % width;
+  const coord_t stepY = h / height, remY = h % height;
+
+#if LCD_ORIENTATION == 270
+  // the bitmaps are stored column by column: pixel (x, y) is at data[x * h + y]
+  // the destination is written column by column, sequentially
+  coord_t sx = 0, errX = 0;
+  for (coord_t x = 0; x < width; x++) {
+    const auto * srcColumn = srcData + sx * h;
+    coord_t sy = 0, errY = 0;
+    for (coord_t y = 0; y < height; y++) {
+      *destData++ = srcColumn[sy];
+      sy += stepY;
+      errY += remY;
+      if (errY >= height) {
+        errY -= height;
+        sy++;
+      }
+    }
+    sx += stepX;
+    errX += remX;
+    if (errX >= width) {
+      errX -= width;
+      sx++;
     }
   }
+#else
+  coord_t sy = 0, errY = 0;
+  for (coord_t y = 0; y < height; y++) {
+    const auto * srcRow = srcData + sy * w;
+    coord_t sx = 0, errX = 0;
+    for (coord_t x = 0; x < width; x++) {
+      *destData++ = srcRow[sx];
+      sx += stepX;
+      errX += remX;
+      if (errX >= width) {
+        errX -= width;
+        sx++;
+      }
+    }
+    sy += stepY;
+    errY += remY;
+    if (errY >= height) {
+      errY -= height;
+      sy++;
+    }
+  }
+#endif
 
   return result;
 }
@@ -665,16 +784,17 @@ class BitmapBuffer: public Bitmap
       drawPlainFilledRectangle(x, y, 1, h, color);
     }
 
-    void drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdColor color, uint8_t pat = SOLID);
+    // antialias: smooth edges (never with a pattern)
+    void drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdColor color, uint8_t pat = SOLID, bool antialias = true);
 
-    void drawTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdColor color, uint8_t pat = SOLID)
+    void drawTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdColor color, uint8_t pat = SOLID, bool antialias = true)
     {
-      drawLine(x0, y0, x1, y1, color, pat);
-      drawLine(x1, y1, x2, y2, color, pat);
-      drawLine(x2, y2, x0, y0, color, pat);
+      drawLine(x0, y0, x1, y1, color, pat, antialias);
+      drawLine(x1, y1, x2, y2, color, pat, antialias);
+      drawLine(x2, y2, x0, y0, color, pat, antialias);
     }
 
-    void drawFilledTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdColor color);
+    void drawFilledTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t x2, coord_t y2, LcdColor color, bool antialias = true);
 
     void drawRectangle(coord_t x, coord_t y, coord_t w, coord_t h, LcdColor color, uint8_t thickness = 1, uint8_t pat = SOLID);
 
@@ -692,13 +812,13 @@ class BitmapBuffer: public Bitmap
 
     void drawMaskFilledRectangle(coord_t x, coord_t y, coord_t w, coord_t h, const Mask * mask, Color565 color);
 
-    void drawCircle(coord_t x, coord_t y, coord_t radius, LcdColor color);
+    void drawCircle(coord_t x, coord_t y, coord_t radius, LcdColor color, bool antialias = true);
 
-    void drawFilledCircle(coord_t x, coord_t y, coord_t radius, LcdColor color, uint8_t pat = SOLID);
+    void drawFilledCircle(coord_t x, coord_t y, coord_t radius, LcdColor color, uint8_t pat = SOLID, bool antialias = true);
 
-    void drawPlainFilledCircle(coord_t x, coord_t y, coord_t radius, Color565 color);
+    void drawPlainFilledCircle(coord_t x, coord_t y, coord_t radius, Color565 color, bool antialias = true);
 
-    void drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadius, coord_t externalRadius, LcdColor color, float startAngle, float endAngle);
+    void drawAnnulusSector(coord_t x, coord_t y, coord_t internalRadius, coord_t externalRadius, LcdColor color, float startAngle, float endAngle, bool antialias = true);
 
     void drawBitmapPie(int x0, int y0, const uint16_t * img, int startAngle, int endAngle);
 
@@ -747,7 +867,7 @@ class BitmapBuffer: public Bitmap
     coord_t offsetX = 0;
     coord_t offsetY = 0;
 
-    void fillHorizontalLineWithAlphaOnEnds(coord_t y, float x, float w, LcdColor color);
+    void fillHorizontalLineWithAlphaOnEnds(coord_t y, float x, float w, LcdColor color, bool antialias = true);
 
     inline bool applyClippingRect(coord_t & x, coord_t & y, coord_t & w, coord_t & h) const
     {
@@ -825,10 +945,14 @@ class BitmapBuffer: public Bitmap
 
     void drawHorizontalLineAbs(coord_t x, coord_t y, coord_t w, LcdColor color, uint8_t pat = SOLID);
 
+    void drawAntialiasedCircle(coord_t x, coord_t y, coord_t radius, Color565 color, uint8_t alpha, bool filled);
+
     void fillRectangle(coord_t x, coord_t y, coord_t w, coord_t h, pixel_t color);
 
-    void fillBottomFlatTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t x2, LcdColor color);
-    void fillTopFlatTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t x2, coord_t y2, LcdColor color);
+    void fillBottomFlatTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t x2, LcdColor color, bool antialias = true);
+    void fillTopFlatTriangle(coord_t x0, coord_t y0, coord_t x1, coord_t x2, coord_t y2, LcdColor color, bool antialias = true);
+
+    void drawAntialiasedLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2, Color565 color, uint8_t alpha);
 
   private:
 #if defined(DEBUG)
