@@ -22,6 +22,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
+#include <type_traits>
 #include "libopenui_types.h"
 #include "libopenui_defines.h"
 #include "libopenui_depends.h"
@@ -42,7 +43,7 @@ extern char * numberToString(int32_t val, uint8_t len, const char * prefix, cons
 
 typedef uint16_t pixel_t;
 
-enum BitmapFormat
+enum BitmapFormat : uint8_t
 {
   BMP_RGB565,
   BMP_ARGB4444
@@ -234,12 +235,6 @@ class Mask: public Raster<uint8_t>
       return allocateWithPixels<Mask>(width, height);
     }
 
-    static Mask * allocate(const Mask * from, uint16_t width, uint16_t height)
-    {
-      UNUSED(from);
-      return allocate(width, height);
-    }
-
     static Mask * load(const char * path, int maxSize = -1);
 
     static Mask * decodeRle(const uint8_t * data);
@@ -262,7 +257,7 @@ class Mask: public Raster<uint8_t>
 class Bitmap: public Raster<pixel_t>
 {
   public:
-    constexpr Bitmap(uint8_t format, uint16_t width, uint16_t height, const pixel_t * data):
+    constexpr Bitmap(BitmapFormat format, uint16_t width, uint16_t height, const pixel_t * data):
       Raster(width, height, data),
       _format(format)
     {
@@ -270,34 +265,29 @@ class Bitmap: public Raster<pixel_t>
 
     // data with the header (format, width and height), not constexpr
     Bitmap(const uint8_t * data):
-      Bitmap(*((uint32_t *)data), *((uint16_t *)(data + 4)), *((uint16_t *)(data + 6)), (pixel_t *)(data + 8))
+      Bitmap((BitmapFormat)*((uint32_t *)data), *((uint16_t *)(data + 4)), *((uint16_t *)(data + 6)), (pixel_t *)(data + 8))
     {
     }
 
-    static Bitmap * allocate(uint8_t format, uint16_t width, uint16_t height)
+    static Bitmap * allocate(BitmapFormat format, uint16_t width, uint16_t height)
     {
       return allocateWithPixels<Bitmap>(width, height, format);
     }
 
-    static Bitmap * allocate(const Bitmap * from, uint16_t width, uint16_t height)
-    {
-      return allocate(from->getFormat(), width, height);
-    }
-
     static Bitmap * load(const char * path, int maxSize = -1);
 
-    [[nodiscard]] uint8_t getFormat() const
+    [[nodiscard]] BitmapFormat getFormat() const
     {
       return _format;
     }
 
-    void setFormat(uint8_t format)
+    void setFormat(BitmapFormat format)
     {
       _format = format;
     }
 
   protected:
-    uint8_t _format;
+    BitmapFormat _format;
 
     static Bitmap * load_stb(const char * filename, int maxSize = -1);
     static Bitmap * load_bmp(const char * filename, int maxSize = -1);
@@ -306,10 +296,23 @@ class Bitmap: public Raster<pixel_t>
 #endif
 };
 
+// Allocates a new object of the same kind as 'source' (same pixel format for the bitmaps) with another size
+template <class C>
+C * allocateLike(const C * source, uint16_t width, uint16_t height)
+{
+  if constexpr (std::is_same_v<C, Mask>) {
+    UNUSED(source);
+    return C::allocate(width, height);
+  }
+  else {
+    return C::allocate(source->getFormat(), width, height);
+  }
+}
+
 template <class C>
 C * invert(const C * source)
 {
-  auto result = C::allocate(source, source->width(), source->height());
+  auto result = allocateLike(source, source->width(), source->height());
   if (result) {
     auto * srcData = source->getData();
     auto * destData = result->getData();
@@ -327,7 +330,7 @@ C * invert(const C * source)
 template <class C>
 C * verticalFlip(const C * source)
 {
-  auto * result = C::allocate(source, source->width(), source->height());
+  auto * result = allocateLike(source, source->width(), source->height());
   if (!result) {
     return nullptr;
   }
@@ -369,7 +372,7 @@ C * rotate(const C * source, float radians)
   auto x0 = w / 2;
   auto y0 = h / 2;
 
-  auto * result = C::allocate(source, w, h);
+  auto * result = allocateLike(source, w, h);
   if (!result) {
     return nullptr;
   }
@@ -408,7 +411,7 @@ C * rotate(const C * source, float radians)
 template <class C>
 static C * horizontalFlip(const C * source)
 {
-  auto * result = C::allocate(source, source->width(), source->height());
+  auto * result = allocateLike(source, source->width(), source->height());
   if (!result) {
     return nullptr;
   }
@@ -442,7 +445,7 @@ static C * horizontalFlip(const C * source)
 template <class C>
 C * rotate90(const C * source)
 {
-  auto * result = C::allocate(source, source->height(), source->width());
+  auto * result = allocateLike(source, source->height(), source->width());
   if (!result) {
     return nullptr;
   }
@@ -473,7 +476,7 @@ C * rotate90(const C * source)
 template <class C>
 C * rotate180(const C * source)
 {
-  auto * result = C::allocate(source, source->width(), source->height());
+  auto * result = allocateLike(source, source->width(), source->height());
   if (!result) {
     return nullptr;
   }
@@ -497,7 +500,7 @@ C * scale(const C * source, coord_t width, coord_t height)
     return nullptr;
   }
 
-  auto * result = C::allocate(source, width, height);
+  auto * result = allocateLike(source, width, height);
   if (!result) {
     return nullptr;
   }
@@ -524,7 +527,7 @@ C * scale(const C * source, coord_t width, coord_t height)
 class BitmapBuffer: public Bitmap
 {
   public:
-    BitmapBuffer(uint8_t format, uint16_t width, uint16_t height, pixel_t * data):
+    BitmapBuffer(BitmapFormat format, uint16_t width, uint16_t height, pixel_t * data):
       Bitmap(format, width, height, data),
       xmax(width),
       ymax(height)
@@ -607,14 +610,9 @@ class BitmapBuffer: public Bitmap
       return dataEnd;
     }
 
-    static BitmapBuffer * allocate(uint8_t format, uint16_t width, uint16_t height) 
+    static BitmapBuffer * allocate(BitmapFormat format, uint16_t width, uint16_t height) 
     {
       return allocateWithPixels<BitmapBuffer>(width, height, format);
-    }
-
-    static BitmapBuffer * allocate(const Bitmap * from, uint16_t width, uint16_t height) 
-    {
-      return allocate(from->getFormat(), width, height);
     }
 
     inline void clear(Color565 color = 0 /*black*/)
