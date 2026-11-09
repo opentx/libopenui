@@ -215,7 +215,12 @@ def write_cpp_definition(f, name, format, data):
             f.write("  " + "".join(value_format % value for value in values[i:i + 16]) + "\n")
 
     if format in ("4/4/4/4", "5/6/5"):
-        bitmap_format = data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24)
+        # BitmapFormat constants of bitmapbuffer.h (the format is the first 32 bits of the data)
+        bitmap_formats = {0: "BMP_RGB565", 1: "BMP_ARGB4444"}
+        bitmap_format_value = data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24)
+        if bitmap_format_value not in bitmap_formats:
+            raise ValueError("%s: unknown bitmap format %d" % (name, bitmap_format_value))
+        bitmap_format = bitmap_formats[bitmap_format_value]
         width = data[4] + (data[5] << 8)
         height = data[6] + (data[7] << 8)
         pixels = [data[i] + (data[i + 1] << 8) for i in range(8, len(data), 2)]
@@ -224,7 +229,7 @@ def write_cpp_definition(f, name, format, data):
         f.write("static const pixel_t %sData[] __ALIGNED(4) = {\n" % name)
         write_values(pixels, "0x%04X,")
         f.write("};\n")
-        f.write("constexpr Bitmap %sEmbedded(%d, %d, %d, %sData);\n" % (name, bitmap_format, width, height, name))
+        f.write("constexpr Bitmap %sEmbedded(%s, %d, %d, %sData);\n" % (name, bitmap_format, width, height, name))
     elif format == "8bits":
         width = data[0] + (data[1] << 8)
         height = data[2] + (data[3] << 8)
