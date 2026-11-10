@@ -31,6 +31,11 @@
 #include "libopenui_helpers.h"
 #include "libopenui_config.h"
 
+// The application can check that the windows are only used by the GUI task (in libopenui_config.h)
+#if !defined(ASSERT_GUI_TASK)
+  #define ASSERT_GUI_TASK(function)
+#endif
+
 #if !defined(_GNUC_)
   #undef OPAQUE
   #undef TRANSPARENT

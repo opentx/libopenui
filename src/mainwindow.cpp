@@ -96,6 +96,8 @@ void MainWindow::checkEvents()
 
 void MainWindow::invalidate(const rect_t & rect)
 {
+  ASSERT_GUI_TASK("MainWindow::invalidate()");
+
   if (invalidatedRect.w) {
     auto left = limit<coord_t>(0, rect.left(), invalidatedRect.left());
     auto right = limit<coord_t>(invalidatedRect.right(), rect.right(), LCD_W);

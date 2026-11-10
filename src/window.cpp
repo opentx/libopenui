@@ -577,6 +577,8 @@ void Window::moveWindowsTop(coord_t y, coord_t delta) // NOLINT(misc-no-recursio
 
 void Window::invalidate(const rect_t & dirtyRect) // NOLINT(misc-no-recursion)
 {
+  ASSERT_GUI_TASK("Window::invalidate()");
+
   if (isVisible()) {
     coord_t x = rect.x + dirtyRect.x - parent->scrollPositionX;
     coord_t y = rect.y + dirtyRect.y - parent->scrollPositionY;
