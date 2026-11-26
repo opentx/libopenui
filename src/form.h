@@ -146,7 +146,7 @@ class FormGroup: public FormField
 
     virtual void addField(FormField * field, bool front = false); // NOLINT(google-default-arguments)
 
-    virtual void removeField(FormField * field);
+    void removeField(FormField * field);
 
     void setFirstField(FormField * field)
     {
