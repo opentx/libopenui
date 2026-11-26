@@ -34,6 +34,8 @@ class FormField: public Window
   public:
     FormField(Window * parent, const rect_t & rect, WindowFlags windowFlags = 0, LcdFlags textFlags = 0);
 
+    void deleteLater(bool detach = true, bool trash = true) override; // NOLINT(google-default-arguments)
+
     inline void setNextField(FormField *field)
     {
       next = field;

@@ -167,31 +167,39 @@ void FormGroup::removeField(FormField * field)
   FormField * prev = field->getPreviousField();
   FormField * next = field->getNextField();
 
-  if (prev) {
+  // With FORM_FORWARD_FOCUS the first and last fields are linked to the group itself: the links of the group, to the
+  // fields around it in its own form, are not changed
+  if (prev && prev != this && prev != field) {
     prev->setNextField(next);
   }
 
-  if (next) {
+  if (next && next != this && next != field) {
     next->setPreviousField(prev);
   }
 
   if (first == field) {
-    if (prev && (prev != field))
-      first = prev;
-    else if (next && (next != field))
-      first = next;
-    else
-      first = nullptr;
+    first = (next && next != this && next != field) ? next : nullptr;
   }
 
   if (last == field) {
-    if (next && (next != field))
-      last = next;
-    else if (prev && (prev != field))
-      last = prev;
-    else
-      last = nullptr;
+    last = (prev && prev != this && prev != field) ? prev : nullptr;
   }
+
+  field->setNextField(nullptr);
+  field->setPreviousField(nullptr);
+}
+
+void FormField::deleteLater(bool detach, bool trash) // NOLINT(google-default-arguments)
+{
+  if (!deleted()) {
+    // the form keeps this field linked to its neighbours: they would point to freed memory once the trash is emptied
+    auto * form = dynamic_cast<FormGroup *>(parent);
+    if (form) {
+      form->removeField(this);
+    }
+  }
+
+  Window::deleteLater(detach, trash);
 }
 
 bool FormGroup::setFocus(uint8_t flag, Window * from)
